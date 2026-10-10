@@ -13,20 +13,11 @@ const MIN_DONATION_AMOUNT = 7;
 const HIGH_PAYMENT_THRESHOLD_CENTS = 2100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
 const TOP_BRAND_TITLE = "Seed Garden";
-const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love You’ve Been Waiting For 💗💕";
-const METER_HEADLINE_PREFIX = "Sow Your Seed";
-const METER_HEADLINE_SUFFIX = "with faith,trust and patience💫";
-const METER_HEADLINE = `${METER_HEADLINE_PREFIX} ${METER_HEADLINE_SUFFIX}`;
-const LEGACY_METER_HEADLINES = new Set([
-  "Sow Your Seed 🌱with faith💫 trust🌹 and patience ༺💗༻",
-]);
-const METER_COLLAPSED_PREVIEW = "Welcome, beloved seeker of love. 💗";
-const LEGACY_METER_COLLAPSED_PREVIEWS = new Set([
-  "Welcome, beloved seeker of love. 💗 You didn’t arrive by accident. Make an order",
-]);
+const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
   "Choose a Seed Writing from the Seed Garden 🌱💗",
   "Choose Your Seed Offering for Your Soulmate & Loved Ones🌱💗 and get a personalised mail as your digital writing order",
+  "Buy a Seed to Sow for the Love You’ve Been Waiting For 💗💕",
   "Buy a Seed to Sow for the Love You’ve Been Waiting For in 💕Christ Pradise garden💫",
   "Buy a Seed to Sow for the Love You’ve Been Waiting For💕💕 for Sow Your Seed Here for Your Soulmate 💫",
 ]);
@@ -36,39 +27,11 @@ const LEGACY_ABOUT_COLLAPSED = new Set([
 const LEGACY_ABOUT_EXPANDED = new Set([
   "🌱✨ Personalised Digital Writing Made for Your Request ✨🌱\n\nShare your prayer, intention, or message and receive a heartfelt custom writing created especially for your order.\n\nEvery personalised mail is prepared with care, faith, and thoughtful attention to what you asked for.",
 ]);
-const MAX_LOCAL_POST_IMAGE_BYTES = 2 * 1024 * 1024;
-const MAX_REMOTE_POST_IMAGE_BYTES = 5 * 1024 * 1024;
 const DIGITAL_ORDER_ITEM_NAME = "Personalised Digital Writing - Custom Order Made Writing";
-const BOOK_PRODUCTS = Object.freeze({
-  "love-and-protection": {
-    id: "love-and-protection",
-    title: "Love & Protection",
-    description: "Learning to love with courage and pray with trust.",
-    cover: "assets/books/love-and-protection-cover.jpg",
-  },
-  "my-soulmate": {
-    id: "my-soulmate",
-    title: "My Soulmate",
-    description: "Seeking a loving partnership with faith and discernment.",
-    cover: "assets/books/my-soulmate-cover.jpg",
-  },
-  "jesus-and-love": {
-    id: "jesus-and-love",
-    title: "Jesus & Love",
-    description: "Receiving the love of Christ and learning to live it.",
-    cover: "assets/books/jesus-and-love-cover.jpg",
-  },
-});
 const CUSTOM_ORDER_STRING_KEYS = new Set([
   "aboutCollapsed",
   "aboutExpanded",
   "aboutTitle",
-  "meterCollapsed",
-  "meterExpanded",
-  "meterHeadline",
-  "postAuthorName",
-  "postBody",
-  "postTitle",
   "profileTitle",
   "supportTitle",
   "topicLabel",
@@ -179,25 +142,12 @@ const FORTUNE_MESSAGES = [
 const DEFAULT_SETTINGS = {
   profileTitle: "Sow Your Seed 💫",
   followersText: "167 Followers",
-  seedGoal: 700,
-  startingSeeds: 0,
-  meterCurrentAmount: 0,
   seedPrice: 7,
-  meterHeadline: METER_HEADLINE,
-  meterCollapsed: METER_COLLAPSED_PREVIEW,
-  meterExpanded:
-    "Welcome, beloved seeker of love. 💗 You didn’t arrive by accident. Make an order\n\nWith every seed you sow you get a personalised mail of your request, prepared with care and intention. 🌱💫🌹",
   aboutTitle: "About",
-  aboutCollapsed:
-    "🌱✨ Personalised Writing & Digital Books for Your Journey ✨📖\nOrder a writing made for your request or preview and buy a complete digital book...",
-  aboutExpanded:
-    "🌱✨ Personalised Writing & Digital Books for Your Journey ✨📖\n\nSeed Garden is a personalised writing and digital book-buying platform. Share your prayer, intention, or message to order a heartfelt writing prepared especially for you and delivered by email.\n\nYou can also visit the Shop, preview the first five pages of each book, and purchase the complete digital book for delivery to your email after successful payment.",
-  topicLabel: "Writing & digital books",
+  aboutCollapsed: "🌱✨ Personalised Writing for Your Journey ✨\nOrder a writing made for your request and delivered by email...",
+  aboutExpanded: "Share your prayer, intention, or message to order a heartfelt writing prepared especially for you and delivered by email.",
+  topicLabel: "Personalised writing",
   supportTitle: MINIMAL_SUPPORT_TITLE,
-  postAuthorName: "Sow Your Seed 💫",
-  postTitle: "༺💗༻ A Divine Invitation: Sow Your Seed 🌱💫🌹",
-  postBody:
-    "Each seed is a small act of trust, a prayerful step toward the love your heart has been waiting for.",
   blessingWallEnabled: true,
   adsenseEnabled: true,
   checkoutRoute: "standard",
@@ -235,17 +185,6 @@ const seedFeed = [
   },
 ];
 
-const defaultPosts = [
-  {
-    id: "post-default-1",
-    title: DEFAULT_SETTINGS.postTitle,
-    description: DEFAULT_SETTINGS.postBody,
-    imageUrl: "assets/sow-cover.jpg",
-    createdAt: "2026-07-27T12:00:00.000Z",
-    likes: 3734,
-  },
-];
-
 const state = loadState();
 
 const elements = {
@@ -270,9 +209,6 @@ const elements = {
   adminLoginDialog: document.querySelector("#adminLoginDialog"),
   adminLoginForm: document.querySelector("#adminLoginForm"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
-  adminNewPostDescription: document.querySelector("#adminNewPostDescription"),
-  adminNewPostImage: document.querySelector("#adminNewPostImage"),
-  adminNewPostTitle: document.querySelector("#adminNewPostTitle"),
   adminPanel: document.querySelector("#adminPanel"),
   adminPaymentAttemptList: document.querySelector("#adminPaymentAttemptList"),
   adminPaymentStarts24h: document.querySelector("#adminPaymentStarts24h"),
@@ -283,48 +219,17 @@ const elements = {
   adminPasswordInput: document.querySelector("#adminPasswordInput"),
   adminPaymentsCompleted24h: document.querySelector("#adminPaymentsCompleted24h"),
   adminPaymentsCompletedLabel: document.querySelector("#adminPaymentsCompletedLabel"),
-  adminPostList: document.querySelector("#adminPostList"),
-  adminPublishPostButton: document.querySelector("#adminPublishPostButton"),
   resetAdminAnalyticsButton: document.querySelector("#resetAdminAnalyticsButton"),
-  adminUploadFileName: document.querySelector("#adminUploadFileName"),
-  adminUploadPreview: document.querySelector("#adminUploadPreview"),
-  adminUploadPreviewImage: document.querySelector("#adminUploadPreviewImage"),
   amountError: document.querySelector("#amountError"),
   amountInput: document.querySelector("#amountInput"),
-  bookAlternateCardCheckoutLink: document.querySelector("#bookAlternateCardCheckoutLink"),
-  bookAmountError: document.querySelector("#bookAmountError"),
-  bookAmountInput: document.querySelector("#bookAmountInput"),
-  bookCardButton: document.querySelector("#bookCardButton"),
-  bookCheckout: document.querySelector("#bookCheckout"),
-  bookCheckoutButton: document.querySelector("#bookCheckoutButton"),
-  bookCheckoutCover: document.querySelector("#bookCheckoutCover"),
-  bookCheckoutDescription: document.querySelector("#bookCheckoutDescription"),
-  bookCheckoutLabel: document.querySelector("#bookCheckoutLabel"),
-  bookCheckoutTitle: document.querySelector("#bookCheckoutTitle"),
-  bookEmailError: document.querySelector("#bookEmailError"),
-  bookEmailInput: document.querySelector("#bookEmailInput"),
-  bookGrid: document.querySelector("#bookGrid"),
-  bookInlinePaypalCheckout: document.querySelector("#bookInlinePaypalCheckout"),
-  bookMessageInput: document.querySelector("#bookMessageInput"),
-  bookNameInput: document.querySelector("#bookNameInput"),
-  bookOrderForm: document.querySelector("#bookOrderForm"),
-  bookPaymentStatus: document.querySelector("#bookPaymentStatus"),
-  bookPaypalButton: document.querySelector("#bookPaypalButton"),
-  bookPaypalButtonContainer: document.querySelector("#bookPaypalButtonContainer"),
-  bookPaypalCardButton: document.querySelector("#bookPaypalCardButton"),
-  bookPaypalCardButtonContainer: document.querySelector("#bookPaypalCardButtonContainer"),
-  bookPaypalCheckoutLoader: document.querySelector("#bookPaypalCheckoutLoader"),
-  bookPriceLabel: document.querySelector("#bookPriceLabel"),
   brandTitle: document.querySelector("#brandTitle"),
   cancelAdminLoginButton: document.querySelector("#cancelAdminLoginButton"),
   checkoutButton: document.querySelector("#checkoutButton"),
   checkoutLabel: document.querySelector("#checkoutLabel"),
   closeAdminButton: document.querySelector("#closeAdminButton"),
   closeReceiptButton: document.querySelector("#closeReceiptButton"),
-  closeTutorialButton: document.querySelector("#closeTutorialButton"),
   doneButton: document.querySelector("#doneButton"),
   decreaseSeedButton: document.querySelector("#decreaseSeedButton"),
-  decreaseBookAmountButton: document.querySelector("#decreaseBookAmountButton"),
   decrementPageViewButton: document.querySelector("#decrementPageViewButton"),
   followersText: document.querySelector("#followersText"),
   fulfillmentCancelButton: document.querySelector("#cancelFulfillmentButton"),
@@ -333,13 +238,8 @@ const elements = {
   fulfillmentForm: document.querySelector("#fulfillmentForm"),
   fulfillmentTimeInput: document.querySelector("#fulfillmentTimeInput"),
   messageInput: document.querySelector("#messageInput"),
-  meterCollapsed: document.querySelector("#meterCollapsed"),
-  meterExpanded: document.querySelector("#meterExpanded"),
-  meterHeadline: document.querySelector("#meterHeadline"),
   nameInput: document.querySelector("#nameInput"),
   nameError: document.querySelector("#nameError"),
-  weeklySeedToggle: document.querySelector("#weeklySeedToggle"),
-  openTutorialButton: document.querySelector("#openTutorialButton"),
   emailError: document.querySelector("#emailError"),
   inlinePaypalCheckout: document.querySelector("#inlinePaypalCheckout"),
   paymentEmailInput: document.querySelector("#paymentEmailInput"),
@@ -355,15 +255,9 @@ const elements = {
   paypalCardButton: document.querySelector("#paypalCardButton"),
   paypalCardButtonContainer: document.querySelector("#paypalCardButtonContainer"),
   cardButton: document.querySelector("#cardButton"),
-  postAuthorName: document.querySelector("#postAuthorName"),
   increaseSeedButton: document.querySelector("#increaseSeedButton"),
-  increaseBookAmountButton: document.querySelector("#increaseBookAmountButton"),
-  postsPageList: document.querySelector("#postsPageList"),
   profileTitle: document.querySelector("#profileTitle"),
   profileTabs: document.querySelectorAll("[data-section-tab]"),
-  milestoneProgress: document.querySelector("#milestoneProgress"),
-  progressRing: document.querySelector("#progressRing"),
-  progressPercent: document.querySelector("#progressPercent"),
   recentDonationList: document.querySelector("#recentDonationList"),
   refreshAdminButton: document.querySelector("#refreshAdminButton"),
   receiptDialog: document.querySelector("#receiptDialog"),
@@ -378,21 +272,11 @@ const elements = {
   closePaymentFailureButton: document.querySelector("#closePaymentFailureButton"),
   sectionViews: document.querySelectorAll("[data-section-view]"),
   showMoreButtons: document.querySelectorAll("[data-toggle-target]"),
-  sidebarPostList: document.querySelector("#sidebarPostList"),
   supportForm: document.querySelector("#supportForm"),
   supportCard: document.querySelector("#support"),
   supportTitle: document.querySelector("#supportTitle"),
-  subscriptionCalendarDetails: document.querySelector("#subscriptionCalendarDetails"),
-  subscriptionCalendarGrid: document.querySelector("#subscriptionCalendarGrid"),
-  subscriptionCalendarNext: document.querySelector("#subscriptionCalendarNext"),
-  subscriptionCalendarPrev: document.querySelector("#subscriptionCalendarPrev"),
-  subscriptionCalendarSummary: document.querySelector("#subscriptionCalendarSummary"),
-  subscriptionCalendarTitle: document.querySelector("#subscriptionCalendarTitle"),
-  subscriptionFilters: document.querySelectorAll("[data-subscription-filter]"),
   toast: document.querySelector("#toast"),
   topicPill: document.querySelector("#topicPill"),
-  tutorialDialog: document.querySelector("#tutorialDialog"),
-  tutorialVideo: document.querySelector("#tutorialVideo"),
   checkoutRouteOptions: document.querySelectorAll("[data-checkout-route]"),
   superAdminHighPaymentEnabled: document.querySelector("#superAdminHighPaymentEnabled"),
   purgeAllOrdersButton: document.querySelector("#purgeAllOrdersButton"),
@@ -401,9 +285,7 @@ const elements = {
   purgeCommentsMode: document.querySelectorAll("[name='purgeCommentsMode']"),
   adminInputs: {
     blessingWallEnabled: document.querySelector("#adminBlessingWallEnabled"),
-    seedGoal: document.querySelector("#adminSeedGoal"),
     seedPrice: document.querySelector("#adminSeedPrice"),
-    meterCurrentAmount: document.querySelector("#adminMeterCurrentAmount"),
   },
 };
 
@@ -419,24 +301,11 @@ let paymentConfig = {
   currency: PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
 };
 let pendingDonation = null;
-let selectedBook = null;
 const initialAdminCalendarDate = getLatestDonationDateKey();
 let adminCalendarCursor = fromDateKey(initialAdminCalendarDate);
 let selectedAdminCalendarDate = initialAdminCalendarDate;
-const initialSubscriptionDate = toIndiaDateKey(new Date());
-let subscriptionCalendarCursor = fromDateKey(initialSubscriptionDate);
-let selectedSubscriptionDate = initialSubscriptionDate;
-let subscriptionFilter = "active";
-let preparedSubscription = null;
 function cloneDefaultSettings() {
   return { ...DEFAULT_SETTINGS };
-}
-
-function cloneDefaultPosts() {
-  return defaultPosts.map((post) => ({
-    ...post,
-    comments: Array.isArray(post.comments) ? post.comments.map((comment) => ({ ...comment })) : [],
-  }));
 }
 
 function toCustomOrderCopy(value) {
@@ -463,14 +332,11 @@ function normalizeSettings(settings) {
   const defaults = cloneDefaultSettings();
   const next = {
     ...defaults,
-    ...(settings && typeof settings === "object" ? settings : {}),
+    ...Object.fromEntries(Object.keys(defaults)
+      .filter((key) => settings && Object.hasOwn(settings, key))
+      .map((key) => [key, settings[key]])),
   };
 
-  next.seedGoal = Math.max(Number.parseInt(next.seedGoal, 10) || defaults.seedGoal, 1);
-  next.startingSeeds = Math.max(Number.parseInt(next.startingSeeds, 10) || 0, 0);
-  next.meterCurrentAmount = Math.max(Number.parseFloat(next.meterCurrentAmount ?? next.startingSeeds) || 0, 0);
-  next.meterCurrentAmount = getCurrentGoalCycleAmount(next.meterCurrentAmount, next.seedGoal);
-  next.startingSeeds = 0;
   next.seedPrice = Math.max(Number.parseInt(next.seedPrice, 10) || defaults.seedPrice, MIN_DONATION_AMOUNT);
   next.blessingWallEnabled = next.blessingWallEnabled !== false && next.blessingWallEnabled !== "false";
   next.adsenseEnabled = next.adsenseEnabled !== false && next.adsenseEnabled !== "false";
@@ -484,16 +350,12 @@ function normalizeSettings(settings) {
     next[key] = CUSTOM_ORDER_STRING_KEYS.has(key) ? toCustomOrderCopy(rawValue) : rawValue;
   });
 
-  if (LEGACY_METER_COLLAPSED_PREVIEWS.has(next.meterCollapsed)) {
-    next.meterCollapsed = METER_COLLAPSED_PREVIEW;
-  }
-
-  if (LEGACY_METER_HEADLINES.has(next.meterHeadline)) {
-    next.meterHeadline = METER_HEADLINE;
-  }
-
   if (LEGACY_SUPPORT_TITLES.has(next.supportTitle)) {
     next.supportTitle = defaults.supportTitle;
+  }
+
+  for (const key of ["aboutCollapsed", "aboutExpanded", "topicLabel"]) {
+    if (/digital[- ]books?|\bshop\b/i.test(next[key])) next[key] = defaults[key];
   }
 
   if (LEGACY_ABOUT_COLLAPSED.has(next.aboutCollapsed)) {
@@ -514,26 +376,6 @@ function normalizeSettings(settings) {
 function toSafeIsoDate(value) {
   const date = new Date(value || Date.now());
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-}
-
-function normalizeComments(comments) {
-  return Array.isArray(comments)
-    ? comments
-        .map((comment, index) => {
-          const text = String(comment?.text || comment?.body || "").trim();
-          const name = String(comment?.name || "Customer").trim().slice(0, 48) || "Customer";
-
-          if (!text) return null;
-
-          return {
-            id: String(comment?.id || `comment-${Date.now()}-${index}`),
-            name,
-            text: text.slice(0, 180),
-            createdAt: toSafeIsoDate(comment?.createdAt),
-          };
-        })
-        .filter(Boolean)
-    : [];
 }
 
 function normalizeSeedComments(comments) {
@@ -562,37 +404,6 @@ function normalizeSeedComments(comments) {
         .filter(Boolean)
         .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     : [];
-}
-
-function normalizePosts(posts) {
-  const normalized = Array.isArray(posts)
-    ? posts
-        .map((post, index) => {
-          const title = String(post?.title || "").trim();
-          const description = String(post?.description || post?.body || "").trim();
-          const rawImageUrl = String(post?.imageUrl || post?.image || "").trim();
-          const imageUrl = rawImageUrl === "assets/sow-cover.png" ? "assets/sow-cover.jpg" : rawImageUrl;
-          const createdAt = toSafeIsoDate(post?.createdAt);
-          const liked = Boolean(post?.liked);
-          const likes = Math.max(Number.parseInt(post?.likes, 10) || 0, liked ? 1 : 0);
-
-          if (!title && !description) return null;
-
-          return {
-            id: String(post?.id || `post-${Date.now()}-${index}`),
-            title: title || "Untitled post",
-            description,
-            imageUrl: imageUrl || "assets/sow-cover.jpg",
-            createdAt,
-            likes,
-            liked,
-            comments: normalizeComments(post?.comments),
-          };
-        })
-        .filter(Boolean)
-    : [];
-
-  return normalized.length ? normalized : cloneDefaultPosts();
 }
 
 function createEmptyAnalytics() {
@@ -648,14 +459,10 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: [],
-      posts: [],
       seedComments: [],
-      subscriptions: [],
       settings: {
         ...cloneDefaultSettings(),
-        startingSeeds: 0,
       },
-      totals: { donationSeeds: 0, donationAmount: 0 },
     };
   }
 
@@ -665,11 +472,8 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
-      posts: cloneDefaultPosts(),
       seedComments: [],
-      subscriptions: [],
       settings: cloneDefaultSettings(),
-      totals: { donationSeeds: null, donationAmount: null },
     };
   }
 
@@ -678,37 +482,21 @@ function loadState() {
     return {
       analytics: normalizeAnalytics(parsed.analytics),
       donations: Array.isArray(parsed.donations) ? parsed.donations : seedFeed,
-      posts: normalizePosts(parsed.posts),
       seedComments: normalizeSeedComments(parsed.seedComments),
-      subscriptions: Array.isArray(parsed.subscriptions) ? parsed.subscriptions : [],
       settings: normalizeSettings(parsed.settings),
-      totals: normalizeTotals(parsed.totals),
     };
   } catch {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
-      posts: cloneDefaultPosts(),
       seedComments: [],
-      subscriptions: [],
       settings: cloneDefaultSettings(),
-      totals: { donationSeeds: null, donationAmount: null },
     };
   }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function normalizeTotals(totals) {
-  const donationSeeds = Number.parseInt(totals?.donationSeeds, 10);
-  const donationAmount = Number.parseFloat(totals?.donationAmount);
-
-  return {
-    donationSeeds: Number.isFinite(donationSeeds) && donationSeeds >= 0 ? donationSeeds : null,
-    donationAmount: Number.isFinite(donationAmount) && donationAmount >= 0 ? donationAmount : null,
-  };
 }
 
 function isBackendConfigured() {
@@ -722,10 +510,6 @@ function getVisitorKey() {
     localStorage.setItem(VISITOR_KEY_KEY, key);
   }
   return key;
-}
-
-function getDonorToken() {
-  return localStorage.getItem(DONOR_TOKEN_KEY) || "";
 }
 
 function setDonorToken(token) {
@@ -854,8 +638,6 @@ function applyBootstrap(payload) {
 
   if (Array.isArray(payload.donations)) state.donations = payload.donations;
   if (Array.isArray(payload.seedComments)) state.seedComments = normalizeSeedComments(payload.seedComments);
-  if (Array.isArray(payload.posts)) state.posts = normalizePosts(payload.posts);
-  if (payload.totals) state.totals = normalizeTotals(payload.totals);
 
   if (payload.payment) {
     paymentConfig = {
@@ -865,7 +647,7 @@ function applyBootstrap(payload) {
     };
   }
 
-  if (Array.isArray(payload.donations) || Array.isArray(payload.seedComments) || Array.isArray(payload.posts)) {
+  if (Array.isArray(payload.donations) || Array.isArray(payload.seedComments)) {
     publicContentLoading = false;
   }
 }
@@ -982,40 +764,6 @@ function formatSeedUnits(value) {
   const roundedValue = Math.max(Math.round(Number(value) || 0), 0);
 
   return `${roundedValue} Seed${roundedValue === 1 ? "" : "s"}`;
-}
-
-function getCurrentGoalCycleAmount(totalAmount, goalAmount) {
-  const numericTotal = Math.max(Number(totalAmount) || 0, 0);
-  const numericGoal = Math.max(Number(goalAmount) || 0, 0);
-
-  if (!numericGoal) return 0;
-
-  return numericTotal % numericGoal;
-}
-
-function getTotals() {
-  const seedPrice = Math.max(Number.parseInt(state.settings.seedPrice, 10) || SEED_DOLLAR_VALUE, 1);
-  const backendDonationSeeds = state.totals?.donationSeeds;
-  const donationSeeds =
-    backendReady && Number.isFinite(backendDonationSeeds)
-      ? backendDonationSeeds
-      : state.donations.reduce((total, donation) => total + getSeedCountFromAmount(donation.amount), 0);
-  const backendDonationAmount = state.totals?.donationAmount;
-  const donationAmount =
-    backendReady && Number.isFinite(backendDonationAmount)
-      ? backendDonationAmount
-      : backendReady && Number.isFinite(backendDonationSeeds)
-        ? backendDonationSeeds * seedPrice
-        : state.donations.reduce((total, donation) => total + Math.max(Number(donation.amount) || 0, 0), 0);
-  const paidSeedUnits = getSeedUnitsFromAmount(donationAmount, seedPrice);
-
-  return { donationAmount, paidSeedUnits, seeds: donationSeeds };
-}
-
-function getSortedPosts() {
-  return state.posts
-    .slice()
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 }
 
 function initials(name) {
@@ -1757,7 +1505,6 @@ async function loadAdminDonations(options = {}) {
       renderAdminCalendar();
       if (state.adminProfile?.role !== "super_admin") {
         renderRecentDonations();
-        renderTotals();
       }
     }
 
@@ -1896,12 +1643,12 @@ async function refreshAdminPortalData() {
   if (elements.adminCalendarPrev) elements.adminCalendarPrev.disabled = true;
   if (elements.adminCalendarNext) elements.adminCalendarNext.disabled = true;
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
-  setAdminStatus(`Reloading page content, order records, posts, and ${routeLabel} checkout activity...`, "loading", { persist: true });
+  setAdminStatus(`Reloading page content, order records, and ${routeLabel} checkout activity...`, "loading", { persist: true });
 
   try {
     await loadBackendData({ throwOnError: true });
     renderApp();
-    await Promise.all([loadAdminDonations(), loadAdminSubscriptions(), loadAdminAnalytics()]);
+    await Promise.all([loadAdminDonations(), loadAdminAnalytics()]);
     setAdminStatus(`${routeLabel} portal data reloaded.`, "success");
     showToast(`${routeLabel} portal data reloaded.`);
   } catch (error) {
@@ -1933,21 +1680,6 @@ function renderParagraphs(element, value) {
     .join("");
 }
 
-function renderMeterHeadline(element, value) {
-  if (!element) return;
-
-  if (value !== METER_HEADLINE) {
-    element.textContent = value;
-    return;
-  }
-
-  const emphasizedText = document.createElement("strong");
-  const supportingText = document.createElement("span");
-  emphasizedText.textContent = METER_HEADLINE_PREFIX;
-  supportingText.textContent = ` ${METER_HEADLINE_SUFFIX}`;
-  element.replaceChildren(emphasizedText, supportingText);
-}
-
 function renderSettings() {
   const settings = state.settings;
 
@@ -1955,15 +1687,11 @@ function renderSettings() {
   elements.brandTitle.textContent = TOP_BRAND_TITLE;
   elements.profileTitle.textContent = settings.profileTitle;
   elements.followersText.textContent = settings.followersText;
-  renderMeterHeadline(elements.meterHeadline, settings.meterHeadline);
-  renderTextWithBreaks(elements.meterCollapsed, settings.meterCollapsed);
-  renderParagraphs(elements.meterExpanded, settings.meterExpanded);
   elements.aboutTitle.textContent = settings.aboutTitle;
   renderTextWithBreaks(elements.aboutCollapsed, settings.aboutCollapsed);
   renderParagraphs(elements.aboutExpanded, settings.aboutExpanded);
   elements.topicPill.textContent = settings.topicLabel;
   elements.supportTitle.textContent = settings.supportTitle;
-  elements.postAuthorName.textContent = settings.postAuthorName;
   if (elements.seedCommentsPanel) {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
   }
@@ -1972,48 +1700,6 @@ function renderSettings() {
   }
   renderAdminForm();
   updateCheckoutLabel();
-}
-
-function renderTotals() {
-  const { donationAmount } = getTotals();
-  const seedPrice = Math.max(Number.parseInt(state.settings.seedPrice, 10) || SEED_DOLLAR_VALUE, 1);
-  const goalAmount = Math.max(Number.parseInt(state.settings.seedGoal, 10) || 1, 1);
-  const cycleAmount = getCurrentGoalCycleAmount(donationAmount, goalAmount);
-  const paidSeedUnits = getSeedUnitsFromAmount(cycleAmount, seedPrice);
-  const goalSeedUnits = goalAmount / seedPrice;
-  const rawPercent = goalSeedUnits > 0 ? (paidSeedUnits / goalSeedUnits) * 100 : 0;
-  const boundedPercent = Math.min(Math.max(rawPercent, 0), 100);
-  const displayPercent = Math.floor(boundedPercent);
-
-  elements.progressPercent.textContent = `${displayPercent}% Fulfilled`;
-  elements.milestoneProgress.style.setProperty("--ring-angle", `${boundedPercent * 3.6}deg`);
-  elements.milestoneProgress.style.setProperty("--ring-cap-color", getRingCapColor(boundedPercent));
-  elements.milestoneProgress.style.setProperty("--ring-cap-opacity", boundedPercent > 0 ? "1" : "0");
-  elements.milestoneProgress.style.setProperty("--water-level", `${boundedPercent}%`);
-  elements.milestoneProgress?.setAttribute("aria-valuenow", String(displayPercent));
-  elements.milestoneProgress?.setAttribute("aria-valuetext", `${displayPercent}% fulfilled`);
-}
-
-function getRingCapColor(percent) {
-  const colorStops = [
-    [0, [53, 188, 103]],
-    [25, [21, 159, 232]],
-    [50, [152, 82, 219]],
-    [75, [152, 82, 219]],
-    [90, [238, 169, 15]],
-    [100, [238, 169, 15]],
-  ];
-  const boundedPercent = Math.min(Math.max(Number(percent) || 0, 0), 100);
-  const upperIndex = colorStops.findIndex(([stop]) => stop >= boundedPercent);
-  const upperStop = colorStops[upperIndex === -1 ? colorStops.length - 1 : upperIndex];
-  const lowerStop = colorStops[Math.max(0, (upperIndex === -1 ? colorStops.length - 1 : upperIndex) - 1)];
-  const span = upperStop[0] - lowerStop[0];
-  const blend = span > 0 ? (boundedPercent - lowerStop[0]) / span : 0;
-  const channels = lowerStop[1].map((channel, index) =>
-    Math.round(channel + (upperStop[1][index] - channel) * blend),
-  );
-
-  return `rgb(${channels.join(", ")})`;
 }
 
 function renderRecentDonations() {
@@ -2087,121 +1773,10 @@ function renderSeedComments() {
     : `<p class="empty-state">Blessing comments will appear here after completed custom writing orders.</p>`;
 }
 
-function renderPostCard(post, compact = false) {
-  const image = post.imageUrl
-    ? `<img class="post-image" src="${escapeHtml(post.imageUrl)}" loading="lazy" decoding="async" alt="${escapeHtml(post.title)}" />`
-    : "";
-  const comments = Array.isArray(post.comments) ? post.comments : [];
-  const likeCount = Math.max(Number.parseInt(post.likes, 10) || 0, 0);
-  const likedClass = post.liked ? " is-liked" : "";
-  const commentsLabel = `${comments.length} comment${comments.length === 1 ? "" : "s"}`;
-  const commentsThread = comments.length
-    ? `<div class="post-comments">
-        ${comments
-          .slice()
-          .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
-          .map(
-            (comment) => `
-              <article class="post-comment">
-                <strong>${escapeHtml(comment.name)}</strong>
-                <p>${escapeHtml(comment.text)}</p>
-                <small>${relativeTime(comment.createdAt)}</small>
-              </article>
-            `,
-          )
-          .join("")}
-      </div>`
-    : `<p class="post-no-comments">Be the first to leave a comment.</p>`;
-  const commentForm = compact
-    ? ""
-    : `<form class="post-comment-form" data-comment-post="${escapeHtml(post.id)}">
-        <label>
-          <span class="visually-hidden">Write a comment</span>
-          <input name="comment" type="text" maxlength="180" placeholder="Write a comment..." autocomplete="off" />
-        </label>
-        <button type="submit">Comment</button>
-      </form>`;
-
-  return `
-    <article class="panel post-card public-post-card${compact ? " compact-post-card" : ""}">
-      ${image}
-      <div class="post-card-copy">
-        <small>${readableDate(post.createdAt)}</small>
-        <h2>${escapeHtml(post.title)}</h2>
-        ${post.description ? `<p>${escapeHtml(post.description)}</p>` : ""}
-        <div class="post-engagement" aria-label="Post engagement">
-          <button class="post-like-button${likedClass}" type="button" data-like-post="${escapeHtml(post.id)}" aria-pressed="${post.liked ? "true" : "false"}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 21s-7-4.35-9.5-9.2C.3 7.55 2.8 4 6.6 4c2.1 0 3.6 1.1 4.4 2.3C11.8 5.1 13.3 4 15.4 4c3.8 0 6.3 3.55 4.1 7.8C19 16.65 12 21 12 21Z" />
-            </svg>
-            <span>Like</span>
-            <strong>${likeCount}</strong>
-          </button>
-          <span class="post-comment-count">${commentsLabel}</span>
-        </div>
-        ${compact ? "" : commentsThread}
-        ${commentForm}
-      </div>
-    </article>
-  `;
-}
-
-function renderPublicPosts() {
-  const loadingMarkup = `<p class="empty-state">Loading posts…</p>`;
-
-  elements.sidebarPostList?.setAttribute("aria-busy", String(publicContentLoading));
-  elements.postsPageList?.setAttribute("aria-busy", String(publicContentLoading));
-  if (publicContentLoading) {
-    if (elements.sidebarPostList) elements.sidebarPostList.innerHTML = loadingMarkup;
-    if (elements.postsPageList) elements.postsPageList.innerHTML = loadingMarkup;
-    return;
-  }
-
-  const posts = getSortedPosts();
-
-  if (elements.sidebarPostList) {
-    elements.sidebarPostList.innerHTML = posts.length
-      ? posts.slice(0, 3).map((post) => renderPostCard(post, true)).join("")
-      : `<p class="empty-state">No posts published yet.</p>`;
-  }
-
-  if (elements.postsPageList) {
-    elements.postsPageList.innerHTML = posts.length
-      ? posts.map((post) => renderPostCard(post)).join("")
-      : `<p class="empty-state">No posts published yet.</p>`;
-  }
-}
-
-function renderAdminPosts() {
-  if (!elements.adminPostList) return;
-
-  const posts = getSortedPosts();
-
-  elements.adminPostList.innerHTML = posts.length
-    ? posts
-        .map(
-          (post) => `
-            <article class="admin-post-item">
-              <img src="${escapeHtml(post.imageUrl || "assets/sow-cover.jpg")}" loading="lazy" decoding="async" alt="" />
-              <div>
-                <strong>${escapeHtml(post.title)}</strong>
-                <span>${readableDate(post.createdAt)}</span>
-                ${post.description ? `<p>${escapeHtml(post.description)}</p>` : ""}
-              </div>
-              <button class="button button-secondary" type="button" data-delete-post="${escapeHtml(post.id)}">Delete</button>
-            </article>
-          `,
-        )
-        .join("")
-    : `<p class="empty-state">No posts published yet.</p>`;
-}
-
 function renderAdminForm() {
   const settings = state.settings;
   const inputs = elements.adminInputs;
 
-  inputs.seedGoal.value = settings.seedGoal;
-  inputs.meterCurrentAmount.value = settings.meterCurrentAmount;
   inputs.seedPrice.value = settings.seedPrice;
   inputs.blessingWallEnabled.checked = Boolean(settings.blessingWallEnabled);
   elements.adminAdsenseEnabled.checked = Boolean(settings.adsenseEnabled);
@@ -2505,168 +2080,6 @@ function renderAdminCalendar() {
   renderCalendarGrid(getPrimaryAdminCalendarContext());
 }
 
-function getSubscriptionStatusGroup(subscription) {
-  if (["cancelled", "expired"].includes(subscription.status)) return "cancelled";
-  if (subscription.status === "active") return "active";
-  return "pending";
-}
-
-function getSubscriptionEventAt(subscription) {
-  const group = getSubscriptionStatusGroup(subscription);
-  if (group === "active") return subscription.nextBillingAt || subscription.billingAnchorAt;
-  if (group === "cancelled") return subscription.cancelledAt || subscription.optedInAt;
-  return subscription.nextRetryAt || subscription.lastFailedAt || subscription.nextBillingAt || subscription.optedInAt;
-}
-
-function toIndiaDateKey(value) {
-  const date = new Date(value || Date.now());
-  if (Number.isNaN(date.getTime())) return toDateKey(new Date());
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    timeZone: "Asia/Kolkata",
-  }).formatToParts(date);
-  const part = (type) => parts.find((item) => item.type === type)?.value || "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-function getVisibleSubscriptions() {
-  return (state.subscriptions || []).filter(
-    (subscription) => getSubscriptionStatusGroup(subscription) === subscriptionFilter,
-  );
-}
-
-function renderSubscriptionCalendar() {
-  if (!elements.subscriptionCalendarGrid || !elements.subscriptionCalendarTitle) return;
-  const subscriptions = getVisibleSubscriptions();
-  const grouped = subscriptions.reduce((result, subscription) => {
-    const dateKey = toIndiaDateKey(getSubscriptionEventAt(subscription));
-    result[dateKey] = result[dateKey] || [];
-    result[dateKey].push(subscription);
-    return result;
-  }, {});
-  const year = subscriptionCalendarCursor.getFullYear();
-  const month = subscriptionCalendarCursor.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayKey = toIndiaDateKey(new Date());
-  const cells = [];
-
-  for (let offset = 0; offset < firstDay.getDay(); offset += 1) {
-    cells.push(`<span class="admin-calendar-day is-empty" role="presentation"></span>`);
-  }
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    const date = new Date(year, month, day);
-    const dateKey = toDateKey(date);
-    const entries = grouped[dateKey] || [];
-    const total = entries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const classes = [
-      "admin-calendar-day",
-      entries.length ? "has-donations" : "",
-      dateKey === selectedSubscriptionDate ? "is-selected" : "",
-      dateKey === todayKey ? "is-today" : "",
-    ].filter(Boolean).join(" ");
-    cells.push(`
-      <button class="${classes}" type="button" role="gridcell"
-        aria-selected="${dateKey === selectedSubscriptionDate}"
-        aria-label="${readableDate(date)}, ${entries.length} ${subscriptionFilter} subscriptions"
-        data-subscription-calendar-date="${dateKey}">
-        <span>${day}</span>
-        ${entries.length ? `<small>${entries.length} · ${money(total)}</small>` : ""}
-      </button>
-    `);
-  }
-
-  elements.subscriptionCalendarTitle.textContent = `${subscriptionFilter[0].toUpperCase()}${subscriptionFilter.slice(1)} · ${formatMonthTitle(subscriptionCalendarCursor)}`;
-  elements.subscriptionCalendarGrid.innerHTML = cells.join("");
-  elements.subscriptionFilters.forEach((button) => {
-    const selected = button.dataset.subscriptionFilter === subscriptionFilter;
-    button.classList.toggle("is-selected", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
-  renderSubscriptionCalendarDetails(grouped[selectedSubscriptionDate] || []);
-
-  const monthEntries = subscriptions.filter((item) => {
-    const key = toIndiaDateKey(getSubscriptionEventAt(item));
-    return key.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`);
-  });
-  const recurringTotal = monthEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-  elements.subscriptionCalendarSummary.innerHTML = `
-    <article><span>${subscriptionFilter} selected day</span><strong>${(grouped[selectedSubscriptionDate] || []).length}</strong><small>customer profile${(grouped[selectedSubscriptionDate] || []).length === 1 ? "" : "s"}</small></article>
-    <article><span>${formatMonthTitle(subscriptionCalendarCursor)}</span><strong>${money(recurringTotal)}</strong><small>${monthEntries.length} ${subscriptionFilter} subscription${monthEntries.length === 1 ? "" : "s"}</small></article>
-  `;
-}
-
-function renderSubscriptionCalendarDetails(subscriptions) {
-  const selectedDate = fromDateKey(selectedSubscriptionDate);
-  if (!subscriptions.length) {
-    elements.subscriptionCalendarDetails.innerHTML = `
-      <div class="admin-calendar-empty">
-        <strong>${readableDate(selectedDate)}</strong>
-        <span>No ${escapeHtml(subscriptionFilter)} subscription records on this day.</span>
-      </div>`;
-    return;
-  }
-
-  elements.subscriptionCalendarDetails.innerHTML = `
-    <div class="admin-calendar-detail-heading"><div><span>Selected day</span><strong>${readableDate(selectedDate)}</strong></div><b>${subscriptions.length} customer${subscriptions.length === 1 ? "" : "s"}</b></div>
-    <div class="admin-calendar-list">
-      ${subscriptions.map((subscription) => {
-        const group = getSubscriptionStatusGroup(subscription);
-        const nextLabel = group === "active" ? "Next renewal" : group === "pending" ? "Next retry / failure" : "Cancelled";
-        const nextValue = getSubscriptionEventAt(subscription);
-        const payments = subscription.payments || [];
-        return `
-          <article class="subscription-profile">
-            <div class="subscription-profile-heading">
-              <div><strong>${escapeHtml(subscription.name)}</strong><a href="mailto:${escapeHtml(subscription.email)}">${escapeHtml(subscription.email)}</a></div>
-              <span class="subscription-profile-status is-${group}">${escapeHtml(subscription.status.replaceAll("_", " "))}</span>
-            </div>
-            <div class="subscription-profile-data">
-              <div><span>Weekly amount</span><strong>${money(subscription.amount)} · ${subscription.seedCount} seed${subscription.seedCount === 1 ? "" : "s"}</strong></div>
-              <div><span>Started</span><strong>${readableIndiaDateTime(subscription.optedInAt)}</strong></div>
-              <div><span>Last payment</span><strong>${subscription.lastSuccessfulPaymentAt ? readableIndiaDateTime(subscription.lastSuccessfulPaymentAt) : "Awaiting first payment"}</strong></div>
-              <div><span>${nextLabel}</span><strong>${nextValue ? readableIndiaDateTime(nextValue) : "Not scheduled"}</strong></div>
-            </div>
-            ${payments.length ? `<ol class="subscription-payment-history">${payments.map((payment) => `<li>${escapeHtml(payment.kind)} · ${money(payment.amount)} · ${readableIndiaDateTime(payment.paidAt)}</li>`).join("")}</ol>` : ""}
-            ${group !== "cancelled" ? `<div class="subscription-profile-actions"><span>PayPal ${escapeHtml(subscription.paypalSubscriptionId || "approval pending")}</span><button class="subscription-cancel-button" type="button" data-cancel-subscription="${escapeHtml(subscription.id)}">Cancel subscription</button></div>` : ""}
-          </article>`;
-      }).join("")}
-    </div>`;
-}
-
-async function loadAdminSubscriptions(options = {}) {
-  if (!isBackendConfigured() || !getAdminAccessToken()) return;
-  try {
-    const payload = await callEdge("admin-subscriptions", { admin: true, method: "GET" });
-    state.subscriptions = Array.isArray(payload.subscriptions) ? payload.subscriptions : [];
-    renderSubscriptionCalendar();
-    if (options.announce) setAdminStatus("Weekly subscription calendar loaded.", "success");
-  } catch (error) {
-    setAdminStatus(error.message || "Could not load weekly subscriptions.", "error", { persist: true });
-  }
-}
-
-async function cancelAdminSubscription(membershipId, button) {
-  const subscription = (state.subscriptions || []).find((item) => item.id === membershipId);
-  if (!subscription || !window.confirm(`Cancel ${subscription.name}'s weekly subscription? Future PayPal charges will stop.`)) return;
-  await runAdminAction({
-    button,
-    busyText: "Cancelling...",
-    loadingMessage: `Cancelling ${subscription.name}'s weekly subscription...`,
-    successMessage: "Weekly subscription cancelled.",
-    errorMessage: "Could not cancel the weekly subscription.",
-  }, async () => {
-    const result = await callEdge("admin-subscriptions", {
-      admin: true,
-      body: { membershipId, reason: "Cancelled by account owner in Sowing Seed portal" },
-    });
-    await loadAdminSubscriptions();
-    return result;
-  });
-}
-
 function updateCheckoutLabel() {
   const amount = Math.max(getAmount(), 0);
   const seedUnits = getSeedUnitsFromAmount(amount, state.settings.seedPrice);
@@ -2676,33 +2089,7 @@ function updateCheckoutLabel() {
   elements.seedPriceLabel.textContent = formatSeedUnits(seedUnits);
 }
 
-function isBookCheckout(donation = pendingDonation) {
-  return donation?.productType === "book";
-}
-
-function getCheckoutUi(donation = pendingDonation) {
-  if (isBookCheckout(donation)) {
-    return {
-      alternateCardCheckoutLink: elements.bookAlternateCardCheckoutLink,
-      amountError: elements.bookAmountError,
-      amountInput: elements.bookAmountInput,
-      cardButton: elements.bookCardButton,
-      checkoutButton: elements.bookCheckoutButton,
-      emailError: elements.bookEmailError,
-      emailInput: elements.bookEmailInput,
-      form: elements.bookOrderForm,
-      inlinePaypalCheckout: elements.bookInlinePaypalCheckout,
-      messageInput: elements.bookMessageInput,
-      nameInput: elements.bookNameInput,
-      paypalButton: elements.bookPaypalButton,
-      paypalButtonContainer: elements.bookPaypalButtonContainer,
-      paypalCardButton: elements.bookPaypalCardButton,
-      paypalCardButtonContainer: elements.bookPaypalCardButtonContainer,
-      paypalCheckoutLoader: elements.bookPaypalCheckoutLoader,
-      paymentStatus: elements.bookPaymentStatus,
-    };
-  }
-
+function getCheckoutUi() {
   return {
     alternateCardCheckoutLink: elements.alternateCardCheckoutLink,
     amountError: elements.amountError,
@@ -2775,43 +2162,6 @@ function setAmount(amount) {
   updateCheckoutLabel();
 }
 
-function setBookAmount(amount) {
-  const units = Math.max(Math.round((Number.parseFloat(amount) || MIN_DONATION_AMOUNT) / SEED_DOLLAR_VALUE), 1);
-  const safeAmount = units * SEED_DOLLAR_VALUE;
-  elements.bookAmountInput.value = safeAmount;
-  elements.bookAmountError.textContent = "";
-  elements.bookPriceLabel.textContent = `${money(safeAmount)} Book`;
-  if (selectedBook) elements.bookCheckoutLabel.textContent = `Buy ${selectedBook.title}`;
-}
-
-function stepBookAmount(direction) {
-  const currentUnits = Math.max(Math.round((Number.parseFloat(elements.bookAmountInput.value) || 7) / SEED_DOLLAR_VALUE), 1);
-  setBookAmount(Math.max(currentUnits + direction, 1) * SEED_DOLLAR_VALUE);
-}
-
-function validateBookForm() {
-  const amount = Number.parseFloat(elements.bookAmountInput.value) || 0;
-  let isValid = true;
-
-  elements.bookAmountError.textContent = "";
-  elements.bookEmailError.textContent = "";
-
-  if (amount < MIN_DONATION_AMOUNT || amount % SEED_DOLLAR_VALUE !== 0) {
-    elements.bookAmountError.textContent = "Choose $7 or a multiple of $7.";
-    isValid = false;
-  }
-  if (!selectedBook) {
-    elements.bookAmountError.textContent = "Choose a book first.";
-    isValid = false;
-  }
-  if (!isValidEmailAddress(elements.bookEmailInput.value)) {
-    elements.bookEmailError.textContent = "Add a valid delivery email.";
-    isValid = false;
-  }
-
-  return isValid;
-}
-
 function validateForm() {
   const amount = getAmount();
   let isValid = true;
@@ -2853,7 +2203,7 @@ function setPayPalCheckoutLoading(isLoading) {
   if (isLoading) {
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = false;
-    ui.cardButton.hidden = pendingDonation?.frequency === "weekly";
+    ui.cardButton.hidden = false;
   }
 }
 
@@ -2863,7 +2213,7 @@ function updatePayPalVisibility() {
 
   ui.paypalButton.hidden = !showPayPal;
   ui.paypalCardButton.hidden = !showPayPal;
-  ui.cardButton.hidden = pendingDonation?.frequency === "weekly";
+  ui.cardButton.hidden = false;
 
   return showPayPal;
 }
@@ -2871,40 +2221,6 @@ function updatePayPalVisibility() {
 function chooseOneTimeSowing() {
   if (!pendingDonation) return;
   pendingDonation.frequency = "once";
-  preparedSubscription = null;
-  openInlinePayPalCheckout();
-}
-
-function chooseWeeklySowing() {
-  if (!pendingDonation) return;
-  const name = elements.nameInput.value.trim();
-  const seedPrice = Math.max(Number(state.settings.seedPrice) || SEED_DOLLAR_VALUE, 1);
-  const seedUnits = getAmount() / seedPrice;
-
-  if (!name) {
-    elements.nameError.textContent = "Add your name to begin weekly sowing.";
-    window.requestAnimationFrame(() => {
-      elements.nameInput.focus({ preventScroll: true });
-      elements.nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    return;
-  }
-  if (!Number.isInteger(seedUnits)) {
-    elements.amountError.textContent = `Weekly sowing must use whole seeds at ${money(seedPrice)} each.`;
-    window.requestAnimationFrame(() => elements.amountInput.focus());
-    return;
-  }
-
-  elements.nameError.textContent = "";
-  pendingDonation = {
-    ...pendingDonation,
-    name,
-    amount: getAmount(),
-    seedCount: seedUnits,
-    frequency: "weekly",
-    paymentRoute: getCheckoutRoute(),
-  };
-  preparedSubscription = null;
   openInlinePayPalCheckout();
 }
 
@@ -2921,7 +2237,7 @@ function submitDonation(event) {
     name: elements.nameInput.value.trim(),
     email: getPaymentEmail(),
     amount: getAmount(),
-    frequency: elements.weeklySeedToggle?.checked ? "weekly" : "once",
+    frequency: "once",
     message: elements.messageInput.value.trim(),
     paymentRoute: getCheckoutRoute(),
     createdAt: new Date().toISOString(),
@@ -2929,80 +2245,7 @@ function submitDonation(event) {
 
   trackCheckoutEvent("checkout_button_clicked", pendingDonation);
   closeInlinePayPalCheckout();
-  if (pendingDonation.frequency === "weekly") {
-    chooseWeeklySowing();
-  } else {
-    chooseOneTimeSowing();
-  }
-}
-
-function selectBook(bookId) {
-  const book = BOOK_PRODUCTS[bookId];
-  if (!book) return;
-
-  closeInlinePayPalCheckout();
-  pendingDonation = null;
-  selectedBook = book;
-  elements.bookCheckout.hidden = false;
-  elements.bookCheckoutCover.src = book.cover;
-  elements.bookCheckoutCover.alt = `${book.title} book cover`;
-  elements.bookCheckoutTitle.textContent = book.title;
-  elements.bookCheckoutDescription.textContent = `${book.description} The complete 23-page PDF will be delivered to your email after successful payment.`;
-  setBookAmount(elements.bookAmountInput.value || MIN_DONATION_AMOUNT);
-  elements.bookCheckout.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function toggleBookPreview(bookId, button) {
-  const preview = elements.bookGrid?.querySelector(`[data-book-preview="${bookId}"]`);
-  const card = elements.bookGrid?.querySelector(`[data-book-card="${bookId}"]`);
-  if (!preview || !card) return;
-
-  const willOpen = preview.hidden;
-  elements.bookGrid.querySelectorAll("[data-book-preview]").forEach((item) => {
-    item.hidden = true;
-    item.closest(".book-card")?.classList.remove("is-preview-open");
-  });
-  elements.bookGrid.querySelectorAll("[data-preview-book]").forEach((item) => {
-    item.setAttribute("aria-expanded", "false");
-    item.textContent = "Preview 5 pages";
-  });
-
-  if (!willOpen) return;
-
-  const frame = preview.querySelector("iframe[data-preview-src]");
-  if (frame && !frame.hasAttribute("src")) frame.src = frame.dataset.previewSrc;
-  preview.hidden = false;
-  card.classList.add("is-preview-open");
-  button.setAttribute("aria-expanded", "true");
-  button.textContent = "Close preview";
-  window.requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "start" }));
-}
-
-function submitBookOrder(event) {
-  event.preventDefault();
-
-  if (!validateBookForm()) {
-    closeInlinePayPalCheckout();
-    pendingDonation = null;
-    return;
-  }
-
-  pendingDonation = {
-    name: elements.bookNameInput.value.trim(),
-    email: String(elements.bookEmailInput.value || "").trim(),
-    amount: Number.parseFloat(elements.bookAmountInput.value),
-    frequency: "once",
-    message: elements.bookMessageInput.value.trim(),
-    paymentRoute: getCheckoutRoute(),
-    productType: "book",
-    productId: selectedBook.id,
-    bookTitle: selectedBook.title,
-    createdAt: new Date().toISOString(),
-  };
-
-  trackCheckoutEvent("checkout_button_clicked", pendingDonation);
-  closeInlinePayPalCheckout();
-  openInlinePayPalCheckout();
+  chooseOneTimeSowing();
 }
 
 function isValidPayPalSdk(paypal) {
@@ -3034,7 +2277,7 @@ function waitForPayPalSdk(namespace, timeoutMs = 5000) {
 
 function getPayPalSdkNamespace(paymentRoute, frequency = pendingDonation?.frequency || "once") {
   const routeName = paymentRoute === "superadmin" ? "SuperAdmin" : "Standard";
-  return `paypalSys${routeName}${frequency === "weekly" ? "Weekly" : "Once"}`;
+  return `paypalSys${routeName}Once`;
 }
 
 function resetPayPalSdk(namespace) {
@@ -3056,16 +2299,14 @@ function resetPayPalSdk(namespace) {
 function resetAllPayPalSdks() {
   ["standard", "superadmin"].forEach((route) => {
     resetPayPalSdk(getPayPalSdkNamespace(route, "once"));
-    resetPayPalSdk(getPayPalSdkNamespace(route, "weekly"));
   });
 }
 
-function loadPayPalSdk(paymentRoute = getCheckoutRoute(), frequency = pendingDonation?.frequency || "once") {
+function loadPayPalSdk(paymentRoute = getCheckoutRoute()) {
   const route = paymentRoute === "superadmin" ? "superadmin" : "standard";
-  const billingFrequency = frequency === "weekly" ? "weekly" : "once";
   const clientId = getPayPalClientId(route);
-  const sdkKey = `${route}:${billingFrequency}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
-  const namespace = getPayPalSdkNamespace(route, billingFrequency);
+  const sdkKey = `${route}:once:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
+  const namespace = getPayPalSdkNamespace(route);
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
@@ -3089,12 +2330,11 @@ function loadPayPalSdk(paymentRoute = getCheckoutRoute(), frequency = pendingDon
     const params = new URLSearchParams({
       "client-id": clientId,
       currency: paymentConfig.currency || CONFIG.currency,
-      intent: billingFrequency === "weekly" ? "subscription" : "capture",
+      intent: "capture",
       components: "buttons",
       "enable-funding": "card",
       "disable-funding": "credit,paylater,venmo",
     });
-    if (billingFrequency === "weekly") params.set("vault", "true");
     const finish = (callback, value) => {
       if (settled) return;
       settled = true;
@@ -3133,8 +2373,6 @@ function loadPayPalSdk(paymentRoute = getCheckoutRoute(), frequency = pendingDon
 function clearPayPalButtons() {
   if (elements.paypalButtonContainer) elements.paypalButtonContainer.innerHTML = "";
   if (elements.paypalCardButtonContainer) elements.paypalCardButtonContainer.innerHTML = "";
-  if (elements.bookPaypalButtonContainer) elements.bookPaypalButtonContainer.innerHTML = "";
-  if (elements.bookPaypalCardButtonContainer) elements.bookPaypalCardButtonContainer.innerHTML = "";
 }
 
 function hasRenderedPayPalButton(container) {
@@ -3185,8 +2423,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
           message: pendingDonation.message,
           email: pendingDonation.email,
           paymentRoute: getCheckoutRoute(),
-          productType: pendingDonation.productType || "seed",
-          productId: pendingDonation.productId || null,
+          productType: "seed",
         },
       });
       pendingDonation.paymentRoute = payload.paymentRoute;
@@ -3239,97 +2476,6 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
   };
 }
 
-function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
-  return {
-    fundingSource,
-    style: {
-      layout: "horizontal",
-      shape: "pill",
-      ...(fundingSource === paypal.FUNDING.PAYPAL ? { label: "subscribe" } : {}),
-      tagline: false,
-      height: 44,
-    },
-    createSubscription: async (_data, actions) => {
-      if (!pendingDonation || pendingDonation.frequency !== "weekly") {
-        throw new Error("Weekly seed details are missing.");
-      }
-      const email = requirePaymentEmail();
-      const name = elements.nameInput.value.trim();
-      if (!name) throw new Error("Name is required for weekly sowing.");
-
-      pendingDonation = {
-        ...pendingDonation,
-        name,
-        email,
-        amount: getAmount(),
-        message: elements.messageInput.value.trim(),
-      };
-      setPaymentStatus("Preparing your weekly seed with PayPal...");
-      const payload = await callEdge("prepare-paypal-subscription", {
-        body: {
-          amount: pendingDonation.amount,
-          seedCount: pendingDonation.seedCount,
-          name: pendingDonation.name,
-          email: pendingDonation.email,
-          message: pendingDonation.message,
-          paymentRoute: getCheckoutRoute(),
-        },
-      });
-      if (payload.paymentRoute !== getCheckoutRoute()) {
-        throw new Error("The PayPal collection account changed. Please start again.");
-      }
-      preparedSubscription = payload;
-      pendingDonation.paymentRoute = payload.paymentRoute;
-      await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
-
-      return actions.subscription.create({
-        plan_id: payload.planId,
-        start_time: payload.startTime,
-        custom_id: payload.checkoutToken,
-        application_context: {
-          shipping_preference: "NO_SHIPPING",
-          user_action: "SUBSCRIBE_NOW",
-        },
-      });
-    },
-    onApprove: async (data) => {
-      if (!preparedSubscription?.checkoutToken || !data.subscriptionID) {
-        throw new Error("PayPal did not return the approved weekly subscription.");
-      }
-      setPaymentStatus("Confirming your weekly seed subscription...");
-      await callEdge("confirm-paypal-subscription", {
-        body: {
-          checkoutToken: preparedSubscription.checkoutToken,
-          subscriptionId: data.subscriptionID,
-        },
-      });
-      finishVerifiedSubscription();
-    },
-    onCancel: () => {
-      preparedSubscription = null;
-      setPaymentStatus("Weekly PayPal subscription cancelled. No subscription was started.", true);
-      openPaymentFailure();
-    },
-    onError: (error) => {
-      preparedSubscription = null;
-      setPaymentStatus(error?.message || "Weekly PayPal subscription could not be started.", true);
-      openPaymentFailure();
-    },
-  };
-}
-
-function finishVerifiedSubscription() {
-  elements.receiptTitle.textContent = "Your weekly seed is scheduled 🌱";
-  elements.receiptSummary.textContent = "";
-  elements.receiptSummary.hidden = true;
-  elements.supportForm.reset();
-  setAmount(getInitialDonationAmount());
-  pendingDonation = null;
-  preparedSubscription = null;
-  closeInlinePayPalCheckout();
-  openReceipt();
-}
-
 function renderPayPalButtons() {
   if (paypalRenderPromise) return paypalRenderPromise;
 
@@ -3351,12 +2497,8 @@ async function renderFreshPayPalButtons() {
   if (!isBackendConfigured() || !backendReady) {
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = pendingDonation?.frequency === "weekly";
-    setPaymentStatus(
-      pendingDonation?.frequency === "weekly"
-        ? "Weekly PayPal subscriptions are unavailable right now."
-        : "PayPal is unavailable. Continue with debit or credit card instead.",
-    );
+    ui.cardButton.hidden = false;
+    setPaymentStatus("PayPal is unavailable. Continue with debit or credit card instead.");
     setPayPalCheckoutLoading(false);
     return;
   }
@@ -3364,7 +2506,6 @@ async function renderFreshPayPalButtons() {
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
     const route = getCheckoutRoute();
-    const frequency = pendingDonation?.frequency === "weekly" ? "weekly" : "once";
     namespace = getPayPalSdkNamespace(route);
 
     if (!isPayPalConfigured(route)) {
@@ -3383,12 +2524,8 @@ async function renderFreshPayPalButtons() {
       throw new Error("The payment route changed while PayPal was loading.");
     }
 
-    const paypalButtons = frequency === "weekly"
-      ? paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal, paypal.FUNDING.PAYPAL))
-      : paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
-    const paypalCardButtons = frequency === "weekly"
-      ? paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal, paypal.FUNDING.CARD))
-      : paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
+    const paypalButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
+    const paypalCardButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
     const paypalEligible = paypalButtons.isEligible();
     const paypalCardEligible = paypalCardButtons.isEligible();
 
@@ -3410,24 +2547,15 @@ async function renderFreshPayPalButtons() {
 
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = !paypalCardEligible;
-    ui.cardButton.hidden = frequency === "weekly";
-    if (frequency === "weekly") {
-      setPaymentStatus("Choose PayPal to approve your weekly seed");
-    } else {
-      setPaymentStatus("Choose a debit/credit card or PayPal to continue");
-    }
+    ui.cardButton.hidden = false;
+    setPaymentStatus("Choose a debit/credit card or PayPal to continue");
   } catch (error) {
     clearPayPalButtons();
     if (namespace) resetPayPalSdk(namespace);
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = pendingDonation?.frequency === "weekly";
-    setPaymentStatus(
-      error?.message || (pendingDonation?.frequency === "weekly"
-        ? "Weekly PayPal checkout could not load."
-        : "PayPal could not load. Continue with debit or credit card instead."),
-      true,
-    );
+    ui.cardButton.hidden = false;
+    setPaymentStatus(error?.message || "PayPal could not load. Continue with debit or credit card instead.", true);
   } finally {
     setPayPalCheckoutLoading(false);
   }
@@ -3435,9 +2563,6 @@ async function renderFreshPayPalButtons() {
 
 async function finishVerifiedDonation(payload) {
   const donation = payload.donation;
-  const completedBookOrder = isBookCheckout();
-  const completedBook = completedBookOrder ? BOOK_PRODUCTS[pendingDonation?.productId] : null;
-  const completedEmail = pendingDonation?.email || payload.digitalOrder?.contactEmail || "your email";
   const fortuneMessage = payload.fortune || donation?.fortune_message || getRandomFortuneMessage();
   const paymentRoute = donation?.paymentRoute || payload.paymentRoute || pendingDonation?.paymentRoute || "standard";
 
@@ -3445,7 +2570,7 @@ async function finishVerifiedDonation(payload) {
     setDonorToken(payload.donorAccessToken);
   }
 
-  if (donation && paymentRoute !== "superadmin" && !completedBookOrder) {
+  if (donation && paymentRoute !== "superadmin") {
     state.donations.unshift({
       id: donation.id,
       name: donation.display_name || donation.name || pendingDonation?.name || "Customer",
@@ -3463,7 +2588,7 @@ async function finishVerifiedDonation(payload) {
 
   if (payload.seedComment) {
     state.seedComments = normalizeSeedComments([payload.seedComment, ...(state.seedComments || [])]);
-  } else if (!completedBookOrder && !isBackendConfigured() && pendingDonation?.message) {
+  } else if (!isBackendConfigured() && pendingDonation?.message) {
     state.seedComments = normalizeSeedComments([
       {
         id: `seed-comment-${Date.now()}`,
@@ -3485,24 +2610,16 @@ async function finishVerifiedDonation(payload) {
   }
 
   renderApp();
-  elements.receiptTitle.textContent = completedBookOrder
-    ? "Your Book Will be Delivered by Mail"
-    : "Your fortune for today";
-  elements.receiptSummary.textContent = completedBookOrder
-    ? `${completedBook?.title || "Your book"} will be delivered to ${completedEmail}. Order ID: ${payload.digitalOrder?.orderNumber || "confirmed"}.`
-    : fortuneMessage;
+  elements.receiptTitle.textContent = "Your fortune for today";
+  elements.receiptSummary.textContent = fortuneMessage;
   elements.receiptSummary.hidden = false;
   const ui = getCheckoutUi();
   ui.form.reset();
   if (ui.emailInput) {
     ui.emailInput.value = "";
   }
-  if (completedBookOrder) {
-    setBookAmount(MIN_DONATION_AMOUNT);
-  } else {
-    setAmount(getInitialDonationAmount());
-    updateCheckoutLabel();
-  }
+  setAmount(getInitialDonationAmount());
+  updateCheckoutLabel();
   closeInlinePayPalCheckout();
   pendingDonation = null;
   closePaymentFailure();
@@ -3523,11 +2640,7 @@ function openInlinePayPalCheckout() {
     return;
   }
   setPayPalCheckoutLoading(false);
-  setPaymentStatus(
-    pendingDonation?.frequency === "weekly"
-      ? "Weekly PayPal subscriptions are unavailable right now."
-      : "PayPal is unavailable. Continue with debit or credit card instead.",
-  );
+  setPaymentStatus("PayPal is unavailable. Continue with debit or credit card instead.");
 }
 
 function closeInlinePayPalCheckout() {
@@ -3594,11 +2707,6 @@ function openAlternateCheckout() {
     url.searchParams.set("amount", String(pendingDonation.amount || getActiveCheckoutAmount()));
     url.searchParams.set("email", pendingDonation.email || getPaymentEmail());
     url.searchParams.set("name", pendingDonation.name || ui.nameInput?.value.trim() || "");
-    if (isBookCheckout()) {
-      url.searchParams.set("productType", "book");
-      url.searchParams.set("productId", pendingDonation.productId || "");
-      url.searchParams.set("itemName", pendingDonation.bookTitle || "Digital book");
-    }
     checkoutUrl = url.toString();
   }
   if (!checkoutUrl || !elements.alternateCheckoutDialog || !elements.alternateCheckoutFrame) return;
@@ -3629,55 +2737,13 @@ function closeAlternateCheckout(showFailure = false) {
   }
 }
 
-function openTutorial() {
-  if (!elements.tutorialDialog || !elements.tutorialVideo) return;
-
-  document.body.classList.add("tutorial-open");
-  elements.tutorialVideo.currentTime = 0;
-
-  if (typeof elements.tutorialDialog.showModal === "function") {
-    elements.tutorialDialog.showModal();
-  } else {
-    elements.tutorialDialog.setAttribute("open", "");
-  }
-
-  window.requestAnimationFrame(() => {
-    elements.tutorialDialog.classList.add("is-open");
-    void elements.tutorialVideo.play().catch(() => {
-      elements.tutorialVideo.controls = true;
-    });
-  });
-}
-
 function returnToSowYourSeed() {
+  setActiveView("aboutView", true);
   if (!elements.supportCard) return;
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   elements.paymentEmailInput?.focus({ preventScroll: true });
   elements.supportCard.scrollIntoView({ behavior, block: "start" });
-}
-
-function closeTutorial(returnToSupport = false) {
-  if (!elements.tutorialDialog || !elements.tutorialVideo) return;
-
-  elements.tutorialVideo.pause();
-  elements.tutorialVideo.currentTime = 0;
-  elements.tutorialDialog.classList.remove("is-open");
-  document.body.classList.remove("tutorial-open");
-
-  if (elements.tutorialDialog.open) {
-    elements.tutorialDialog.close();
-  } else {
-    elements.tutorialDialog.removeAttribute("open");
-  }
-
-  window.requestAnimationFrame(() => {
-    if (returnToSupport) {
-      returnToSowYourSeed();
-    } else {
-      elements.openTutorialButton?.focus();
-    }
-  });
 }
 
 function openAdminLogin() {
@@ -3748,10 +2814,9 @@ function openAdminPanel() {
   sections.forEach(section => {
     const isSuperAdminSection = section.classList.contains("admin-super-checkout-section");
     const isCollectionCalendar = section.classList.contains("admin-donations");
-    const isSubscriptionCalendar = section.classList.contains("admin-subscriptions-section");
     const isRoleScopedAnalytics = section.classList.contains("admin-analytics-section");
     const shouldShow = isSuperAdmin
-      ? isSuperAdminSection || isCollectionCalendar || isSubscriptionCalendar || isRoleScopedAnalytics
+      ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics
       : !isSuperAdminSection;
     section.hidden = !shouldShow;
     section.style.display = shouldShow ? "" : "none";
@@ -3764,13 +2829,12 @@ function openAdminPanel() {
 
   renderAdminForm();
   renderAdminCalendar();
-  renderSubscriptionCalendar();
   renderAdminAnalytics();
   
   if (isSuperAdmin) {
     setAdminStatus("SuperAdmin ready. Manage payment routing and private collections.", "info", { persist: true });
   } else {
-    setAdminStatus("Admin ready. Manage orders, goal settings, analytics, and posts.", "info", { persist: true });
+    setAdminStatus("Admin ready. Manage orders, site settings, and analytics.", "info", { persist: true });
   }
   
   document.body.classList.add("admin-open");
@@ -3808,300 +2872,14 @@ function getAdminSettings() {
     ...state.settings,
     adsenseEnabled: elements.adminAdsenseEnabled.checked,
     blessingWallEnabled: inputs.blessingWallEnabled.checked,
-    seedGoal: inputs.seedGoal.value,
     seedPrice: inputs.seedPrice.value,
   });
 }
 
-function createPostId() {
-  return `post-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function getSelectedPostImageFile() {
-  return elements.adminNewPostImage.files?.[0] || null;
-}
-
-function readImageFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result));
-    reader.addEventListener("error", () => reject(reader.error));
-    reader.readAsDataURL(file);
-  });
-}
-
-function clearAdminPostForm() {
-  elements.adminNewPostTitle.value = "";
-  elements.adminNewPostDescription.value = "";
-  elements.adminNewPostImage.value = "";
-  elements.adminUploadPreview.hidden = true;
-  elements.adminUploadPreviewImage.removeAttribute("src");
-  elements.adminUploadFileName.textContent = "";
-}
-
-function previewAdminUpload() {
-  const file = getSelectedPostImageFile();
-
-  if (!file) {
-    elements.adminUploadPreview.hidden = true;
-    elements.adminUploadPreviewImage.removeAttribute("src");
-    elements.adminUploadFileName.textContent = "";
-    return;
-  }
-
-  if (file.size > MAX_LOCAL_POST_IMAGE_BYTES) {
-    elements.adminNewPostImage.value = "";
-    elements.adminUploadPreview.hidden = true;
-    setAdminStatus("Choose an image under 2 MB for local preview.", "error", { persist: true });
-    showToast("Choose an image under 2 MB for local preview.");
-    return;
-  }
-
-  const previewUrl = URL.createObjectURL(file);
-  elements.adminUploadPreviewImage.src = previewUrl;
-  elements.adminUploadFileName.textContent = file.name;
-  elements.adminUploadPreview.hidden = false;
-  setAdminStatus("Photo selected. Add post text, then click Publish post.", "dirty", { persist: true });
-}
-
-async function publishAdminPost() {
-  const title = elements.adminNewPostTitle.value.trim();
-  const description = elements.adminNewPostDescription.value.trim();
-  const imageFile = getSelectedPostImageFile();
-
-  if (!title || !description) {
-    setAdminStatus("Add a post title and description before publishing.", "error", { persist: true });
-    showToast("Add a post title and description.");
-    return;
-  }
-
-  if (imageFile && !isBackendConfigured() && imageFile.size > MAX_LOCAL_POST_IMAGE_BYTES) {
-    setAdminStatus("Choose an image under 2 MB for local demo mode.", "error", { persist: true });
-    showToast("Choose an image under 2 MB for local demo mode.");
-    return;
-  }
-
-  if (imageFile && isBackendConfigured() && imageFile.size > MAX_REMOTE_POST_IMAGE_BYTES) {
-    setAdminStatus("Choose an image under 5 MB.", "error", { persist: true });
-    showToast("Choose an image under 5 MB.");
-    return;
-  }
-
-  if (isBackendConfigured() && getAdminAccessToken()) {
-    await runAdminAction(
-      {
-        button: elements.adminPublishPostButton,
-        busyText: "Publishing...",
-        loadingMessage: imageFile ? "Uploading image and publishing post..." : "Publishing post...",
-        successMessage: "Post published. Posts refreshed.",
-        errorMessage: "Could not publish post.",
-      },
-      async () => {
-        const form = new FormData();
-        form.append("title", title);
-        form.append("description", description);
-        if (imageFile) form.append("image", imageFile);
-
-        const payload = await callEdge("admin-posts", {
-          admin: true,
-          body: form,
-          method: "POST",
-        });
-
-        clearAdminPostForm();
-        if (payload.post) {
-          state.posts.unshift(payload.post);
-        }
-        await loadBackendData();
-        renderApp();
-      },
-    );
-
-    return;
-  }
-
-  await runAdminAction(
-    {
-      button: elements.adminPublishPostButton,
-      busyText: "Publishing...",
-      loadingMessage: "Publishing local demo post...",
-      successMessage: "Post published locally. Posts refreshed.",
-      errorMessage: "Could not publish post.",
-    },
-    async () => {
-      let imageUrl = "assets/sow-cover.jpg";
-
-      if (imageFile) {
-        imageUrl = await readImageFileAsDataUrl(imageFile);
-      }
-
-      state.posts.unshift({
-        id: createPostId(),
-        title,
-        description,
-        imageUrl,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        liked: false,
-        comments: [],
-      });
-
-      clearAdminPostForm();
-      saveState();
-      renderApp();
-    },
-  );
-}
-
-async function deleteAdminPost(postId, triggerButton) {
-  if (isBackendConfigured() && getAdminAccessToken()) {
-    await runAdminAction(
-      {
-        button: triggerButton,
-        busyText: "Deleting...",
-        loadingMessage: "Deleting post...",
-        successMessage: "Post deleted. Posts refreshed.",
-        errorMessage: "Could not delete post.",
-      },
-      async () => {
-        await callEdge("admin-posts", {
-          admin: true,
-          body: { postId },
-          method: "DELETE",
-        });
-        await loadBackendData();
-        renderApp();
-      },
-    );
-
-    return;
-  }
-
-  await runAdminAction(
-    {
-      button: triggerButton,
-      busyText: "Deleting...",
-      loadingMessage: "Deleting local demo post...",
-      successMessage: "Post deleted locally. Posts refreshed.",
-      errorMessage: "Could not delete post.",
-    },
-    async () => {
-      state.posts = state.posts.filter((post) => post.id !== postId);
-      saveState();
-      renderApp();
-    },
-  );
-}
-
-function findPost(postId) {
-  return state.posts.find((post) => post.id === postId);
-}
-
-async function togglePostLike(postId) {
-  const post = findPost(postId);
-  if (!post) return;
-
-  if (isBackendConfigured() && backendReady) {
-    try {
-      const payload = await callEdge("post-engagement", {
-        body: {
-          action: "like",
-          postId,
-          visitorKey: getVisitorKey(),
-        },
-      });
-      post.likes = payload.likes;
-      post.liked = payload.liked;
-      renderPublicPosts();
-    } catch (error) {
-      showToast(error.message || "Could not update like.");
-    }
-
-    return;
-  }
-
-  const currentLikes = Math.max(Number.parseInt(post.likes, 10) || 0, 0);
-  post.liked = !post.liked;
-  post.likes = post.liked ? currentLikes + 1 : Math.max(currentLikes - 1, 0);
-
-  saveState();
-  renderPublicPosts();
-}
-
-async function addPostComment(postId, text) {
-  const post = findPost(postId);
-  const commentText = String(text || "").trim();
-
-  if (!post) return;
-
-  if (!commentText) {
-    showToast("Write a comment first.");
-    return;
-  }
-
-  if (isBackendConfigured() && backendReady) {
-    const donorAccessToken = getDonorToken();
-
-    if (!donorAccessToken) {
-      showToast("Complete a custom order to unlock comments.");
-      return;
-    }
-
-    try {
-      const payload = await callEdge("post-engagement", {
-        body: {
-          action: "comment",
-          postId,
-          donorAccessToken,
-          displayName: elements.nameInput.value.trim().slice(0, 48) || "Customer",
-          comment: commentText,
-        },
-      });
-
-      post.comments = Array.isArray(post.comments) ? post.comments : [];
-      if (payload.comment) post.comments.push(payload.comment);
-      renderPublicPosts();
-      showToast("Comment posted.");
-    } catch (error) {
-      showToast(error.message || "Could not post comment.");
-    }
-
-    return;
-  }
-
-  const commenterName = elements.nameInput.value.trim().slice(0, 48) || "Customer";
-  post.comments = Array.isArray(post.comments) ? post.comments : [];
-  post.comments.push({
-    id: `comment-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name: commenterName,
-    text: commentText.slice(0, 180),
-    createdAt: new Date().toISOString(),
-  });
-
-  saveState();
-  renderPublicPosts();
-  showToast("Comment posted.");
-}
-
-function handlePostClick(event) {
-  const likeButton = event.target.closest("[data-like-post]");
-  if (!likeButton) return;
-
-  togglePostLike(likeButton.dataset.likePost);
-}
-
-function handlePostCommentSubmit(event) {
-  const form = event.target.closest("[data-comment-post]");
-  if (!form) return;
-
-  event.preventDefault();
-  addPostComment(form.dataset.commentPost, new FormData(form).get("comment"));
-}
-
 function getViewIdFromHash() {
-  if (window.location.hash === "#posts") return "postsView";
-  if (window.location.hash === "#shop") return "shopView";
-  return "aboutView";
+  return ["#about", "#support", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)
+    ? "aboutView"
+    : "homeView";
 }
 
 function setActiveView(viewId, updateHash = false) {
@@ -4114,7 +2892,10 @@ function setActiveView(viewId, updateHash = false) {
   });
 
   elements.profileTabs.forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.sectionTab === viewId);
+    const isActive = tab.dataset.sectionTab === viewId;
+    tab.classList.toggle("active", isActive);
+    if (isActive) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
   });
 
   if (updateHash && targetTab) {
@@ -4217,13 +2998,9 @@ function escapeHtml(value) {
 
 function renderApp() {
   renderSettings();
-  renderTotals();
   renderRecentDonations();
   renderSeedComments();
-  renderPublicPosts();
-  renderAdminPosts();
   renderAdminCalendar();
-  renderSubscriptionCalendar();
   renderAdminAnalytics();
   updateCheckoutLabel();
 }
@@ -4243,17 +3020,6 @@ elements.decreaseSeedButton?.addEventListener("click", () => {
 elements.increaseSeedButton?.addEventListener("click", () => {
   stepSeedAmount(1);
 });
-elements.bookAmountInput?.addEventListener("input", () => {
-  elements.bookAmountError.textContent = "";
-  const amount = Number.parseFloat(elements.bookAmountInput.value) || 0;
-  elements.bookPriceLabel.textContent = `${money(amount)} Book`;
-});
-elements.bookAmountInput?.addEventListener("blur", () => {
-  setBookAmount(elements.bookAmountInput.value);
-});
-elements.decreaseBookAmountButton?.addEventListener("click", () => stepBookAmount(-1));
-elements.increaseBookAmountButton?.addEventListener("click", () => stepBookAmount(1));
-
 elements.adminCalendarPrev.addEventListener("click", () => {
   adminCalendarCursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth() - 1, 1);
   selectedAdminCalendarDate = toDateKey(adminCalendarCursor);
@@ -4275,43 +3041,6 @@ elements.adminCalendarGrid.addEventListener("click", (event) => {
   selectedAdminCalendarDate = dateButton.dataset.adminCalendarDate;
   adminCalendarCursor = fromDateKey(selectedAdminCalendarDate);
   renderAdminCalendar();
-});
-
-elements.subscriptionCalendarPrev?.addEventListener("click", () => {
-  subscriptionCalendarCursor = new Date(subscriptionCalendarCursor.getFullYear(), subscriptionCalendarCursor.getMonth() - 1, 1);
-  selectedSubscriptionDate = toDateKey(subscriptionCalendarCursor);
-  renderSubscriptionCalendar();
-});
-
-elements.subscriptionCalendarNext?.addEventListener("click", () => {
-  subscriptionCalendarCursor = new Date(subscriptionCalendarCursor.getFullYear(), subscriptionCalendarCursor.getMonth() + 1, 1);
-  selectedSubscriptionDate = toDateKey(subscriptionCalendarCursor);
-  renderSubscriptionCalendar();
-});
-
-elements.subscriptionCalendarGrid?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-subscription-calendar-date]");
-  if (!button) return;
-  selectedSubscriptionDate = button.dataset.subscriptionCalendarDate;
-  subscriptionCalendarCursor = fromDateKey(selectedSubscriptionDate);
-  renderSubscriptionCalendar();
-});
-
-elements.subscriptionFilters.forEach((button) => {
-  button.addEventListener("click", () => {
-    subscriptionFilter = button.dataset.subscriptionFilter;
-    const first = getVisibleSubscriptions().find((item) => getSubscriptionEventAt(item));
-    if (first) {
-      selectedSubscriptionDate = toIndiaDateKey(getSubscriptionEventAt(first));
-      subscriptionCalendarCursor = fromDateKey(selectedSubscriptionDate);
-    }
-    renderSubscriptionCalendar();
-  });
-});
-
-elements.subscriptionCalendarDetails?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-cancel-subscription]");
-  if (button) cancelAdminSubscription(button.dataset.cancelSubscription, button);
 });
 
 function handleAdminCalendarDetailClick(event) {
@@ -4360,32 +3089,14 @@ elements.profileTabs.forEach((tab) => {
   });
 });
 
-elements.adminPublishPostButton.addEventListener("click", publishAdminPost);
 elements.refreshAdminButton.addEventListener("click", refreshAdminPortalData);
 elements.resetAdminAnalyticsButton.addEventListener("click", resetAdminAnalytics);
 elements.decrementPageViewButton?.addEventListener("click", decrementPageView);
 elements.purgeAllOrdersButton?.addEventListener("click", () => purgeAllPaymentRecords(elements.purgeAllOrdersButton));
-elements.adminNewPostImage.addEventListener("change", previewAdminUpload);
-elements.adminForm.addEventListener("input", (event) => {
-  if (event.target.closest(".admin-posts-section")) {
-    setAdminStatus("Post draft changed. Click Publish post to update Posts.", "dirty", { persist: true });
-    return;
-  }
+elements.adminForm.addEventListener("input", () => {
 
   setAdminStatus("Unsaved site setting changes. Click Save site settings to publish them.", "dirty", { persist: true });
 });
-elements.adminPostList.addEventListener("click", (event) => {
-  const deleteButton = event.target.closest("[data-delete-post]");
-  if (!deleteButton) return;
-  deleteAdminPost(deleteButton.dataset.deletePost, deleteButton);
-});
-
-[elements.sidebarPostList, elements.postsPageList].forEach((postList) => {
-  if (!postList) return;
-  postList.addEventListener("click", handlePostClick);
-  postList.addEventListener("submit", handlePostCommentSubmit);
-});
-
 elements.showMoreButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const content = document.querySelector(`#${button.dataset.toggleTarget}`);
@@ -4400,18 +3111,7 @@ elements.showMoreButtons.forEach((button) => {
 });
 
 elements.supportForm.addEventListener("submit", submitDonation);
-elements.bookOrderForm?.addEventListener("submit", submitBookOrder);
-elements.bookGrid?.addEventListener("click", (event) => {
-  const previewButton = event.target.closest("[data-preview-book]");
-  if (previewButton) {
-    toggleBookPreview(previewButton.dataset.previewBook, previewButton);
-    return;
-  }
-
-  const buyButton = event.target.closest("[data-buy-book]");
-  if (buyButton) selectBook(buyButton.dataset.buyBook);
-});
-[elements.alternateCardCheckoutLink, elements.bookAlternateCardCheckoutLink].forEach((link) => {
+[elements.alternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();
     const cardButton = link.closest(".card-choice");
@@ -4427,11 +3127,6 @@ elements.bookGrid?.addEventListener("click", (event) => {
 elements.paymentEmailInput?.addEventListener("input", () => {
   if (elements.emailError && isValidEmailAddress(elements.paymentEmailInput.value)) {
     elements.emailError.textContent = "";
-  }
-});
-elements.bookEmailInput?.addEventListener("input", () => {
-  if (elements.bookEmailError && isValidEmailAddress(elements.bookEmailInput.value)) {
-    elements.bookEmailError.textContent = "";
   }
 });
 elements.nameInput?.addEventListener("input", () => {
@@ -4458,7 +3153,6 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
       openAdminPanel();
       await Promise.all([
         loadAdminDonations({ announce: true }),
-        loadAdminSubscriptions(),
         loadAdminAnalytics({ announce: true }),
       ]);
     } catch (error) {
@@ -4614,21 +3308,6 @@ elements.alternateCheckoutDialog?.addEventListener("click", (event) => {
 elements.alternateCheckoutDialog?.addEventListener("close", () => {
   document.body.classList.remove("alternate-checkout-open");
   if (elements.alternateCheckoutFrame) elements.alternateCheckoutFrame.src = "about:blank";
-});
-elements.openTutorialButton?.addEventListener("click", openTutorial);
-elements.closeTutorialButton?.addEventListener("click", () => closeTutorial());
-elements.tutorialVideo?.addEventListener("ended", () => closeTutorial(true));
-elements.tutorialDialog?.addEventListener("cancel", (event) => {
-  event.preventDefault();
-  closeTutorial();
-});
-elements.tutorialDialog?.addEventListener("click", (event) => {
-  if (event.target === elements.tutorialDialog) closeTutorial();
-});
-elements.tutorialDialog?.addEventListener("close", () => {
-  elements.tutorialVideo?.pause();
-  elements.tutorialDialog.classList.remove("is-open");
-  document.body.classList.remove("tutorial-open");
 });
 window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.body.classList.contains("admin-open")) {

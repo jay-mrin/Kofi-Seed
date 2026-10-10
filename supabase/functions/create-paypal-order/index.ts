@@ -15,7 +15,6 @@ import {
   normalizePaymentRoute,
   resolvePaymentRoute,
 } from "../_shared/payment-routing.ts";
-import { getBookProduct } from "../_shared/products.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
 type CreateOrderBody = {
@@ -25,7 +24,6 @@ type CreateOrderBody = {
   email?: string;
   paymentRoute?: string;
   productType?: string;
-  productId?: string | null;
 };
 
 function isValidEmail(value: string) {
@@ -69,21 +67,14 @@ Deno.serve(async (request) => {
     const supporterMessage = getRandomOrderRequest();
     const contactEmail = String(body.email || "").trim().slice(0, 160);
     const requestedProductType = String(body.productType || "seed").trim();
-    const book = requestedProductType === "book"
-      ? getBookProduct(body.productId)
-      : null;
-
-    if (requestedProductType === "book" && !book) {
-      return errorResponse("Choose a valid book before checkout.", 422);
+    if (requestedProductType !== "seed" && requestedProductType !== "personalized_seed_writing") {
+      return errorResponse("This product is no longer available.", 422);
     }
     const personalizedRequest = String(body.message || "").trim().slice(0, 180) ||
-      (book ? `Deliver ${book.title} to the customer email.` : supporterMessage);
+      supporterMessage;
 
     if (amountCents < MIN_AMOUNT_CENTS) {
       return errorResponse("Amount must be at least $7.", 422);
-    }
-    if (book && amountCents % MIN_AMOUNT_CENTS !== 0) {
-      return errorResponse("Book payments must be in multiples of $7.", 422);
     }
     if (!isValidEmail(contactEmail)) {
       return errorResponse(
@@ -111,7 +102,6 @@ Deno.serve(async (request) => {
     const order = await createPayPalOrder({
       amountCents,
       paymentRoute,
-      itemName: book?.itemName,
     });
 
     const supabase = getSupabaseAdmin();
@@ -130,18 +120,16 @@ Deno.serve(async (request) => {
         amount: centsToMoney(amountCents),
         currency: getPayPalCurrency(),
         customer_request: personalizedRequest,
-        supporter_message: book ? `Book order: ${book.title}` : supporterMessage,
+        supporter_message: supporterMessage,
         frequency: "once",
-        product_type: book ? "book" : "personalized_seed_writing",
-        product_id: book?.id || null,
+        product_type: "personalized_seed_writing",
+        product_id: null,
         paypal_order_id: order.id,
         payment_route: paymentRoute,
         status: "started",
         raw_payment: {
           order,
-          product: book
-            ? { type: "book", id: book.id, title: book.title, itemName: book.itemName }
-            : { type: "seed", itemName: "Personalised Digital Writing - Custom Order Made Writing" },
+          product: { type: "seed", itemName: "Personalised Digital Writing - Custom Order Made Writing" },
         },
       });
     if (attemptError) throw attemptError;

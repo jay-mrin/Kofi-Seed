@@ -243,13 +243,6 @@ export async function handleSubscriptionWebhook(
           .update({ paypal_status: status })
           .eq("id", payment.donation_id);
         if (donationError) throw donationError;
-        if (membership.payment_route === "standard") {
-          const { error: meterError } = await supabase
-            .from("meter_applied_donations")
-            .delete()
-            .eq("donation_id", payment.donation_id);
-          if (meterError) throw meterError;
-        }
       }
       const { error: summaryError } = await supabase.rpc(
         "refresh_membership_payment_summary",

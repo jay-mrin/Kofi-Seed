@@ -7,29 +7,14 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (filePath) => readFileSync(path.join(repositoryRoot, filePath), "utf8");
 
-test("the form uses a weekly switch without a frequency popup", () => {
+test("public checkout offers one-time payments while existing subscription processing remains", () => {
   const html = read("index.html");
   const app = read("src/app.js");
-
-  assert.match(html, /id="weeklySeedToggle"[^>]*type="checkbox"[^>]*role="switch"[\s\S]*Sow Seed Every Week/);
-  assert.doesNotMatch(html, /id="frequencyDialog"|How would you like to sow your seed\?/);
-  assert.match(app, /frequency: elements\.weeklySeedToggle\?\.checked \? "weekly" : "once"/);
-  assert.match(app, /pendingDonation\.frequency === "weekly"[\s\S]*chooseWeeklySowing\(\)[\s\S]*chooseOneTimeSowing\(\)/);
-  assert.doesNotMatch(app, /openFrequencyDialog|closeFrequencyDialog/);
-});
-
-test("weekly checkout requires a name and whole seeds and uses subscription intent", () => {
-  const app = read("src/app.js");
-
-  assert.match(app, /Add your name to begin weekly sowing/);
-  assert.match(app, /Number\.isInteger\(seedUnits\)/);
-  assert.match(app, /intent: billingFrequency === "weekly" \? "subscription" : "capture"/);
-  assert.match(app, /params\.set\("vault", "true"\)/);
-  assert.match(app, /createSubscription:[\s\S]*prepare-paypal-subscription[\s\S]*confirm-paypal-subscription/);
-  assert.match(app, /ui\.cardButton\.hidden = frequency === "weekly"/);
-  assert.match(app, /finishVerifiedSubscription[\s\S]*receiptSummary\.hidden = true/);
-  assert.match(app, /finishVerifiedDonation[\s\S]*receiptSummary\.hidden = false/);
-  assert.doesNotMatch(app, /was set up today\. Your next renewal/);
+  const webhook = read("supabase/functions/paypal-webhook/index.ts");
+  assert.doesNotMatch(html, /weeklySeedToggle|Sow Seed Every Week/);
+  assert.doesNotMatch(app, /chooseWeeklySowing|buildPayPalSubscriptionButtonOptions|createSubscription:/);
+  assert.match(app, /intent: "capture"/);
+  assert.match(webhook, /handleSubscriptionWebhook/);
 });
 
 test("weekly plan preparation pins routing and Monday 6 PM IST", () => {
@@ -57,17 +42,12 @@ test("subscription webhooks create idempotent weekly orders and track failures",
   assert.match(migration, /create table if not exists public\.memberships/);
   assert.match(migration, /create or replace function public\.record_weekly_subscription_payment/);
   assert.match(migration, /on conflict \(paypal_transaction_id\) do nothing/);
-  assert.match(migration, /apply_standard_donation_to_meter/);
 });
 
-test("Admin and SuperAdmin subscription portals remain route scoped", () => {
+test("Subscription backend remains route scoped", () => {
   const admin = read("supabase/functions/admin-subscriptions/index.ts");
-  const app = read("src/app.js");
 
   assert.match(admin, /adminProfile\.role === "super_admin"[\s\S]*"superadmin"[\s\S]*"standard"/);
   assert.match(admin, /\.eq\("payment_route", paymentRoute\)/);
   assert.match(admin, /cancelPayPalSubscription/);
-  assert.match(app, /subscriptionFilter = "active"/);
-  assert.match(app, /\["cancelled", "expired"\]/);
-  assert.match(app, /subscription\.status === "active"\) return "active"/);
 });

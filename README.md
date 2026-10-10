@@ -1,6 +1,6 @@
 # Sow Your Seed
 
-A personalised digital-writing and digital-book buying platform with five-page book previews, Supabase backend support, dual-account PayPal Checkout, role-based admin controls, posts, likes, comments, order calendars, and fulfillment tracking.
+A personalised digital-writing platform with Supabase backend support, dual-account PayPal Checkout, role-based admin controls, community blessing comments, order calendars, and fulfillment tracking.
 
 ## What Runs Locally
 
@@ -12,7 +12,7 @@ npm run dev
 
 Then open `http://127.0.0.1:5173`.
 
-When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, goal settings, posts, orders, likes, comments, and PayPal checkout are loaded through Supabase Edge Functions.
+When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, and PayPal checkout are loaded through Supabase Edge Functions.
 
 Both portals show the combined total of Admin- and SuperAdmin-route page visits from the last 24 hours. Every payment attempt and completed payment remains visible only in the portal for the checkout route that owns it. Each portal uses its own reset timestamp, so resetting one dashboard does not affect the other.
 
@@ -92,7 +92,7 @@ npm run supabase:deploy
 
 ## PayPal Notes
 
-This app uses PayPal Orders for one-time payments and PayPal Subscriptions for weekly sowing. A separate blue card option appears only for one-time checkout and opens the separately hosted alternate checkout website inside a same-page popup. After it is used, it turns gray and is disabled for the rest of the page session.
+This app uses PayPal Orders for one-time payments. A separate blue card option appears only for one-time checkout and opens the separately hosted alternate checkout website inside a same-page popup. After it is used, it turns gray and is disabled for the rest of the page session.
 
 The PayPal SDK is never preloaded. When a customer opens checkout, the app refreshes the server-selected payment route, removes any previous PayPal SDK instance, displays the rotating seed loader, and loads a new SDK instance. PayPal buttons remain hidden until each eligible button has rendered a visible iframe.
 
@@ -100,13 +100,10 @@ For your India-registered PayPal Business account, test with PayPal sandbox buye
 
 SuperAdmin chooses whether payments use the Admin or SuperAdmin PayPal account. The optional `$21 or more` override always routes qualifying payments to SuperAdmin. Admin uses `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID`; SuperAdmin uses the corresponding `SUPER_ADMIN_PAYPAL_*` secrets.
 
-A valid email address is required at checkout so the order can be delivered. Display name and message remain optional for one-time payments; a customer name and whole seed count are required for Weekly. The form defaults to a one-time offering; customers can enable the **Sow Seed Every Week** switch before checkout to use a weekly PayPal subscription.
-
-Weekly subscriptions charge the selected seed amount immediately as the plan setup fee. Regular billing starts on the next applicable Monday at 6:00 PM `Asia/Kolkata`; a subscription created on Monday starts regular billing the following Monday. PayPal may retry failed renewal payments outside the Monday schedule. Failed, retrying, and suspended subscriptions remain under Pending until payment recovers or the receiving account owner cancels them.
+A valid email address is required at checkout so the order can be delivered. Display name and message remain optional. Checkout creates one-time payments; existing weekly subscriptions continue to be processed by the webhook.
 
 Both PayPal apps must send `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.REFUNDED`, `PAYMENT.SALE.REVERSED`, `BILLING.SUBSCRIPTION.CREATED`, `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.UPDATED`, `BILLING.SUBSCRIPTION.EXPIRED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, and `BILLING.SUBSCRIPTION.PAYMENT.FAILED` to the deployed `paypal-webhook` URL. Keep the route-specific webhook IDs in the existing PayPal secrets.
 
-The public meter is a repeating goal cycle, separate from the complete order calendar. Admin sets the goal amount and current cycle amount in dollars. With `$7 = 1 seed` and a `$700` goal, the target is `100 seeds`; a `$7` order adds `1%`, a `$14` order adds `2%`, and custom amounts contribute as `amount / 7`. When the current cycle reaches `$700`, the visible meter resets to `0%` and starts the next cycle.
 
 Admin can enable or disable Google AdSense under Site settings. The setting is public, applies across the main and legal/information pages, and takes effect for new page loads.
 The static `google-adsense-account` meta tag and root `ads.txt` record remain available for Google site ownership verification; neither marker loads ads when the admin setting is disabled.
@@ -127,11 +124,15 @@ Use PayPal sandbox first:
 - Debit or credit card checkout redirects to the configured alternate checkout website.
 - Cancelled checkout creates no donation.
 - Duplicate capture/webhook updates do not create duplicate donations.
-- The Once/Weekly dialog opens only after valid seed details and closes through Not now, Escape, or backdrop selection.
-- Weekly approval creates one subscription, and every verified subscription sale creates exactly one linked seed order.
-- Admin and SuperAdmin subscription calendars show only their own Active, Pending, and Cancelled customers.
+- Existing verified subscription sales continue to create exactly one linked seed order.
 - Admin calendar can download a proof PDF for each digital-service order and mark orders fulfilled.
 - Both analytics portals share the total page-visit count while keeping every payment attempt and completed payment private to its checkout owner. Each portal resets independently.
 - Public Blessing Wall loads imported legacy comments and appends paid blessing requests after confirmed payment capture.
 - Admin login requires Supabase Auth and `admin_profiles`; Admin and SuperAdmin see only the orders routed to their respective collection account.
 - Donor comments require the same-browser donor token returned after a completed donation.
+
+The progress card and its goal settings have been retired. Deploy the updated Edge Functions and apply `202610100001_remove_progress_feature.sql` to remove the old database settings, progress ledger, and routines. The migration preserves orders, payments, and subscription processing. Earlier migrations are retained as upgrade history.
+
+The Shop is retired. New book checkouts are rejected; existing book orders retain their payment metadata, delivery controls, proof downloads, and payment recovery. No order or payment records are removed.
+
+Posts are retired. Deploy the updated functions, remove the deployed `admin-posts` and `post-engagement` functions, and apply `202610100002_remove_posts.sql`. To delete previously uploaded post images through the Storage API, run `node scripts/remove-post-images.mjs` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set. This targets only the dedicated `post-images` bucket. Order/payment tables and the order-linked Blessing Wall remain intact.

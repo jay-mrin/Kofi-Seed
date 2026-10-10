@@ -2,15 +2,6 @@ import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { getPayPalClientId } from "../_shared/paypal.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 
-function getCurrentGoalCycleAmount(totalAmount: number, goalAmount: number) {
-  const numericTotal = Math.max(Number(totalAmount) || 0, 0);
-  const numericGoal = Math.max(Number(goalAmount) || 0, 0);
-
-  if (!numericGoal) return 0;
-
-  return numericTotal % numericGoal;
-}
-
 function getUtcHourStart(date = new Date()) {
   const hour = new Date(date);
   hour.setUTCMinutes(0, 0, 0);
@@ -72,22 +63,8 @@ async function loadCriticalData(
       true ||
     (settings as Record<string, unknown>).highPaymentSuperAdminEnabled ===
       "true";
-  const goalAmount = Math.max(Number(settings.seedGoal) || 0, 0);
-  const seedPrice = Math.max(Number(settings.seedPrice) || 7, 1);
-  const rawCurrentAmount = Math.max(
-    Number(settings.meterCurrentAmount ?? settings.startingSeeds) || 0,
-    0,
-  );
-  const donationAmount = goalAmount
-    ? getCurrentGoalCycleAmount(rawCurrentAmount, goalAmount)
-    : rawCurrentAmount;
-
   return {
     settings,
-    totals: {
-      donationSeeds: Math.floor(donationAmount / seedPrice),
-      donationAmount,
-    },
     payment: {
       paypalClientId: getPayPalClientId(),
       superAdminPayPalClientId: getPayPalClientId("superadmin"),
@@ -101,9 +78,8 @@ async function loadCriticalData(
 
 async function loadPublicContent(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  visitorKeyHash: string,
 ) {
-  const [donationsResult, seedCommentsResult, postsResult] = await Promise.all([
+  const [donationsResult, seedCommentsResult] = await Promise.all([
     supabase
       .from("donations")
       .select(
@@ -119,18 +95,10 @@ async function loadPublicContent(
       )
       .order("created_at", { ascending: false })
       .limit(1000),
-    supabase
-      .from("posts")
-      .select(
-        "id, title, description, image_url, published, like_count_base, created_at",
-      )
-      .eq("published", true)
-      .order("created_at", { ascending: false }),
   ]);
 
   if (donationsResult.error) throw donationsResult.error;
   if (seedCommentsResult.error) throw seedCommentsResult.error;
-  if (postsResult.error) throw postsResult.error;
 
   const donations = (donationsResult.data || [])
     .filter((donation) => {
@@ -164,52 +132,6 @@ async function loadPublicContent(
     },
   ).slice(0, 520);
 
-  const posts = postsResult.data || [];
-  const postIds = posts.map((post) => post.id);
-  const [commentsResult, likesResult] = postIds.length
-    ? await Promise.all([
-      supabase
-        .from("comments")
-        .select("id, post_id, display_name, body, created_at")
-        .in("post_id", postIds)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("post_likes")
-        .select("post_id, visitor_key_hash")
-        .in("post_id", postIds),
-    ])
-    : [
-      { data: [], error: null },
-      { data: [], error: null },
-    ];
-
-  if (commentsResult.error) throw commentsResult.error;
-  if (likesResult.error) throw likesResult.error;
-
-  const likesByPost = new Map<string, { count: number; liked: boolean }>();
-  for (const like of likesResult.data || []) {
-    const entry = likesByPost.get(like.post_id) || {
-      count: 0,
-      liked: false,
-    };
-    entry.count += 1;
-    entry.liked = entry.liked ||
-      Boolean(visitorKeyHash && like.visitor_key_hash === visitorKeyHash);
-    likesByPost.set(like.post_id, entry);
-  }
-
-  const commentsByPost = new Map<string, unknown[]>();
-  for (const comment of commentsResult.data || []) {
-    const list = commentsByPost.get(comment.post_id) || [];
-    list.push({
-      id: comment.id,
-      name: comment.display_name,
-      text: comment.body,
-      createdAt: comment.created_at,
-    });
-    commentsByPost.set(comment.post_id, list);
-  }
-
   return {
     donations: donations.map((donation) => ({
       id: donation.id,
@@ -228,23 +150,6 @@ async function loadPublicContent(
       source: comment.source,
       createdAt: comment.created_at,
     })),
-    posts: posts.map((post) => {
-      const likeEntry = likesByPost.get(post.id) || {
-        count: 0,
-        liked: false,
-      };
-      return {
-        id: post.id,
-        title: post.title,
-        description: post.description,
-        imageUrl: post.image_url,
-        createdAt: post.created_at,
-        likes: Math.max(Number(post.like_count_base) || 0, 0) +
-          likeEntry.count,
-        liked: likeEntry.liked,
-        comments: commentsByPost.get(post.id) || [],
-      };
-    }),
   };
 }
 
@@ -284,7 +189,7 @@ Deno.serve(async (request) => {
     });
     const [criticalData, contentData] = await Promise.all([
       criticalDataPromise,
-      loadPublicContent(supabase, visitorKeyHash),
+      loadPublicContent(supabase),
       pageViewPromise,
     ]);
 

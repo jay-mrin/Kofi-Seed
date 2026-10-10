@@ -86,37 +86,6 @@ test("frontend ID selectors and static asset paths resolve", () => {
   }
 });
 
-test("the shop exposes three five-page book previews and a seven-dollar checkout", () => {
-  const html = readRepositoryFile("index.html");
-  const app = readRepositoryFile("src/app.js");
-
-  assert.match(html, /href="#about"[\s\S]*href="#shop"[\s\S]*href="#posts"/);
-  assert.equal((html.match(/data-book-card=/g) || []).length, 3);
-  assert.equal((html.match(/-preview\.pdf#toolbar=0/g) || []).length, 3);
-  assert.match(html, /id="bookAmountInput"[^>]*min="7"[^>]*step="7"[^>]*value="7"/);
-  assert.match(html, /id="bookEmailInput"[^>]*required/);
-  assert.match(app, /productType: "book"/);
-  assert.match(app, /Your Book Will be Delivered by Mail/);
-});
-
-test("public and legal copy describes both personalised writing and digital books", () => {
-  const home = readRepositoryFile("index.html");
-  const about = readRepositoryFile("about-us.html");
-  const terms = readRepositoryFile("terms-and-conditions.html");
-  const privacy = readRepositoryFile("privacy-policy.html");
-  const delivery = readRepositoryFile("delivery-fulfillment-policy.html");
-  const app = readRepositoryFile("src/app.js");
-
-  for (const source of [home, about, terms, privacy, delivery, app]) {
-    assert.match(source, /personalis(?:ed|ed)/i);
-    assert.match(source, /digital[- ]book/i);
-  }
-  assert.match(terms, /Book previews are limited samples/);
-  assert.match(terms, /may not reproduce, upload, share, resell, commercially distribute/);
-  assert.match(app, /LEGACY_ABOUT_COLLAPSED/);
-  assert.match(app, /LEGACY_ABOUT_EXPANDED/);
-});
-
 test("public startup loads checkout settings before deferred community content", () => {
   const app = readRepositoryFile("src/app.js");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
@@ -126,45 +95,7 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(app, /loadBackendData\(\{ mode: "content" \}\)/);
   assert.doesNotMatch(app, /waitForInitialAssets/);
   assert.match(bootstrap, /requestedMode === "critical" \|\| requestedMode === "content"/);
-  assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)[\s\S]*\.from\("posts"\)/);
-});
-
-test("the public meter is reconciled from confirmed Admin-payment ledger entries", () => {
-  const migration = readRepositoryFile("supabase/migrations/202608280001_reconcile_meter_to_admin_orders.sql");
-  const adminSettings = readRepositoryFile("supabase/functions/admin-settings/index.ts");
-  const app = readRepositoryFile("src/app.js");
-  const html = readRepositoryFile("index.html");
-
-  assert.match(migration, /create or replace function public\.reconcile_standard_meter\(\)/);
-  assert.match(migration, /select coalesce\(sum\(amount\), 0\)[\s\S]*from public\.meter_applied_donations/);
-  assert.match(migration, /return public\.reconcile_standard_meter\(\)/);
-  assert.match(migration, /after delete on public\.meter_applied_donations/);
-  assert.match(migration, /select public\.reconcile_standard_meter\(\)/);
-  assert.match(adminSettings, /supabase\.rpc\(\s*"reconcile_standard_meter"/);
-  assert.doesNotMatch(app, /meterCurrentAmount: inputs\.meterCurrentAmount\.value/);
-  assert.match(html, /id="adminMeterCurrentAmount"[^>]*readonly[^>]*aria-readonly="true"/);
-});
-
-test("the fulfillment meter reveals a multicolor circular seedling ring", () => {
-  const html = readRepositoryFile("index.html");
-  const app = readRepositoryFile("src/app.js");
-  const styles = readRepositoryFile("src/styles.css");
-
-  assert.match(html, /id="milestoneProgress"[^>]*role="progressbar"[^>]*aria-valuemax="100"/);
-  assert.match(html, /class="progress-ring-gradient"[\s\S]*id="progressRing"[\s\S]*class="ring-droplet"[\s\S]*id="meterDropletClip"[\s\S]*class="droplet-water"[\s\S]*class="droplet-seed" src="assets\/droplet-seed\.svg"/);
-  assert.match(html, /class="meter-progress-layout"[\s\S]*class="meter-ring-column"[\s\S]*Everyone who puts their faith in Christ will receive a gift in their mail when the seed reaches 100%\.[\s\S]*<strong>Keep Sowing<\/strong>/);
-  assert.match(html, /id="meterCollapsed">\s*Welcome, beloved seeker of love\. 💗\s*<\/p>/);
-  assert.match(html, /id="meterHeadline"><strong>Sow Your Seed<\/strong> <span>with faith,trust and patience💫<\/span>/);
-  assert.match(app, /renderMeterHeadline\(elements\.meterHeadline, settings\.meterHeadline\)/);
-  assert.match(styles, /\.meter-header h2\s*\{[\s\S]*?font-weight: 400;[\s\S]*?\.meter-header h2 strong\s*\{[\s\S]*?font-weight: 800;/);
-  assert.match(styles, /\.donation-meter-card \.show-more-button\s*\{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 400;/);
-  assert.match(app, /setProperty\("--ring-angle", `\$\{boundedPercent \* 3\.6\}deg`\)/);
-  assert.match(app, /setProperty\("--water-level", `\$\{boundedPercent\}%`\)/);
-  assert.match(html, /progress-ring-startcap[\s\S]*progress-ring-endcap/);
-  assert.match(styles, /\.progress-ring-gradient[\s\S]*conic-gradient\([\s\S]*#35bc67[\s\S]*#159fe8[\s\S]*#9852db[\s\S]*#eea90f/);
-  assert.match(styles, /\.progress-ring-cover[\s\S]*transparent 0deg var\(--ring-angle\)[\s\S]*#edecef/);
-  assert.match(styles, /--ring-angle 5200ms[\s\S]*--water-level 5600ms[\s\S]*\.progress-ring-endcap/);
-  assert.match(styles, /@property --water-level[\s\S]*\.droplet-water[\s\S]*translateY\(calc\(100% - var\(--water-level\)\)\)/);
+  assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
 test("failed and cancelled PayPal payments open the seed-not-sown dialog", () => {
@@ -266,7 +197,7 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
-  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.bookAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(\)/);
+  assert.match(app, /\[elements\.alternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(\)/);
   assert.match(app, /setPaymentStatus\("Choose a debit\/credit card or PayPal to continue"\)/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
@@ -277,17 +208,4 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.match(styles, /\.inline-paypal-checkout\.is-loading \.payment-choice\s*\{[\s\S]*opacity: 0/);
   assert.match(styles, /\.paypal-checkout-loader[\s\S]*background: linear-gradient/);
   assert.match(styles, /\.paypal-checkout-loader-seed[\s\S]*animation: app-loader-spin/);
-});
-
-test("1080-wide tutorial opens in a modal and returns to checkout when playback ends", () => {
-  const html = readRepositoryFile("index.html");
-  const app = readRepositoryFile("src/app.js");
-  const videoPath = path.join(repositoryRoot, "assets/how-to-sow-your-seed-1080p.mp4");
-
-  assert.ok(existsSync(videoPath), "tutorial video asset is missing");
-  assert.ok(statSync(videoPath).size > 0, "tutorial video asset is empty");
-  assert.match(html, /id="howToSow"[\s\S]*How To Sow Your Seed/);
-  assert.match(html, /id="tutorialVideo"[\s\S]*width="1080"[\s\S]*height="1844"[\s\S]*how-to-sow-your-seed-1080p\.mp4/);
-  assert.match(app, /tutorialVideo\?\.addEventListener\("ended", \(\) => closeTutorial\(true\)\)/);
-  assert.match(app, /elements\.supportCard\.scrollIntoView/);
 });

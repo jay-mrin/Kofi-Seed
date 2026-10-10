@@ -191,16 +191,6 @@ Deno.serve(async (request) => {
           ).not("id", "is", null);
           if (seedCommentsError) throw seedCommentsError;
 
-          const { error: commentsError } = await applyDateRange(
-            supabase.from("comments").delete(),
-            fromDate,
-            toDate,
-          ).not(
-            "id",
-            "is",
-            null,
-          );
-          if (commentsError) throw commentsError;
         }
 
         if (donationIds.length) {

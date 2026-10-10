@@ -25,18 +25,14 @@ test("PayPal creation rejects a stale SDK route and persists checkout metadata",
   assert.match(source, /sdkRoute !== paymentRoute/);
   assert.match(source, /\.from\("payment_attempts"\)\s*\.insert/);
   assert.match(source, /customer_request: personalizedRequest/);
-  assert.match(source, /supporter_message: book \? `Book order: \$\{book\.title\}` : supporterMessage/);
-  assert.match(source, /product_type: book \? "book" : "personalized_seed_writing"/);
-  assert.match(source, /book && amountCents % MIN_AMOUNT_CENTS !== 0/);
 });
 
-test("book captures remain private from the seed feed and meter", () => {
+test("book captures remain private from the seed feed", () => {
   const capture = read("supabase/functions/capture-paypal-order/index.ts");
   const bootstrap = read("supabase/functions/public-bootstrap/index.ts");
 
   assert.match(capture, /paymentAttempt\.product_type === "book"/);
   assert.match(capture, /paymentRoute === "superadmin" \|\| isBookOrder[\s\S]*ensureSeedComment/);
-  assert.match(capture, /paymentRoute !== "superadmin" && !isBookOrder[\s\S]*applyDonationToMeter/);
   assert.match(bootstrap, /rawPayment\.product\?\.type !== "book"/);
 });
 
@@ -135,4 +131,30 @@ test("checkout analytics combine visits while isolating all payment records by r
   assert.match(migration, /add column if not exists payment_route text/);
   assert.match(roleScopeMigration, /payment_route text primary key/);
   assert.match(roleScopeMigration, /revoke all on table public\.checkout_analytics_state from anon, authenticated/);
+});
+
+test("progress retirement preserves the weekly payment transaction and removes its dependency", () => {
+  const original = read("supabase/migrations/202608290001_weekly_subscriptions.sql");
+  const cleanup = read("supabase/migrations/202610100001_remove_progress_feature.sql");
+  const signature = "create or replace function public.record_weekly_subscription_payment(";
+  const expected = original.slice(original.indexOf(signature)).replace(
+    /  if v_membership\.payment_route = 'standard' then\n    perform public\.apply_standard_donation_to_meter\(v_donation_id, p_amount\);\n  end if;\n\n/,
+    "",
+  );
+  assert.ok(cleanup.startsWith(expected));
+  assert.match(cleanup, /drop table if exists public\.meter_applied_donations;/);
+  assert.match(cleanup, /drop function if exists public\.apply_standard_donation_to_meter\(uuid, numeric\);/);
+  assert.doesNotMatch(cleanup, /drop table[^;]*(?:public\.donations|public\.digital_orders|public\.membership_payments)/);
+});
+
+test("shop retirement rejects new products but recovers existing book payments from stored metadata", () => {
+  const create = read("supabase/functions/create-paypal-order/index.ts");
+  const capture = read("supabase/functions/capture-paypal-order/index.ts");
+  const app = read("src/app.js");
+  assert.match(create, /requestedProductType !== "seed" && requestedProductType !== "personalized_seed_writing"/);
+  assert.ok(create.indexOf('return errorResponse("This product is no longer available."') < create.indexOf("await createPayPalOrder("));
+  assert.match(capture, /paymentAttempt\.product_type === "book"[\s\S]*attemptRawPayment\.product\?\.title[\s\S]*attemptRawPayment\.product\?\.itemName/);
+  assert.doesNotMatch(capture, /getBookProduct|selected book is no longer available/);
+  assert.match(app, /isBookOrder \? "Mark delivered" : "Mark fulfilled"/);
+  assert.match(app, /isBook \? "Delivered by email" : "Fulfilled"/);
 });

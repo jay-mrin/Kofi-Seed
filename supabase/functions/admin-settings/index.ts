@@ -9,19 +9,11 @@ import { requireAdmin } from "../_shared/supabase.ts";
 const ACTIVE_SETTING_KEYS = [
   "profileTitle",
   "followersText",
-  "meterHeadline",
-  "meterCollapsed",
-  "meterExpanded",
   "aboutTitle",
   "aboutCollapsed",
   "aboutExpanded",
   "topicLabel",
   "supportTitle",
-  "postAuthorName",
-  "postTitle",
-  "postBody",
-  "seedGoal",
-  "meterCurrentAmount",
   "seedPrice",
   "blessingWallEnabled",
   "adsenseEnabled",
@@ -47,18 +39,12 @@ function normalizeCheckoutRoute(value: unknown) {
   return value === "superadmin" ? "superadmin" : "standard";
 }
 
-function applyGoalSettings(
+function applySiteSettings(
   existing: Record<string, unknown>,
   submitted: Record<string, unknown>,
 ) {
   const next = { ...existing };
 
-  if (Object.hasOwn(submitted, "seedGoal")) {
-    next.seedGoal = Math.max(
-      Number.parseInt(String(submitted.seedGoal), 10) || 1,
-      1,
-    );
-  }
   if (Object.hasOwn(submitted, "seedPrice")) {
     next.seedPrice = Math.max(
       Number.parseInt(String(submitted.seedPrice), 10) || 7,
@@ -119,7 +105,7 @@ Deno.serve(async (request) => {
         : {}) as Record<string, unknown>;
     const submittedSettings = keepActiveSettings(body.settings);
     const existingSettings = keepActiveSettings(currentSettings);
-    let settingsToSave = applyGoalSettings(existingSettings, submittedSettings);
+    let settingsToSave = applySiteSettings(existingSettings, submittedSettings);
 
     if (adminProfile.role === "super_admin") {
       const checkoutRoute = Object.hasOwn(submittedSettings, "checkoutRoute")
@@ -152,19 +138,14 @@ Deno.serve(async (request) => {
 
     if (error) throw error;
 
-    const { error: meterError } = await supabase.rpc(
-      "reconcile_standard_meter",
-    );
-    if (meterError) throw meterError;
-
-    const { data: reconciled, error: reconciledError } = await supabase
+    const { data: savedSettings, error: savedSettingsError } = await supabase
       .from("site_settings")
       .select("settings")
       .eq("id", true)
       .single();
-    if (reconciledError) throw reconciledError;
+    if (savedSettingsError) throw savedSettingsError;
 
-    return jsonResponse({ settings: reconciled.settings });
+    return jsonResponse({ settings: savedSettings.settings });
   } catch (error) {
     if (error instanceof Response) return error;
     return errorResponse("Could not save admin settings.", 500, String(error));

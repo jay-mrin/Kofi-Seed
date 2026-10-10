@@ -6,9 +6,9 @@
     <meta name="google-adsense-account" content="ca-pub-7086538868392432" />
     <meta
       name="description"
-      content="Seed Garden is a personalised digital-writing and digital-book buying platform with secure online checkout and email delivery."
+      content="Seed Garden is a personalised digital-writing platform with secure online checkout and email delivery."
     />
-    <title>Seed Garden | Personalised Writing &amp; Digital Books</title>
+    <title>Seed Garden | Personalised Writing</title>
     <link rel="icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="shortcut icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=117" />
+    <link rel="stylesheet" href="src/styles.css?v=118" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -212,49 +212,10 @@
           </section>
         </section>
 
-        <section class="admin-section admin-subscriptions-section" aria-labelledby="subscriptionCalendarHeading">
-          <div class="admin-donation-heading subscription-calendar-heading">
-            <div>
-              <h3 id="subscriptionCalendarHeading">2. Weekly subscription calendar</h3>
-              <p>Renewals are scheduled for Monday at 6:00 PM Asia/Kolkata.</p>
-            </div>
-            <div class="subscription-status-filters" role="group" aria-label="Filter weekly subscriptions">
-              <button class="is-selected" type="button" data-subscription-filter="active" aria-pressed="true">Active</button>
-              <button type="button" data-subscription-filter="pending" aria-pressed="false">Pending</button>
-              <button type="button" data-subscription-filter="cancelled" aria-pressed="false">Cancelled</button>
-            </div>
-          </div>
-          <section class="admin-calendar subscription-calendar" aria-labelledby="subscriptionCalendarTitle">
-            <div class="admin-calendar-header">
-              <button class="admin-calendar-nav" id="subscriptionCalendarPrev" type="button" aria-label="Previous subscription month">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
-              </button>
-              <h4 id="subscriptionCalendarTitle">Weekly subscriptions</h4>
-              <button class="admin-calendar-nav" id="subscriptionCalendarNext" type="button" aria-label="Next subscription month">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-              </button>
-            </div>
-            <div class="admin-calendar-weekdays" aria-hidden="true">
-              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-            </div>
-            <div class="admin-calendar-grid" id="subscriptionCalendarGrid" role="grid" aria-label="Weekly subscription dates"></div>
-            <div class="admin-calendar-details subscription-calendar-details" id="subscriptionCalendarDetails" aria-live="polite"></div>
-            <div class="admin-calendar-summary" id="subscriptionCalendarSummary" aria-live="polite"></div>
-          </section>
-        </section>
-
         <div class="admin-right-column">
           <section class="admin-section admin-settings-section">
-            <h3>3. Site settings</h3>
+            <h3>2. Site settings</h3>
             <div class="admin-grid">
-              <label>
-                <span>Goal amount ($)</span>
-                <input id="adminSeedGoal" type="number" min="1" step="1" />
-              </label>
-              <label>
-                <span>Current cycle amount ($) · automatic</span>
-                <input id="adminMeterCurrentAmount" type="number" min="0" step="1" readonly aria-readonly="true" />
-              </label>
               <label>
                 <span>Seed price ($)</span>
                 <input id="adminSeedPrice" type="number" min="7" step="1" />
@@ -330,35 +291,6 @@
 
         </div>
 
-        <section class="admin-section admin-posts-section">
-          <div class="admin-posts-heading">
-            <h3>4. Posts</h3>
-            <p>Publish posts with a title, description, and uploaded photo.</p>
-          </div>
-          <div class="admin-post-editor">
-            <label>
-              <span>Post title</span>
-              <input id="adminNewPostTitle" type="text" maxlength="90" placeholder="A fresh fortune invitation" />
-            </label>
-            <label class="admin-upload-field">
-              <span>Upload photo</span>
-              <input id="adminNewPostImage" type="file" accept="image/*" />
-              <small>Uploads to Supabase Storage when the backend is configured. Local demo mode keeps images in this browser.</small>
-            </label>
-            <div class="admin-upload-preview" id="adminUploadPreview" hidden>
-              <img id="adminUploadPreviewImage" alt="" />
-              <span id="adminUploadFileName"></span>
-            </div>
-            <label class="admin-post-description-field">
-              <span>Description</span>
-              <textarea id="adminNewPostDescription" maxlength="420" placeholder="Write what people will see in the Posts tab."></textarea>
-            </label>
-          </div>
-          <div class="admin-post-actions">
-            <button class="button button-primary" id="adminPublishPostButton" type="button">Publish post</button>
-          </div>
-          <div class="admin-post-list" id="adminPostList" aria-live="polite"></div>
-        </section>
       </form>
     </section>
 
@@ -369,149 +301,64 @@
         </div>
 
         <section class="profile-bar" aria-label="Seed Garden profile">
-          <img class="profile-photo" src="assets/jesus-profile.jpg" width="512" height="512" decoding="async" alt="Illustrated portrait of Jesus Christ" />
           <div class="profile-copy">
             <h1 id="profileTitle">Sow Your Seed 💫</h1>
             <p id="followersText">167 Followers</p>
           </div>
-          <div class="profile-actions">
-            <a class="button button-primary profile-seed-cta" href="#support">
-              <span>Sow Your Seed Today</span>
-              <span aria-hidden="true">🌱</span>
-            </a>
-          </div>
         </section>
 
         <nav class="profile-tabs" aria-label="Seed Garden sections">
-          <a class="active" href="#about" data-section-tab="aboutView">About</a>
-          <a href="#shop" data-section-tab="shopView">Shop</a>
-          <a href="#posts" data-section-tab="postsView">Posts</a>
+          <a class="active" href="#home" data-section-tab="homeView" aria-current="page">Home</a>
+          <a href="#about" data-section-tab="aboutView">About</a>
         </nav>
       </section>
 
-      <section class="app-grid section-view is-active" id="aboutView" data-section-view>
-        <div class="main-stack">
-          <section class="panel impact-panel donation-meter-card collapsible-card" id="impact" aria-label="Order progress">
-            <div class="meter-header">
-              <h2 id="meterHeadline"><strong>Sow Your Seed</strong> <span>with faith,trust and patience💫</span></h2>
-            </div>
+      <section class="section-view is-active" id="homeView" data-section-view aria-label="Home"></section>
 
-            <div class="goal-meter" aria-label="Custom order progress">
-              <div class="meter-progress-layout">
-                <div class="meter-ring-column">
-                  <div class="ring-progress" id="milestoneProgress" role="progressbar" aria-label="Order fulfillment" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <span class="progress-ring-gradient" aria-hidden="true"></span>
-                    <span class="progress-ring-cover" id="progressRing" aria-hidden="true"></span>
-                    <span class="progress-ring-cap progress-ring-startcap" aria-hidden="true"></span>
-                    <span class="progress-ring-cap progress-ring-endcap" aria-hidden="true"></span>
-                    <span class="ring-droplet" aria-hidden="true">
-                      <svg viewBox="0 0 80 96">
-                        <defs>
-                          <clipPath id="meterDropletClip">
-                            <path d="M40 4C34 18 12 38 12 59c0 17 12.5 29 28 29s28-12 28-29C68 38 46 18 40 4Z"></path>
-                          </clipPath>
-                          <linearGradient id="meterWaterGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0" stop-color="#d8f5ff"></stop>
-                            <stop offset="1" stop-color="#78cbed"></stop>
-                          </linearGradient>
-                        </defs>
-                        <path class="droplet-shell" d="M40 4C34 18 12 38 12 59c0 17 12.5 29 28 29s28-12 28-29C68 38 46 18 40 4Z"></path>
-                        <g clip-path="url(#meterDropletClip)">
-                          <g class="droplet-water">
-                            <rect x="8" y="4" width="64" height="84" fill="url(#meterWaterGradient)"></rect>
-                          </g>
-                        </g>
-                        <path class="droplet-outline" d="M40 4C34 18 12 38 12 59c0 17 12.5 29 28 29s28-12 28-29C68 38 46 18 40 4Z"></path>
-                      </svg>
-                      <img class="droplet-seed" src="assets/droplet-seed.svg" width="600" height="970" alt="" />
-                    </span>
-                  </div>
-                  <p class="meter-percent" id="progressPercent">0% Fulfilled</p>
-                </div>
-                <div class="meter-gift-message">
-                  <p>Everyone who puts their faith in Christ will receive a gift in their mail when the seed reaches 100%.</p>
-                  <strong>Keep Sowing</strong>
-                </div>
-              </div>
+      <section class="app-grid section-view" id="aboutView" data-section-view hidden>
+        <section class="panel recent-donations-panel" id="recentSeeds" aria-label="Recent custom orders">
+            <div class="section-heading">
+              <p class="section-kicker">Recent custom orders</p>
             </div>
-
-            <div class="meter-copy collapsible-content" id="meterContent">
-              <p class="collapsed-preview" id="meterCollapsed">
-                Welcome, beloved seeker of love. 💗
-              </p>
-              <div class="expanded-copy" id="meterExpanded">
-                <p>
-                Welcome, beloved seeker of love. 💗 You didn’t arrive by accident. Make an order
-                </p>
-                <p>
-                With every seed you sow you get a personalised mail of your request, prepared with care and intention.
-                🌱💫🌹
-                </p>
-              </div>
-            </div>
-            <button class="show-more-button" type="button" data-toggle-target="meterContent" aria-expanded="false">
-              Show more
-            </button>
+            <div class="recent-donation-list" id="recentDonationList"></div>
           </section>
 
-          <section class="panel about-panel collapsible-card" id="about">
+        <section class="panel about-panel collapsible-card" id="about">
             <h2 id="aboutTitle">About</h2>
             <div class="about-copy collapsible-content" id="aboutContent">
               <p class="collapsed-preview" id="aboutCollapsed">
-                🌱✨ Personalised Writing &amp; Digital Books for Your Journey ✨📖<br />
-                Order a writing made for your request or preview and buy a complete digital book...
+                🌱✨ Personalised Writing for Your Journey ✨📖<br />
+                Order a writing made for your request and delivered by email...
               </p>
               <div class="expanded-copy" id="aboutExpanded">
                 <p>
-                  🌱✨ Personalised Writing &amp; Digital Books for Your Journey ✨📖
+                  🌱✨ Personalised Writing for Your Journey ✨📖
                 </p>
                 <p>
-                  Seed Garden is a personalised writing and digital book-buying platform. Share your prayer, intention,
+                  Seed Garden is a personalised writing platform. Share your prayer, intention,
                   or message to order a heartfelt writing prepared especially for you and delivered by email.
-                </p>
-                <p>
-                  You can also visit the Shop, preview the first five pages of each book, and purchase the complete
-                  digital book for delivery to your email after successful payment.
                 </p>
               </div>
             </div>
             <button class="show-more-button" type="button" data-toggle-target="aboutContent" aria-expanded="false">
               Show more
             </button>
-            <span class="topic-pill" id="topicPill">Writing &amp; digital books</span>
+            <span class="topic-pill" id="topicPill">Personalised writing</span>
           </section>
 
-          <section class="panel recent-donations-panel" id="recentSeeds" aria-label="Recent custom orders">
+        <section class="panel seed-comments-panel" id="seedCommentsPanel" aria-labelledby="seedCommentsTitle">
             <div class="section-heading">
-              <p class="section-kicker">Recent custom orders</p>
+              <p class="section-kicker">Blessing wall</p>
+              <h2 id="seedCommentsTitle">Comments from the community</h2>
             </div>
-            <div class="recent-donation-list" id="recentDonationList"></div>
-          </section>
-        </div>
-
-        <aside class="support-column">
-          <section class="tutorial-invite" id="howToSow" aria-labelledby="howToSowTitle">
-            <div class="tutorial-invite-copy">
-              <span class="tutorial-play-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="m9 7 8 5-8 5V7Z" />
-                </svg>
-              </span>
-              <div>
-                <p class="section-kicker">Quick video tutorial</p>
-                <h2 id="howToSowTitle">See how it works before you begin</h2>
-              </div>
-            </div>
-            <button class="button tutorial-open-button" id="openTutorialButton" type="button" aria-haspopup="dialog" aria-controls="tutorialDialog">
-              How To Sow Your Seed
-            </button>
+            <div class="seed-comments-list" id="seedCommentsList" aria-live="polite"></div>
           </section>
 
-          <section class="donation-card minimal-offering" id="support" aria-labelledby="supportTitle">
+        <section class="donation-card minimal-offering" id="support" aria-labelledby="supportTitle">
             <div class="donation-header">
               <div>
                 <p class="section-kicker">Personalised digital writing</p>
-                <h2 id="supportTitle">Buy a Seed to Sow for the Love You&rsquo;ve Been Waiting For 💗💕</h2>
+                <h2 id="supportTitle">Buy a Seed to Sow for the Love 💗💕</h2>
               </div>
               <span class="secure-pill">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -555,14 +402,6 @@
                 <textarea id="messageInput" maxlength="180" placeholder="Your message (optional)"></textarea>
               </label>
 
-              <label class="weekly-seed-toggle" for="weeklySeedToggle">
-                <input id="weeklySeedToggle" type="checkbox" role="switch" />
-                <span class="weekly-seed-toggle-track" aria-hidden="true">
-                  <span class="weekly-seed-toggle-thumb"></span>
-                </span>
-                <span class="weekly-seed-toggle-label">Sow Seed Every Week</span>
-              </label>
-
               <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
                 <span id="checkoutLabel">Sow Your Seed</span>
               </button>
@@ -596,212 +435,9 @@
               </section>
             </form>
           </section>
-
-          <section class="panel seed-comments-panel" id="seedCommentsPanel" aria-labelledby="seedCommentsTitle">
-            <div class="section-heading">
-              <p class="section-kicker">Blessing wall</p>
-              <h2 id="seedCommentsTitle">Comments from the community</h2>
-            </div>
-            <div class="seed-comments-list" id="seedCommentsList" aria-live="polite"></div>
-          </section>
-
-          <section class="post-stack" aria-label="Seed Garden posts">
-            <div class="post-author">
-              <img src="assets/jesus-profile.jpg" width="512" height="512" loading="lazy" decoding="async" alt="" />
-              <strong id="postAuthorName">Sow Your Seed 💫</strong>
-            </div>
-            <div class="public-posts-list sidebar-posts-list" id="sidebarPostList"></div>
-          </section>
-        </aside>
       </section>
 
-      <section class="section-view shop-view" id="shopView" data-section-view hidden>
-        <section class="shop-shell" aria-labelledby="shopTitle">
-          <div class="shop-heading">
-            <p class="section-kicker">Digital book shop</p>
-            <h2 id="shopTitle">Books for faith, love, and the journey ahead</h2>
-            <p>Read the first five pages, then choose a book to receive the complete PDF by email after payment.</p>
-          </div>
-
-          <div class="book-grid" id="bookGrid">
-            <article class="book-card" data-book-card="love-and-protection">
-              <div class="book-cover-frame">
-                <span class="book-format-badge">Digital PDF</span>
-                <img src="assets/books/love-and-protection-cover.jpg" width="928" height="1200" loading="lazy" decoding="async" alt="Love and Protection book cover" />
-              </div>
-              <div class="book-card-copy">
-                <p class="section-kicker">23-page digital book</p>
-                <h3>Love &amp; Protection</h3>
-                <p>Learning to love with courage and pray with trust.</p>
-                <div class="book-product-meta"><strong>From $7</strong><span>Preview 5 of 23 pages</span></div>
-                <div class="book-card-actions">
-                  <button class="button button-secondary" type="button" data-preview-book="love-and-protection" aria-expanded="false">Preview 5 pages</button>
-                  <button class="button button-primary" type="button" data-buy-book="love-and-protection">Choose book</button>
-                </div>
-              </div>
-              <div class="book-preview" data-book-preview="love-and-protection" hidden>
-                <iframe data-preview-src="assets/books/love-and-protection-preview.pdf#toolbar=0&amp;navpanes=0" title="First five pages of Love and Protection"></iframe>
-                <p>Preview ends after page 5. Purchase the book to receive all 23 pages by email.</p>
-              </div>
-            </article>
-
-            <article class="book-card" data-book-card="my-soulmate">
-              <div class="book-cover-frame">
-                <span class="book-format-badge">Digital PDF</span>
-                <img src="assets/books/my-soulmate-cover.jpg" width="928" height="1200" loading="lazy" decoding="async" alt="My Soulmate book cover" />
-              </div>
-              <div class="book-card-copy">
-                <p class="section-kicker">23-page digital book</p>
-                <h3>My Soulmate</h3>
-                <p>Seeking a loving partnership with faith and discernment.</p>
-                <div class="book-product-meta"><strong>From $7</strong><span>Preview 5 of 23 pages</span></div>
-                <div class="book-card-actions">
-                  <button class="button button-secondary" type="button" data-preview-book="my-soulmate" aria-expanded="false">Preview 5 pages</button>
-                  <button class="button button-primary" type="button" data-buy-book="my-soulmate">Choose book</button>
-                </div>
-              </div>
-              <div class="book-preview" data-book-preview="my-soulmate" hidden>
-                <iframe data-preview-src="assets/books/my-soulmate-preview.pdf#toolbar=0&amp;navpanes=0" title="First five pages of My Soulmate"></iframe>
-                <p>Preview ends after page 5. Purchase the book to receive all 23 pages by email.</p>
-              </div>
-            </article>
-
-            <article class="book-card" data-book-card="jesus-and-love">
-              <div class="book-cover-frame">
-                <span class="book-format-badge">Digital PDF</span>
-                <img src="assets/books/jesus-and-love-cover.jpg" width="927" height="1200" loading="lazy" decoding="async" alt="Jesus and Love book cover" />
-              </div>
-              <div class="book-card-copy">
-                <p class="section-kicker">23-page digital book</p>
-                <h3>Jesus &amp; Love</h3>
-                <p>Receiving the love of Christ and learning to live it.</p>
-                <div class="book-product-meta"><strong>From $7</strong><span>Preview 5 of 23 pages</span></div>
-                <div class="book-card-actions">
-                  <button class="button button-secondary" type="button" data-preview-book="jesus-and-love" aria-expanded="false">Preview 5 pages</button>
-                  <button class="button button-primary" type="button" data-buy-book="jesus-and-love">Choose book</button>
-                </div>
-              </div>
-              <div class="book-preview" data-book-preview="jesus-and-love" hidden>
-                <iframe data-preview-src="assets/books/jesus-and-love-preview.pdf#toolbar=0&amp;navpanes=0" title="First five pages of Jesus and Love"></iframe>
-                <p>Preview ends after page 5. Purchase the book to receive all 23 pages by email.</p>
-              </div>
-            </article>
-          </div>
-
-          <section class="book-checkout" id="bookCheckout" aria-labelledby="bookCheckoutTitle" hidden>
-            <div class="book-checkout-selection">
-              <img id="bookCheckoutCover" src="assets/books/love-and-protection-cover.jpg" width="928" height="1200" alt="" />
-              <div>
-                <p class="section-kicker">Selected digital book</p>
-                <h2 id="bookCheckoutTitle">Love &amp; Protection</h2>
-                <p id="bookCheckoutDescription">The complete PDF will be delivered to your email after successful payment.</p>
-              </div>
-              <span class="secure-pill">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-5" /></svg>
-                Secure
-              </span>
-            </div>
-
-            <form class="minimal-offering-form book-order-form" id="bookOrderForm" novalidate>
-              <div class="seed-quantity-row" aria-label="Book payment amount">
-                <label class="compact-amount-field">
-                  <span class="visually-hidden">Book payment amount</span>
-                  <span aria-hidden="true">$</span>
-                  <input id="bookAmountInput" type="number" min="7" step="7" value="7" inputmode="numeric" aria-describedby="bookAmountError" />
-                </label>
-                <button class="seed-stepper-button" id="decreaseBookAmountButton" type="button" aria-label="Decrease book payment">−</button>
-                <div class="seed-price book-price"><span aria-hidden="true">📖</span><strong id="bookPriceLabel">$7 Book</strong></div>
-                <button class="seed-stepper-button seed-stepper-button-plus" id="increaseBookAmountButton" type="button" aria-label="Increase book payment">+</button>
-              </div>
-              <small id="bookAmountError" class="error-message compact-amount-error"></small>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Email for book delivery</span>
-                <input id="bookEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email for book delivery" aria-describedby="bookEmailError" required />
-                <small id="bookEmailError" class="error-message"></small>
-              </label>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Name</span>
-                <input id="bookNameInput" type="text" placeholder="Name (optional)" maxlength="48" autocomplete="name" />
-              </label>
-
-              <label class="field minimal-text-field textarea-field">
-                <span class="visually-hidden">Your message</span>
-                <textarea id="bookMessageInput" maxlength="180" placeholder="Your message (optional)"></textarea>
-              </label>
-
-              <button class="button button-primary checkout-button" id="bookCheckoutButton" type="submit" aria-expanded="false" aria-controls="bookInlinePaypalCheckout">
-                <span id="bookCheckoutLabel">Buy Love &amp; Protection</span>
-              </button>
-
-              <section class="inline-paypal-checkout" id="bookInlinePaypalCheckout" aria-label="Book PayPal checkout" hidden>
-                <p class="payment-status" id="bookPaymentStatus" role="status" aria-live="polite" hidden></p>
-                <div class="paypal-checkout-loader" id="bookPaypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure book checkout" hidden>
-                  <span class="paypal-checkout-loader-seed" aria-hidden="true">📖</span>
-                  <span>Preparing your book…</span>
-                </div>
-                <div class="payment-choice card-choice" id="bookCardButton">
-                  <span>Alternate debit or credit card</span>
-                  <small class="preferred-payment-label">Preferred</small>
-                  <a class="alternate-card-link" id="bookAlternateCardCheckoutLink" href="https://sowseed-receiver-seed-alternate-server.vercel.app/" aria-label="Open book debit or credit card checkout popup" aria-haspopup="dialog" aria-controls="alternateCheckoutDialog">Debit or Credit Card</a>
-                </div>
-                <div class="payment-choice paypal-choice" id="bookPaypalButton">
-                  <span>PayPal</span>
-                  <div class="paypal-button-slot" id="bookPaypalButtonContainer"></div>
-                </div>
-                <div class="payment-choice paypal-card-choice" id="bookPaypalCardButton">
-                  <span>PayPal debit or credit card</span>
-                  <div class="paypal-button-slot" id="bookPaypalCardButtonContainer"></div>
-                </div>
-              </section>
-            </form>
-          </section>
-        </section>
-      </section>
-
-      <section class="section-view posts-view" id="postsView" data-section-view hidden>
-        <section class="panel posts-panel" id="posts" aria-labelledby="postsTitle">
-          <div class="section-heading">
-            <p class="section-kicker">Posts</p>
-            <h2 id="postsTitle">Latest posts</h2>
-          </div>
-          <div class="public-posts-list full-posts-list" id="postsPageList"></div>
-        </section>
-      </section>
     </main>
-
-    <dialog class="tutorial-dialog" id="tutorialDialog" aria-labelledby="tutorialDialogTitle">
-      <div class="tutorial-dialog-card">
-        <div class="tutorial-dialog-heading">
-          <div>
-            <p class="section-kicker">1080p tutorial</p>
-            <h2 id="tutorialDialogTitle">How To Sow Your Seed</h2>
-          </div>
-          <button class="icon-button tutorial-close-button" id="closeTutorialButton" type="button" aria-label="Close tutorial">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
-          </button>
-        </div>
-        <div class="tutorial-video-frame">
-          <video
-            class="tutorial-video"
-            id="tutorialVideo"
-            width="1080"
-            height="1844"
-            controls
-            playsinline
-            preload="metadata"
-            aria-label="How To Sow Your Seed video tutorial"
-          >
-            <source src="assets/how-to-sow-your-seed-1080p.mp4" type="video/mp4" />
-            Your browser does not support the tutorial video.
-          </video>
-        </div>
-        <p class="tutorial-dialog-note">When the tutorial finishes, you&rsquo;ll return to the Sow Your Seed form.</p>
-      </div>
-    </dialog>
 
     <dialog class="alternate-checkout-dialog" id="alternateCheckoutDialog" aria-labelledby="alternateCheckoutTitle">
       <div class="alternate-checkout-card">
@@ -877,7 +513,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <footer class="footer">
-      <p>Seed Garden is a personalised digital-writing and digital-book buying platform. Custom writings are prepared from the buyer&rsquo;s request, while complete purchased books are delivered electronically by email.</p>
       <nav class="footer-links" aria-label="Legal and information links">
         <a href="about-us.html">About Us</a>
         <span aria-hidden="true">·</span>
@@ -887,11 +522,10 @@
         <span aria-hidden="true">·</span>
         <a href="delivery-fulfillment-policy.html">Delivery &amp; Fulfillment Policy</a>
       </nav>
-      <p class="footer-contact">Contact: <a href="mailto:sowyourseed@christgarden.church">sowyourseed@christgarden.church</a></p>
     </footer>
 
     <script src="src/config.js?v=3"></script>
     <script src="src/adsense.js?v=1" data-adsense-mode="app" defer></script>
-    <script src="src/app.js?v=108" defer></script>
+    <script src="src/app.js?v=109" defer></script>
   </body>
 </html>

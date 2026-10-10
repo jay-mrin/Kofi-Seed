@@ -14,7 +14,6 @@ import {
   parseMoneyToCents,
   PayPalApiError,
 } from "../_shared/paypal.ts";
-import { getBookProduct } from "../_shared/products.ts";
 import {
   createRandomToken,
   getSupabaseAdmin,
@@ -214,24 +213,6 @@ async function ensureSeedComment(
   return created;
 }
 
-async function applyDonationToMeter(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  donationId: string,
-  amount: number,
-) {
-  const { data, error } = await supabase.rpc(
-    "apply_standard_donation_to_meter",
-    {
-      p_donation_id: donationId,
-      p_amount: amount,
-    },
-  );
-
-  if (error) throw error;
-
-  return Number(data) || 0;
-}
-
 Deno.serve(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
@@ -302,13 +283,6 @@ Deno.serve(async (request) => {
             seedCountFromAmount(Number(existing.amount) || 0),
           createdAt: existing.created_at,
         });
-      const meterCurrentAmount = paymentRoute === "superadmin" || isBookOrder
-        ? undefined
-        : await applyDonationToMeter(
-          supabase,
-          existing.id,
-          Number(existing.amount) || 0,
-        );
       const { error: attemptUpdateError } = await supabase
         .from("payment_attempts")
         .update({
@@ -329,7 +303,6 @@ Deno.serve(async (request) => {
         digitalOrder: mapDigitalOrder(digitalOrder),
         seedComment: seedComment ? mapSeedComment(seedComment) : null,
         donorAccessToken: null,
-        meterCurrentAmount,
         paymentRoute,
         productType: isBookOrder ? "book" : "seed",
         duplicate: true,
@@ -363,11 +336,12 @@ Deno.serve(async (request) => {
         ? paymentAttempt.raw_payment
         : {};
     const book = paymentAttempt.product_type === "book"
-      ? getBookProduct(paymentAttempt.product_id)
+      ? {
+        id: paymentAttempt.product_id,
+        title: String(attemptRawPayment.product?.title || "Purchased book"),
+        itemName: String(attemptRawPayment.product?.itemName || "Digital Book - Purchased book"),
+      }
       : null;
-    if (paymentAttempt.product_type === "book" && !book) {
-      return errorResponse("The selected book is no longer available.", 422);
-    }
     const isBookOrder = Boolean(book);
     const itemName = book?.itemName || DIGITAL_ORDER_ITEM_NAME;
 
@@ -601,15 +575,6 @@ Deno.serve(async (request) => {
       .eq("paypal_order_id", orderId);
     if (attemptConfirmError) throw attemptConfirmError;
 
-    let meterCurrentAmount = undefined;
-    if (paymentRoute !== "superadmin" && !isBookOrder) {
-      meterCurrentAmount = await applyDonationToMeter(
-        supabase,
-        donation.id,
-        capturedAmount,
-      );
-    }
-
     return jsonResponse({
       donation: {
         ...donation,
@@ -619,7 +584,6 @@ Deno.serve(async (request) => {
       digitalOrder: mapDigitalOrder(digitalOrder),
       seedComment: seedComment ? mapSeedComment(seedComment) : null,
       donorAccessToken: rawDonorToken,
-      meterCurrentAmount,
       paymentRoute,
       productType: isBookOrder ? "book" : "seed",
       product: book ? { id: book.id, title: book.title, itemName } : null,

@@ -24,9 +24,6 @@ verify_jwt = true
 [functions.admin-settings]
 verify_jwt = true
 
-[functions.admin-posts]
-verify_jwt = true
-
 [functions.admin-donations]
 verify_jwt = true
 
@@ -37,7 +34,4 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.track-checkout-event]
-verify_jwt = false
-
-[functions.post-engagement]
 verify_jwt = false
