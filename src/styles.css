@@ -3733,3 +3733,32 @@ legend::after {
   .dodo-checkout-summary { grid-template-columns: 1fr; }
   .dodo-quantity-control { grid-column: 1; }
 }
+
+.home-books-preview { width: min(940px, 100%); margin: 38px auto 0; }
+.home-books-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin: 0 0 16px; }
+.home-books-heading .section-kicker { margin: 0 0 4px; }
+.home-books-heading h2 { margin: 0; color: var(--ink); font-size: clamp(20px, 3vw, 27px); font-weight: 800; }
+.home-books-explore { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; color: #d7239c; font-size: 14px; font-weight: 800; text-decoration: none; }
+.home-books-explore:hover { color: #a81b79; }
+.home-books-carousel { display: flex; gap: 14px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 2px 13px; scroll-snap-type: x mandatory; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.home-book-slide { flex: 0 0 clamp(130px, 17vw, 175px); min-width: 0; overflow: hidden; border: 1px solid #eadfe7; border-radius: 14px; background: rgba(255,255,255,.88); box-shadow: 0 8px 20px rgba(40,24,36,.06); scroll-snap-align: start; }
+.home-book-slide img { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: contain; background: #eee8e1; }
+.home-book-slide h3 { display: -webkit-box; min-height: 42px; margin: 0; padding: 10px 11px; overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 700; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+@media (max-width: 600px) {
+  .home-books-preview { margin-top: 28px; }
+  .home-books-heading { align-items: center; }
+  .home-books-heading h2 { font-size: 20px; }
+  .home-books-explore { font-size: 12px; }
+  .home-book-slide { flex-basis: 140px; }
+}
+.dodo-message-field textarea { width: 100%; min-height: 120px; resize: vertical; padding: 15px 18px; border: 1px solid #e6dce4; border-radius: 14px; outline: none; background: #fff; color: #272127; font: 500 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-message-field textarea:focus { border-color: #f832b8; box-shadow: 0 0 0 3px rgba(248,50,184,.12); }
+.dodo-message-field textarea::placeholder { color: #ae8d92; }
+.dodo-message-field > span small { color: #77717a; font: 500 12px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.what-is-seed { width: min(940px, 100%); margin: 15px auto 0; padding: 0 17px; border: 1px solid rgba(248,50,184,.18); border-radius: 16px; background: rgba(255,255,255,.7); }
+.what-is-seed summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; color: var(--ink); font-size: 14px; font-weight: 800; list-style: none; cursor: pointer; }
+.what-is-seed summary::-webkit-details-marker { display: none; }
+.what-is-seed-chevron { color: #d7239c; font-size: 20px; transition: transform .2s ease; }
+.what-is-seed[open] .what-is-seed-chevron { transform: rotate(180deg); }
+.what-is-seed-copy { padding: 0 0 12px; color: #62565d; font-size: 13px; line-height: 1.6; }
+.what-is-seed-copy p { margin: 7px 0 0; }
