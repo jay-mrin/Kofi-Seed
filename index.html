@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="google-adsense-account" content="ca-pub-7086538868392432" />
     <meta
       name="description"
       content="Seed Garden is a personalised digital-writing platform with secure online checkout and email delivery."
@@ -19,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=118" />
+    <link rel="stylesheet" href="src/styles.css?v=127" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -114,60 +113,7 @@
       <div class="admin-status" id="adminActionStatus" role="status" aria-live="polite" hidden></div>
 
       <form class="admin-form admin-portal-grid" id="adminForm">
-        <section class="admin-section admin-super-checkout-section" id="adminSuperCheckoutSection" hidden>
-          <div class="admin-super-checkout-heading">
-            <div>
-              <h3>Payment routing</h3>
-              <p>Choose the PayPal collection account and optionally route payments of $21 or more to SuperAdmin.</p>
-            </div>
-            <button class="button button-primary" id="saveCheckoutRouteButton" type="button">Save routing</button>
-          </div>
-          <div class="checkout-route-options" role="radiogroup" aria-label="Default PayPal collection account">
-            <button class="checkout-route-option" type="button" data-checkout-route="standard" role="radio" aria-checked="true">
-              <span>Admin</span>
-              <small>Send payments to the Admin PayPal account.</small>
-            </button>
-            <button class="checkout-route-option" type="button" data-checkout-route="superadmin" role="radio" aria-checked="false">
-              <span>SuperAdmin</span>
-              <small>Send payments to the SuperAdmin PayPal account.</small>
-            </button>
-          </div>
-          <div class="checkout-routing-override" aria-label="Payment routing override">
-            <label class="admin-toggle checkout-routing-toggle">
-              <input id="superAdminHighPaymentEnabled" type="checkbox" />
-              <span>
-                <strong>Route payments of $21 or more to SuperAdmin</strong>
-                When enabled, every PayPal payment of at least $21 goes to SuperAdmin regardless of the default selection.
-              </span>
-            </label>
-          </div>
-          <div class="superadmin-purge">
-            <h4>Erase all payment records</h4>
-            <p>Choose a date range and whether public page comments should also be removed.</p>
-            <div class="superadmin-purge-grid">
-              <label>
-                <span>From date</span>
-                <input id="purgeFromDate" type="date" />
-              </label>
-              <label>
-                <span>To date</span>
-                <input id="purgeToDate" type="date" />
-              </label>
-            </div>
-            <fieldset class="superadmin-purge-options">
-              <legend>Public comments</legend>
-              <label>
-                <input name="purgeCommentsMode" type="radio" value="keep" checked />
-                <span>Erase payment records only</span>
-              </label>
-              <label>
-                <input name="purgeCommentsMode" type="radio" value="remove" />
-                <span>Erase payment records and public comments</span>
-              </label>
-            </fieldset>
-            <button class="button button-danger" id="purgeAllOrdersButton" type="button">Erase all records</button>
-          </div>
-        </section>
+
 
         <section class="admin-section admin-donations">
           <div class="admin-donation-heading">
@@ -228,67 +174,90 @@
                 Show or hide the public community blessing comments section.
               </span>
             </label>
-            <label class="admin-toggle">
-              <input id="adminAdsenseEnabled" type="checkbox" />
-              <span>
-                <strong>Google AdSense</strong>
-                Load AdSense on public site pages. Changes apply to new page loads.
-              </span>
-            </label>
             <div class="admin-actions">
               <button class="button button-primary" id="saveAdminButton" type="submit">Save site settings</button>
             </div>
           </section>
 
           <section class="admin-section admin-analytics-section">
-            <div class="admin-analytics-heading">
-              <div>
-                <h3 id="adminAnalyticsTitle">3. Admin checkout activity</h3>
-                <p id="adminAnalyticsDescription">All page visits and Admin checkout activity from the last 24 hours. Payment records are private to this account.</p>
-              </div>
-              <button class="button button-secondary admin-analytics-reset-button" id="resetAdminAnalyticsButton" type="button">
-                Reset data
-              </button>
-            </div>
-            <div class="admin-analytics-grid">
-              <article class="admin-page-views-card">
-                <span>No. of page visits</span>
-                <div class="admin-analytics-value-row">
-                  <strong id="adminPageViews24h">0</strong>
-                  <button
-                    class="admin-page-view-minus"
-                    id="decrementPageViewButton"
-                    type="button"
-                    aria-label="Subtract one page view"
-                    title="Subtract one page view"
-                    hidden
-                  >−</button>
+            <details class="admin-analytics-details">
+              <summary class="admin-analytics-summary">
+                <span><strong id="adminAnalyticsTitle">3. Admin checkout activity</strong><small>Page visits, checkout activity, and payment history</small></span>
+                <span class="analytics-chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="admin-analytics-content">
+                <div class="admin-analytics-heading">
+                  <p id="adminAnalyticsDescription">All page visits and Admin checkout activity from the last 24 hours. Payment records are private to this account.</p>
+                  <button class="button button-secondary admin-analytics-reset-button" id="resetAdminAnalyticsButton" type="button">Reset data</button>
                 </div>
-                <small id="adminPageViewsLabel">All checkout-route views last 24 hours</small>
-              </article>
-              <article>
-                <span>No. who started payment</span>
-                <strong id="adminPaymentStarts24h">0</strong>
-                <small id="adminPaymentStartsLabel">Persisted Admin checkout attempts</small>
-              </article>
-              <article>
-                <span>No. of payments completed</span>
-                <strong id="adminPaymentsCompleted24h">0</strong>
-                <small id="adminPaymentsCompletedLabel">Server-verified Admin payments</small>
-              </article>
-            </div>
-            <div class="admin-payment-attempts">
-              <div class="admin-payment-attempts-heading">
-                <h4>People who started payment</h4>
-                <span>Name, email, amount, and completion status</span>
+                <div class="admin-analytics-grid">
+                  <article class="admin-page-views-card">
+                    <span>No. of page visits</span>
+                    <div class="admin-analytics-value-row">
+                      <strong id="adminPageViews24h">0</strong>
+                      <button class="admin-page-view-minus" id="decrementPageViewButton" type="button" aria-label="Subtract one page view" title="Subtract one page view" hidden>−</button>
+                    </div>
+                    <small id="adminPageViewsLabel">All checkout-route views last 24 hours</small>
+                  </article>
+                  <article>
+                    <span>No. who started payment</span>
+                    <strong id="adminPaymentStarts24h">0</strong>
+                    <small id="adminPaymentStartsLabel">Persisted Admin checkout attempts</small>
+                  </article>
+                  <article>
+                    <span>No. of payments completed</span>
+                    <strong id="adminPaymentsCompleted24h">0</strong>
+                    <small id="adminPaymentsCompletedLabel">Server-verified Admin payments</small>
+                  </article>
+                </div>
+                <div class="admin-payment-attempts">
+                  <div class="admin-payment-attempts-heading">
+                    <h4>People who started payment</h4>
+                    <span>Name, email, amount, and completion status</span>
+                  </div>
+                  <div class="admin-payment-attempt-list" id="adminPaymentAttemptList" aria-live="polite">
+                    <p class="admin-payment-attempt-empty">No Admin payment attempts in this window.</p>
+                  </div>
+                </div>
+                <p class="admin-analytics-updated" id="adminAnalyticsUpdated">Waiting for analytics...</p>
               </div>
-              <div class="admin-payment-attempt-list" id="adminPaymentAttemptList" aria-live="polite">
-                <p class="admin-payment-attempt-empty">No Admin payment attempts in this window.</p>
-              </div>
-            </div>
-            <p class="admin-analytics-updated" id="adminAnalyticsUpdated">Waiting for analytics...</p>
+            </details>
           </section>
 
+        <section class="admin-section admin-super-checkout-section" id="adminSuperCheckoutSection" hidden>
+          <details class="checkout-routing-details">
+            <summary class="admin-super-checkout-heading">
+              <span class="checkout-routing-summary-copy">
+                <strong>Payment routing</strong>
+                <small>Choose where PayPal payments are collected</small>
+              </span>
+              <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="checkout-routing-content">
+              <p class="checkout-routing-description">Choose the PayPal collection account and optionally route payments of $21 or more to SuperAdmin.</p>
+              <div class="checkout-route-options" role="radiogroup" aria-label="Default PayPal collection account">
+                <button class="checkout-route-option" type="button" data-checkout-route="standard" role="radio" aria-checked="true">
+                  <span>Admin</span>
+                  <small>Send payments to the Admin PayPal account.</small>
+                </button>
+                <button class="checkout-route-option" type="button" data-checkout-route="superadmin" role="radio" aria-checked="false">
+                  <span>SuperAdmin</span>
+                  <small>Send payments to the SuperAdmin PayPal account.</small>
+                </button>
+              </div>
+              <div class="checkout-routing-override" aria-label="Payment routing override">
+                <label class="admin-toggle checkout-routing-toggle">
+                  <input id="superAdminHighPaymentEnabled" type="checkbox" />
+                  <span>
+                    <strong>Route payments of $21 or more to SuperAdmin</strong>
+                    When enabled, every PayPal payment of at least $21 goes to SuperAdmin regardless of the default selection.
+                  </span>
+                </label>
+              </div>
+              <button class="button button-primary" id="saveCheckoutRouteButton" type="button">Save routing</button>
+            </div>
+          </details>
+        </section>
         </div>
 
       </form>
@@ -309,11 +278,204 @@
 
         <nav class="profile-tabs" aria-label="Seed Garden sections">
           <a class="active" href="#home" data-section-tab="homeView" aria-current="page">Home</a>
+          <a href="#library" data-section-tab="libraryView">Library</a>
           <a href="#about" data-section-tab="aboutView">About</a>
         </nav>
       </section>
 
-      <section class="section-view is-active" id="homeView" data-section-view aria-label="Home"></section>
+      <section class="section-view is-active home-welcome" id="homeView" data-section-view aria-labelledby="welcomeTitle">
+        <p class="section-kicker">Welcome to Christgarden</p>
+        <h2 id="welcomeTitle">Stories for the seasons of life.</h2>
+        <p>Find a little hope, wonder, and meaning in a story made to stay with you.</p>
+        <a class="button button-primary" href="#library" data-section-tab="libraryView">Explore the bookshelf</a>
+      </section>
+
+      <section class="section-view shop-gallery" id="libraryView" data-section-view aria-label="Book collections" hidden>
+        <h2 class="shop-collection-title">Christgarden Bookshelf</h2>
+        <section class="shop-series shop-series-blue" aria-labelledby="series-blue">
+          <header class="shop-series-heading"><div><h3 id="series-blue">Whispers of Grace</h3><p>The Faith &amp; Promise Collection</p></div><span>4 books</span></header>
+          <div class="shop-book-grid">
+          <article class="shop-book">
+            <img src="assets/books/a-prayer-between-seasons.jpg" alt="A Prayer Between Seasons book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>A Prayer Between Seasons</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Prayer Between Seasons">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/grace-in-the-waiting-room.jpg" alt="Grace in the Waiting Room book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Grace in the Waiting Room</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Grace in the Waiting Room">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-chapel-of-open-doors.jpg" alt="The Chapel of Open Doors book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Chapel of Open Doors</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Chapel of Open Doors">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-mustard-seed-promise.jpg" alt="The Mustard Seed Promise book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Mustard Seed Promise</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Mustard Seed Promise">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          </div>
+        </section>
+        <section class="shop-series shop-series-peach" aria-labelledby="series-peach">
+          <header class="shop-series-heading"><div><h3 id="series-peach">Of Little Things &amp; Passing Days</h3><p>The Quiet Stories Collection</p></div><span>7 books</span></header>
+          <div class="shop-book-grid">
+          <article class="shop-book">
+            <img src="assets/books/a-map-of-small-kindnesses.jpg" alt="A Map of Small Kindnesses book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>A Map of Small Kindnesses</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Map of Small Kindnesses">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/paper-boats-in-june.jpg" alt="Paper Boats in June book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Paper Boats in June</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Paper Boats in June">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-lantern-at-low-tide.jpg" alt="The Lantern at Low Tide book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Lantern at Low Tide</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Lantern at Low Tide">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-last-blue-bicycle.jpg" alt="The Last Blue Bicycle book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Last Blue Bicycle</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Last Blue Bicycle">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-orchard-after-rain.jpg" alt="The Orchard After Rain book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Orchard After Rain</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Orchard After Rain">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-window-garden.jpg" alt="The Window Garden book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Window Garden</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Window Garden">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/when-the-clockmaker-smiled.jpg" alt="When the Clockmaker Smiled book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>When the Clockmaker Smiled</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get When the Clockmaker Smiled">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          </div>
+        </section>
+        <section class="shop-series shop-series-grey" aria-labelledby="series-grey">
+          <header class="shop-series-heading"><div><h3 id="series-grey">The Stories We Leave Behind</h3><p>An Anthology of Ordinary Lives</p></div><span>10 books</span></header>
+          <div class="shop-book-grid">
+          <article class="shop-book">
+            <img src="assets/books/a-kitchen-full-of-history.jpg" alt="A Kitchen Full of History book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>A Kitchen Full of History</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Kitchen Full of History">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/hands-that-built-the-morning.jpg" alt="Hands That Built the Morning book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Hands That Built the Morning</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Hands That Built the Morning">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/letters-from-the-monsoon.jpg" alt="Letters from the Monsoon book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Letters from the Monsoon</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Letters from the Monsoon">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/midnight-radio-diaries.jpg" alt="Midnight Radio Diaries book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Midnight Radio Diaries</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Midnight Radio Diaries">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/notes-from-a-quiet-classroom.jpg" alt="Notes from a Quiet Classroom book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Notes from a Quiet Classroom</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Notes from a Quiet Classroom">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/portraits-of-the-night-train.jpg" alt="Portraits of the Night Train book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Portraits of the Night Train</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Portraits of the Night Train">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/seeds-beneath-concrete.jpg" alt="Seeds Beneath Concrete book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Seeds Beneath Concrete</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Seeds Beneath Concrete">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-language-of-clay.jpg" alt="The Language of Clay book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Language of Clay</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Language of Clay">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/the-memory-of-rivers.jpg" alt="The Memory of Rivers book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Memory of Rivers</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Memory of Rivers">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book">
+            <img src="assets/books/thirty-steps-to-the-sea.jpg" alt="Thirty Steps to the Sea book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Thirty Steps to the Sea</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Thirty Steps to the Sea">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          </div>
+        </section>
+      </section>
 
       <section class="app-grid section-view" id="aboutView" data-section-view hidden>
         <section class="panel recent-donations-panel" id="recentSeeds" aria-label="Recent custom orders">
@@ -525,7 +687,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/adsense.js?v=1" data-adsense-mode="app" defer></script>
     <script src="src/app.js?v=109" defer></script>
+    <script src="src/shop-gallery.js?v=2" defer></script>
   </body>
 </html>

@@ -112,46 +112,22 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   assert.match(styles, /\.payment-failure-card\s*\{[\s\S]*linear-gradient\(180deg, #1c1720 0%, #0f0c12 100%\)/);
 });
 
-test("Google AdSense is controlled by the persisted admin setting on every content page", () => {
-  const app = readRepositoryFile("src/app.js");
-  const adsense = readRepositoryFile("src/adsense.js");
-  const adminSettings = readRepositoryFile("supabase/functions/admin-settings/index.ts");
-  const migration = readRepositoryFile("supabase/migrations/202608250001_add_adsense_toggle.sql");
-  const adsText = readRepositoryFile("ads.txt").trim();
-  const contentPages = [
+test("Google AdSense has been removed from active pages and settings", () => {
+  const pages = [
     "index.html",
     "about-us.html",
     "terms-and-conditions.html",
     "privacy-policy.html",
     "delivery-fulfillment-policy.html",
   ];
-
-  assert.match(adsense, /ca-pub-7086538868392432/);
-  assert.match(adsense, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=/);
-  assert.match(adsense, /script\.async = true/);
-  assert.match(adsense, /script\.crossOrigin = "anonymous"/);
-  assert.match(adsense, /payload\.settings\?\.adsenseEnabled/);
-  assert.match(adsense, /catch \(error\) \{\s*setEnabled\(false\)/);
-
-  for (const page of contentPages) {
+  for (const page of pages) {
     const html = readRepositoryFile(page);
-    assert.match(
-      html,
-      /<meta name="google-adsense-account" content="ca-pub-7086538868392432" \/>/,
-      `${page} must expose the static AdSense verification meta tag`,
-    );
-    assert.match(html, /src="src\/config\.js\?v=3"/, `${page} must load public configuration`);
-    assert.match(html, /src="src\/adsense\.js\?v=1"/, `${page} must load the conditional AdSense controller`);
+    assert.doesNotMatch(html, /adsense|google-adsense|ca-pub/i);
   }
-
-  assert.match(readRepositoryFile("index.html"), /id="adminAdsenseEnabled"/);
-  assert.match(app, /adsenseEnabled: true/);
-  assert.match(app, /adminAdsenseEnabled: document\.querySelector\("#adminAdsenseEnabled"\)/);
-  assert.match(app, /SeedGardenAdsense\?\.setEnabled\(settings\.adsenseEnabled\)/);
-  assert.match(adminSettings, /"adsenseEnabled"/);
-  assert.match(adminSettings, /next\.adsenseEnabled = isEnabled\(submitted\.adsenseEnabled\)/);
-  assert.match(migration, /'\{adsenseEnabled\}'[\s\S]*'true'::jsonb/);
-  assert.equal(adsText, "google.com, pub-7086538868392432, DIRECT, f08c47fec0942fa0");
+  assert.doesNotMatch(readRepositoryFile("src/app.js"), /adsense|SeedGardenAdsense/i);
+  assert.doesNotMatch(readRepositoryFile("supabase/functions/admin-settings/index.ts"), /adsense/i);
+  assert.equal(existsSync(path.join(repositoryRoot, "src/adsense.js")), false);
+  assert.equal(existsSync(path.join(repositoryRoot, "ads.txt")), false);
 });
 
 test("optimized page images stay within the initial transfer budget", () => {

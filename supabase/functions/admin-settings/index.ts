@@ -16,7 +16,6 @@ const ACTIVE_SETTING_KEYS = [
   "supportTitle",
   "seedPrice",
   "blessingWallEnabled",
-  "adsenseEnabled",
   "checkoutRoute",
   "highPaymentSuperAdminEnabled",
 ] as const;
@@ -54,9 +53,6 @@ function applySiteSettings(
   if (Object.hasOwn(submitted, "blessingWallEnabled")) {
     next.blessingWallEnabled = submitted.blessingWallEnabled !== false &&
       submitted.blessingWallEnabled !== "false";
-  }
-  if (Object.hasOwn(submitted, "adsenseEnabled")) {
-    next.adsenseEnabled = isEnabled(submitted.adsenseEnabled);
   }
 
   return next;

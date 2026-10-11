@@ -149,7 +149,6 @@ const DEFAULT_SETTINGS = {
   topicLabel: "Personalised writing",
   supportTitle: MINIMAL_SUPPORT_TITLE,
   blessingWallEnabled: true,
-  adsenseEnabled: true,
   checkoutRoute: "standard",
   highPaymentSuperAdminEnabled: false,
 };
@@ -192,7 +191,6 @@ const elements = {
   aboutExpanded: document.querySelector("#aboutExpanded"),
   aboutTitle: document.querySelector("#aboutTitle"),
   adminActionStatus: document.querySelector("#adminActionStatus"),
-  adminAdsenseEnabled: document.querySelector("#adminAdsenseEnabled"),
   adminAnalyticsDescription: document.querySelector("#adminAnalyticsDescription"),
   adminAnalyticsTitle: document.querySelector("#adminAnalyticsTitle"),
   adminAnalyticsUpdated: document.querySelector("#adminAnalyticsUpdated"),
@@ -279,10 +277,6 @@ const elements = {
   topicPill: document.querySelector("#topicPill"),
   checkoutRouteOptions: document.querySelectorAll("[data-checkout-route]"),
   superAdminHighPaymentEnabled: document.querySelector("#superAdminHighPaymentEnabled"),
-  purgeAllOrdersButton: document.querySelector("#purgeAllOrdersButton"),
-  purgeFromDate: document.querySelector("#purgeFromDate"),
-  purgeToDate: document.querySelector("#purgeToDate"),
-  purgeCommentsMode: document.querySelectorAll("[name='purgeCommentsMode']"),
   adminInputs: {
     blessingWallEnabled: document.querySelector("#adminBlessingWallEnabled"),
     seedPrice: document.querySelector("#adminSeedPrice"),
@@ -339,7 +333,6 @@ function normalizeSettings(settings) {
 
   next.seedPrice = Math.max(Number.parseInt(next.seedPrice, 10) || defaults.seedPrice, MIN_DONATION_AMOUNT);
   next.blessingWallEnabled = next.blessingWallEnabled !== false && next.blessingWallEnabled !== "false";
-  next.adsenseEnabled = next.adsenseEnabled !== false && next.adsenseEnabled !== "false";
   next.checkoutRoute = next.checkoutRoute === "superadmin" ? "superadmin" : "standard";
   next.highPaymentSuperAdminEnabled =
     next.highPaymentSuperAdminEnabled === true || next.highPaymentSuperAdminEnabled === "true";
@@ -1388,52 +1381,6 @@ async function deleteDonationRecord(donationId, button) {
   );
 }
 
-async function purgeAllPaymentRecords(button) {
-  const fromDate = elements.purgeFromDate?.value || "";
-  const toDate = elements.purgeToDate?.value || "";
-  const includePublicComments =
-    Array.from(elements.purgeCommentsMode || []).find((input) => input.checked)?.value === "remove";
-  const rangeLabel =
-    fromDate || toDate
-      ? `${fromDate || "the beginning"} through ${toDate || "today"}`
-      : "all dates";
-  const commentLabel = includePublicComments ? "Payment records and public comments" : "Payment records only";
-  const password = window.prompt(`Enter the SuperAdmin purge password to erase ${commentLabel.toLowerCase()} for ${rangeLabel}.`);
-  if (!password) return;
-  if (
-    !window.confirm(
-      `${commentLabel} will be permanently erased for ${rangeLabel}. ${
-        includePublicComments ? "Public comments linked to these orders will also disappear." : "Public comments will be kept on the page."
-      } Continue?`,
-    )
-  ) {
-    return;
-  }
-
-  await runAdminAction(
-    {
-      panel: elements.adminPanel,
-      statusElement: elements.adminActionStatus,
-      button,
-      busyText: "Erasing...",
-      loadingMessage: `Erasing ${commentLabel.toLowerCase()} for ${rangeLabel}...`,
-      successMessage: `${commentLabel} erased for ${rangeLabel}.`,
-      errorMessage: "Could not erase selected records.",
-    },
-    async () => {
-      await callEdge("admin-donations", {
-        admin: true,
-        method: "PUT",
-        body: { purgeAll: true, password, fromDate, toDate, includePublicComments },
-      });
-      state.donations = [];
-      await Promise.all([loadBackendData({ throwOnError: true }), loadAdminDonations()]);
-      renderApp();
-      return { success: true };
-    },
-  );
-}
-
 function toDateKey(date) {
   const safeDate = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
   const year = safeDate.getFullYear();
@@ -1696,7 +1643,6 @@ function renderSettings() {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
   }
   if (!isBackendConfigured() || backendReady) {
-    window.SeedGardenAdsense?.setEnabled(settings.adsenseEnabled);
   }
   renderAdminForm();
   updateCheckoutLabel();
@@ -1779,7 +1725,6 @@ function renderAdminForm() {
 
   inputs.seedPrice.value = settings.seedPrice;
   inputs.blessingWallEnabled.checked = Boolean(settings.blessingWallEnabled);
-  elements.adminAdsenseEnabled.checked = Boolean(settings.adsenseEnabled);
   if (elements.superAdminHighPaymentEnabled) {
     elements.superAdminHighPaymentEnabled.checked = Boolean(settings.highPaymentSuperAdminEnabled);
   }
@@ -2870,16 +2815,15 @@ function getAdminSettings() {
 
   return normalizeSettings({
     ...state.settings,
-    adsenseEnabled: elements.adminAdsenseEnabled.checked,
     blessingWallEnabled: inputs.blessingWallEnabled.checked,
     seedPrice: inputs.seedPrice.value,
   });
 }
 
 function getViewIdFromHash() {
-  return ["#about", "#support", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)
-    ? "aboutView"
-    : "homeView";
+  if (["#about", "#support", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)) return "aboutView";
+  if (window.location.hash === "#library") return "libraryView";
+  return "homeView";
 }
 
 function setActiveView(viewId, updateHash = false) {
@@ -3092,7 +3036,7 @@ elements.profileTabs.forEach((tab) => {
 elements.refreshAdminButton.addEventListener("click", refreshAdminPortalData);
 elements.resetAdminAnalyticsButton.addEventListener("click", resetAdminAnalytics);
 elements.decrementPageViewButton?.addEventListener("click", decrementPageView);
-elements.purgeAllOrdersButton?.addEventListener("click", () => purgeAllPaymentRecords(elements.purgeAllOrdersButton));
+
 elements.adminForm.addEventListener("input", () => {
 
   setAdminStatus("Unsaved site setting changes. Click Save site settings to publish them.", "dirty", { persist: true });

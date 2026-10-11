@@ -22,7 +22,6 @@ The payment column includes a Blessing Wall loaded from `seed_comments`. Initial
 
 - `index.html` - static app entrypoint
 - `src/app.js` - frontend state, Supabase calls, PayPal SDK wiring
-- `src/adsense.js` - backend-controlled Google AdSense loader shared by public pages
 - `src/styles.css` - responsive UI and modal styling
 - `src/config.js` - local browser config, never store secrets here
 - `.env.example` - server secret placeholders
@@ -78,7 +77,6 @@ npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_ID="YOUR_SUPERADMIN_SANDBOX_C
 npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_SECRET="YOUR_SUPERADMIN_SANDBOX_CLIENT_SECRET"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_WEBHOOK_ID="YOUR_SUPERADMIN_SANDBOX_WEBHOOK_ID"
 npx supabase secrets set PAYPAL_CURRENCY="USD"
-npx supabase secrets set SUPERADMIN_PURGE_PASSWORD="YOUR_STRONG_PURGE_PASSWORD"
 npx supabase secrets set SITE_ORIGIN="http://127.0.0.1:5173"
 ```
 
@@ -105,8 +103,6 @@ A valid email address is required at checkout so the order can be delivered. Dis
 Both PayPal apps must send `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.REFUNDED`, `PAYMENT.SALE.REVERSED`, `BILLING.SUBSCRIPTION.CREATED`, `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.UPDATED`, `BILLING.SUBSCRIPTION.EXPIRED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, and `BILLING.SUBSCRIPTION.PAYMENT.FAILED` to the deployed `paypal-webhook` URL. Keep the route-specific webhook IDs in the existing PayPal secrets.
 
 
-Admin can enable or disable Google AdSense under Site settings. The setting is public, applies across the main and legal/information pages, and takes effect for new page loads.
-The static `google-adsense-account` meta tag and root `ads.txt` record remain available for Google site ownership verification; neither marker loads ads when the admin setting is disabled.
 
 Every completed PayPal capture also creates a linked digital-service order for `Personalised Digital Writing - Custom Order Made Writing`. The calendar for the collecting role shows the order ID, PayPal transaction ID, personalised-writing request, fulfillment status, and a proof PDF download for each payment.
 
@@ -133,6 +129,6 @@ Use PayPal sandbox first:
 
 The progress card and its goal settings have been retired. Deploy the updated Edge Functions and apply `202610100001_remove_progress_feature.sql` to remove the old database settings, progress ledger, and routines. The migration preserves orders, payments, and subscription processing. Earlier migrations are retained as upgrade history.
 
-The Shop is retired. New book checkouts are rejected; existing book orders retain their payment metadata, delivery controls, proof downloads, and payment recovery. No order or payment records are removed.
+The homepage shows a 21-book gallery grouped into Blue (10 Seeds per book), Red & peach (5 Seeds), and Grey (2 Seeds) series, in that order. Book purchasing is marked coming soon; no book payment gateway is connected. New book checkouts remain rejected; existing book orders retain their payment metadata, delivery controls, proof downloads, and payment recovery.
 
 Posts are retired. Deploy the updated functions, remove the deployed `admin-posts` and `post-engagement` functions, and apply `202610100002_remove_posts.sql`. To delete previously uploaded post images through the Storage API, run `node scripts/remove-post-images.mjs` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set. This targets only the dedicated `post-images` bucket. Order/payment tables and the order-linked Blessing Wall remain intact.
