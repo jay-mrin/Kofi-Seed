@@ -249,6 +249,29 @@ a {
   white-space: nowrap;
 }
 
+.seed-balance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 8px 12px;
+  border: 1px solid rgba(61, 128, 169, 0.3);
+  border-radius: 999px;
+  color: var(--ink);
+  background: #f1f6f6;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.seed-balance strong {
+  color: #30688e;
+  font-size: 16px;
+  font-weight: 800;
+}
+
 .menu-button {
   display: grid;
   width: 42px;
@@ -2705,6 +2728,17 @@ legend::after {
   .brand-avatar {
     width: 44px;
     height: 44px;
+  }
+
+  .seed-balance {
+    gap: 6px;
+    padding: 7px 9px;
+    margin-right: 54px;
+    font-size: 15px;
+  }
+
+  .seed-balance strong {
+    font-size: 14px;
   }
 
   .menu-button {
