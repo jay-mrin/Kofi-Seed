@@ -723,8 +723,9 @@ function money(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: CONFIG.currency,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
 }
 
 function formatCompactNumber(value) {
@@ -1933,8 +1934,8 @@ function renderCalendarSummary(context) {
   const donationsByDate = getDonationsByDate(context.donations);
   const dayDonations = donationsByDate[context.selectedDate] || [];
   const monthDonations = getCalendarMonthDonations(context);
-  const dayTotal = dayDonations.reduce((sum, donation) => sum + (Number.parseInt(donation.amount, 10) || 0), 0);
-  const monthTotal = monthDonations.reduce((sum, donation) => sum + (Number.parseInt(donation.amount, 10) || 0), 0);
+  const dayTotal = dayDonations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
+  const monthTotal = monthDonations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
 
   context.summary.innerHTML = `
     <article>
@@ -1969,7 +1970,7 @@ function renderCalendarGrid(context) {
     const date = new Date(year, month, day);
     const dateKey = toDateKey(date);
     const donations = donationsByDate[dateKey] || [];
-    const total = donations.reduce((sum, donation) => sum + (Number.parseInt(donation.amount, 10) || 0), 0);
+    const total = donations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
     const classes = [
       "admin-calendar-day",
       donations.length ? "has-donations" : "",
