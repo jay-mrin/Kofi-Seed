@@ -3612,3 +3612,124 @@ legend::after {
 .support-details[open] .support-chevron { transform: rotate(180deg); }
 .support-details-content { padding-top: 16px; }
 .support-details-content > .section-kicker { margin: 0 0 10px; }
+
+/* Home page DodoPayments-ready seed checkout */
+.dodo-checkout-card {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 940px);
+  margin: 42px auto 10px;
+  padding: clamp(20px, 4vw, 42px);
+  overflow: hidden;
+  border: 1px solid rgba(221, 145, 151, .36);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 248, 245, .96), rgba(255, 239, 242, .93));
+  box-shadow: 0 18px 48px rgba(143, 63, 83, .10);
+}
+.dodo-checkout-card::after {
+  position: absolute;
+  z-index: -1;
+  right: -45px;
+  top: -60px;
+  color: rgba(205, 110, 119, .12);
+  content: "❧";
+  font-family: Georgia, serif;
+  font-size: 220px;
+  line-height: 1;
+  transform: rotate(18deg);
+  pointer-events: none;
+}
+.dodo-checkout-heading { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }
+.dodo-checkout-heading h3 { margin: 0; color: #4f2730; font: 600 clamp(25px, 4vw, 36px)/1.1 "Cormorant Garamond", Georgia, serif; }
+.dodo-leaf { color: #dc6675; font-size: 26px; }
+.dodo-checkout-summary { display: grid; grid-template-columns: minmax(230px, 1.6fr) minmax(135px, .7fr) minmax(180px, .85fr); align-items: center; gap: 18px; margin-bottom: 25px; padding: 16px; border: 1px solid #f0c7c8; border-radius: 22px; background: rgba(255,255,255,.65); }
+.dodo-quantity-control { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 74px; padding: 10px 12px; border-radius: 18px; background: #fff9f7; box-shadow: 0 8px 24px rgba(143,63,83,.08); }
+.dodo-quantity-control strong { color: #51242f; font: 600 clamp(20px, 3vw, 28px) "Cormorant Garamond", Georgia, serif; white-space: nowrap; }
+.dodo-quantity-control button { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; border: 0; border-radius: 50%; color: white; background: linear-gradient(145deg, #f17f88, #dc4d67); box-shadow: 0 7px 17px rgba(220,77,103,.22); font-size: 26px; cursor: pointer; }
+.dodo-quantity-control button:first-child { color: #8c3949; background: #fce3e2; box-shadow: none; }
+.dodo-unit-price { display: grid; gap: 3px; padding-left: 17px; border-left: 1px solid #e8aeb2; color: #754850; }
+.dodo-unit-price span,.dodo-total > span { font: 500 14px "Cormorant Garamond", Georgia, serif; }
+.dodo-unit-price strong { color: #bd2849; font: 600 27px "Cormorant Garamond", Georgia, serif; }
+.dodo-total { display: grid; justify-items: center; gap: 2px; padding: 12px; border-radius: 16px; color: #855d61; background: rgba(255,224,221,.65); }
+.dodo-total strong { color: #b92245; font: 700 clamp(27px, 4vw, 38px) "Cormorant Garamond", Georgia, serif; }
+.dodo-total small { font: 500 14px "Cormorant Garamond", Georgia, serif; }
+.dodo-field { display: grid; gap: 9px; margin: 18px 0; color: #652d3c; font: 600 20px "Cormorant Garamond", Georgia, serif; }
+.dodo-field input { width: 100%; min-height: 58px; padding: 0 18px; border: 1px solid #e9b8b9; border-radius: 15px; outline: none; background: rgba(255,255,255,.75); color: #272127; font: 500 16px Inter, sans-serif; }
+.dodo-field input:focus { border-color: #d9576e; box-shadow: 0 0 0 3px rgba(217,87,110,.13); }
+.dodo-field input::placeholder { color: #ae8d92; }
+.dodo-field small { color: #80696d; font: 13px Inter, sans-serif; }
+.dodo-proceed-button { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; min-height: 66px; margin-top: 22px; border: 0; border-radius: 999px; color: white; background: linear-gradient(105deg, #ee7984, #dc4563); box-shadow: 0 12px 28px rgba(220,69,99,.24); font: 600 22px "Cormorant Garamond", Georgia, serif; cursor: pointer; }
+.dodo-proceed-button:hover { filter: brightness(.97); }
+.dodo-proceed-button span { font: 30px Inter, sans-serif; }
+.dodo-secure-note { display: flex; justify-content: center; align-items: center; gap: 9px; margin: 17px 0 0; color: #805d61; font: 500 15px "Cormorant Garamond", Georgia, serif; }
+.dodo-checkout-status { margin: 12px 0 0; text-align: center; color: #73404a; font-size: 14px; }
+@media (max-width: 680px) {
+  .dodo-checkout-card { margin-top: 30px; border-radius: 22px; }
+  .dodo-checkout-summary { grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
+  .dodo-quantity-control { grid-column: 1 / -1; }
+  .dodo-unit-price { padding-left: 10px; }
+  .dodo-field { font-size: 18px; }
+  .dodo-proceed-button { min-height: 58px; font-size: 20px; }
+}
+
+/* Match the new checkout card to the site's Inter typography and pink palette. */
+.dodo-checkout-card {
+  border-color: rgba(248, 50, 184, .2);
+  background: linear-gradient(145deg, rgba(255,255,255,.97), rgba(255,241,250,.95));
+  box-shadow: 0 18px 48px rgba(248,50,184,.09);
+}
+.dodo-checkout-heading h3 { color: var(--ink); font: 800 clamp(23px, 3.5vw, 32px)/1.15 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-leaf { color: #f832b8; }
+.dodo-checkout-summary { border-color: rgba(248,50,184,.2); background: rgba(255,255,255,.78); }
+.dodo-quantity-control { background: #fff8fc; }
+.dodo-quantity-control strong { color: var(--ink); font: 800 clamp(18px, 2.8vw, 24px) Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-quantity-control button { background: #f832b8; box-shadow: 0 7px 17px rgba(248,50,184,.2); }
+.dodo-quantity-control button:first-child { color: #b62083; background: #fce4f4; }
+.dodo-unit-price { border-color: rgba(248,50,184,.3); color: #655b69; }
+.dodo-unit-price span,.dodo-total > span { font: 600 13px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-unit-price strong { color: #d7239c; font: 700 23px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-total { color: #655b69; background: rgba(255,232,247,.85); }
+.dodo-total strong { color: #d7239c; font: 800 clamp(24px, 3.5vw, 32px) Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-total small { font: 500 12px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-field { color: var(--ink); font: 700 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-field input { border-color: #e6dce4; border-radius: 14px; background: #fff; font: 500 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-field input:focus { border-color: #f832b8; box-shadow: 0 0 0 3px rgba(248,50,184,.12); }
+.dodo-field small { color: #77717a; font: 13px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-proceed-button { background: #f832b8; box-shadow: 0 14px 30px rgba(248,50,184,.18); font: 800 17px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-proceed-button:hover { background: #e925a8; filter: none; }
+.dodo-proceed-button span { font: 24px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-secure-note { color: #6b6570; font: 600 13px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-checkout-status { color: #665d68; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+.home-checkout-view { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 60px; }
+.home-checkout-view .dodo-checkout-card { margin-top: 0; }
+.dodo-unit-price { gap: 2px; }
+.dodo-unit-price span,.dodo-total > span { font-size: 11px; }
+.dodo-unit-price strong { font-size: 19px; }
+.dodo-total { gap: 0; padding: 7px 9px; }
+.dodo-total strong { font-size: 25px; line-height: 1.1; }
+.dodo-total small { font-size: 11px; }
+@media (max-width: 680px) {
+  .dodo-unit-price strong { font-size: 18px; }
+  .dodo-total strong { font-size: 22px; }
+}
+.dodo-checkout-summary { grid-template-columns: minmax(210px, 1.6fr) minmax(120px, .65fr) minmax(150px, .75fr); gap: 14px; padding: 12px; }
+.dodo-unit-price { padding-left: 12px; }
+.dodo-unit-price span,.dodo-total > span { font-size: 10px; }
+.dodo-unit-price strong { font-size: 17px; }
+.dodo-total { padding: 5px 7px; border-radius: 13px; }
+.dodo-total strong { font-size: 22px; }
+.dodo-total small { font-size: 10px; }
+@media (max-width: 680px) {
+  .dodo-checkout-summary { grid-template-columns: 1fr 1fr; gap: 9px; padding: 10px; }
+  .dodo-unit-price { padding-left: 8px; }
+  .dodo-unit-price strong { font-size: 16px; }
+  .dodo-total strong { font-size: 20px; }
+}
+
+.dodo-checkout-summary { grid-template-columns: minmax(230px, 1.6fr) minmax(180px, .85fr); }
+.dodo-unit-price { display: none; }
+@media (max-width: 680px) {
+  .dodo-checkout-summary { grid-template-columns: 1fr; }
+  .dodo-quantity-control { grid-column: 1; }
+}

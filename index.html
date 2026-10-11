@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=128" />
+    <link rel="stylesheet" href="src/styles.css?v=130" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -283,11 +283,29 @@
         </nav>
       </section>
 
-      <section class="section-view is-active home-welcome" id="homeView" data-section-view aria-labelledby="welcomeTitle">
-        <p class="section-kicker">Welcome to Christgarden</p>
-        <h2 id="welcomeTitle">Stories for the seasons of life.</h2>
-        <p>Find a little hope, wonder, and meaning in a story made to stay with you.</p>
-        <a class="button button-primary" href="#library" data-section-tab="libraryView">Explore the bookshelf</a>
+      <section class="section-view is-active home-checkout-view" id="homeView" data-section-view aria-label="Seed checkout">
+
+        <section class="dodo-checkout-card" aria-labelledby="dodoCheckoutTitle">
+          <div class="dodo-checkout-heading">
+            <span class="dodo-leaf" aria-hidden="true">✦</span>
+            <h3 id="dodoCheckoutTitle">Select Seeds</h3>
+          </div>
+          <form id="dodoCheckoutForm" novalidate>
+            <div class="dodo-checkout-summary">
+              <div class="dodo-quantity-control" aria-label="Seed quantity">
+                <button type="button" id="dodoDecreaseSeeds" aria-label="Remove one seed">−</button>
+                <strong><output id="dodoSeedCount">1</output> <span>🌱 Seeds</span></strong>
+                <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
+              </div>
+              <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
+            </div>
+            <label class="dodo-field"><span>Your Name</span><input id="dodoCustomerName" type="text" autocomplete="name" placeholder="Enter your full name" required /></label>
+            <label class="dodo-field"><span>Email Address</span><input id="dodoCustomerEmail" type="email" autocomplete="email" placeholder="Enter your email address" required /><small>We’ll send your seed details to this email.</small></label>
+            <button class="dodo-proceed-button" type="submit">Proceed to Payment <span aria-hidden="true">→</span></button>
+            <p class="dodo-checkout-status" id="dodoCheckoutStatus" role="status" aria-live="polite" hidden></p>
+            <p class="dodo-secure-note"><span aria-hidden="true">♧</span> Secure payment setup coming soon</p>
+          </form>
+        </section>
       </section>
 
       <section class="section-view shop-gallery" id="libraryView" data-section-view aria-label="Book collections" hidden>
@@ -685,6 +703,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/app.js?v=109" defer></script>
+    <script src="src/home-dodo-checkout.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=2" defer></script>
   </body>
 </html>

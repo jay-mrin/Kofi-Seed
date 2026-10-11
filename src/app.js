@@ -1640,10 +1640,10 @@ function renderSettings() {
   renderParagraphs(elements.aboutExpanded, settings.aboutExpanded);
   elements.topicPill.textContent = settings.topicLabel;
   elements.supportTitle.textContent = settings.supportTitle;
+  const dodoTotalAmount = document.querySelector("#dodoTotalAmount");
+  if (dodoTotalAmount) dodoTotalAmount.dataset.unitPrice = String(Number(settings.seedPrice) || SEED_DOLLAR_VALUE);
   if (elements.seedCommentsPanel) {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
-  }
-  if (!isBackendConfigured() || backendReady) {
   }
   renderAdminForm();
   updateCheckoutLabel();
