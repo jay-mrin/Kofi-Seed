@@ -3601,3 +3601,14 @@ legend::after {
 .admin-analytics-heading { align-items: center; }
 .admin-analytics-heading p { margin: 0; color: #706a75; font-size: 13px; font-weight: 700; }
 .admin-right-column > .admin-super-checkout-section { grid-column: 1; }
+
+.support-details { border-radius: inherit; }
+.support-summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; list-style: none; cursor: pointer; }
+.support-summary::-webkit-details-marker { display: none; }
+.support-summary-copy { display: grid; gap: 3px; }
+.support-summary h2 { margin: 0; min-width: 0; font-size: clamp(13px, 3.5vw, 24px); line-height: 1.15; white-space: nowrap; }
+.support-heart { font-size: .68em; vertical-align: .08em; }
+.support-chevron { color: #76576a; font-size: 22px; transition: transform .2s ease; }
+.support-details[open] .support-chevron { transform: rotate(180deg); }
+.support-details-content { padding-top: 16px; }
+.support-details-content > .section-kicker { margin: 0 0 10px; }

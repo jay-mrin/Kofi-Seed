@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=127" />
+    <link rel="stylesheet" href="src/styles.css?v=128" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -517,20 +517,15 @@
           </section>
 
         <section class="donation-card minimal-offering" id="support" aria-labelledby="supportTitle">
-            <div class="donation-header">
-              <div>
+            <details class="support-details">
+              <summary class="support-summary">
+                <span class="support-summary-copy">
+                  <h2 id="supportTitle">Buy a Seed to Sow for the Love <span class="support-heart">💗💕</span></h2>
+                </span>
+                <span class="support-chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="support-details-content">
                 <p class="section-kicker">Personalised digital writing</p>
-                <h2 id="supportTitle">Buy a Seed to Sow for the Love 💗💕</h2>
-              </div>
-              <span class="secure-pill">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z" />
-                  <path d="m9 12 2 2 4-5" />
-                </svg>
-                Secure
-              </span>
-            </div>
-
             <form class="minimal-offering-form" id="supportForm" novalidate>
               <div class="seed-quantity-row" aria-label="Seed quantity and amount">
                 <label class="compact-amount-field">
@@ -596,6 +591,8 @@
                 </div>
               </section>
             </form>
+              </div>
+            </details>
           </section>
       </section>
 
