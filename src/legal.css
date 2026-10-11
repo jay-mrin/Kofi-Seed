@@ -1,11 +1,11 @@
 :root {
   color-scheme: light;
-  --ink: #172033;
-  --muted: #68728a;
-  --lavender: #f4efff;
-  --pink: #fff0f7;
-  --line: #e4ddeb;
-  --accent: #ef2ca6;
+  --ink: #17384a;
+  --muted: #53636a;
+  --lavender: #eef3f4;
+  --pink: #f1f6f6;
+  --line: #d7d9d4;
+  --accent: #3d80a9;
 }
 
 * {
@@ -72,11 +72,11 @@ ol {
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fbf9ff;
+  background: #f8faf9;
 }
 
 a {
-  color: #b91d82;
+  color: #17435b;
 }
 
 .legal-footer {
