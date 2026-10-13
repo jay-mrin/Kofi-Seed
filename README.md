@@ -1,6 +1,6 @@
 # Sow Your Seed
 
-A personalised digital-writing platform with Supabase backend support, dual-account PayPal Checkout, role-based admin controls, community blessing comments, order calendars, and fulfillment tracking.
+A personalised digital-writing platform with Supabase backend support, SuperAdmin PayPal Checkout, role-based admin controls, community blessing comments, order calendars, and fulfillment tracking.
 
 ## What Runs Locally
 
@@ -14,9 +14,9 @@ Then open `http://127.0.0.1:5173`.
 
 When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, and PayPal checkout are loaded through Supabase Edge Functions.
 
-Both portals show the combined total of Admin- and SuperAdmin-route page visits from the last 24 hours. Every payment attempt and completed payment remains visible only in the portal for the checkout route that owns it. Each portal uses its own reset timestamp, so resetting one dashboard does not affect the other.
+Both portals retain their separate calendars and historical payment records. New PayPal checkout attempts and payments belong to SuperAdmin. Each portal uses its own analytics reset timestamp.
 
-The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments are imported from legacy data, and completed public Admin-routed orders can add a new comment with the captured payment timestamp.
+The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
 ## Files
 
@@ -35,7 +35,7 @@ The payment column includes a Blessing Wall loaded from `seed_comments`. Initial
    - `supabaseAnonKey`
    - `backendEnabled: true`
 
-   PayPal client IDs are provided by the backend for the selected Admin or SuperAdmin route. Do not put PayPal client secrets in browser configuration.
+   The SuperAdmin PayPal client ID is provided by the backend. Do not put PayPal client secrets in browser configuration.
 
 2. Copy `.env.example` to `.env` for your local notes only. Do not commit real secrets.
 
@@ -70,9 +70,6 @@ on conflict (user_id) do update set email = excluded.email, role = excluded.role
 npx supabase secrets set SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
 npx supabase secrets set PAYPAL_ENV="sandbox"
-npx supabase secrets set PAYPAL_CLIENT_ID="YOUR_SANDBOX_CLIENT_ID"
-npx supabase secrets set PAYPAL_CLIENT_SECRET="YOUR_SANDBOX_CLIENT_SECRET"
-npx supabase secrets set PAYPAL_WEBHOOK_ID="YOUR_SANDBOX_WEBHOOK_ID"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_ID="YOUR_SUPERADMIN_SANDBOX_CLIENT_ID"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_SECRET="YOUR_SUPERADMIN_SANDBOX_CLIENT_SECRET"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_WEBHOOK_ID="YOUR_SUPERADMIN_SANDBOX_WEBHOOK_ID"
@@ -92,15 +89,15 @@ npm run supabase:deploy
 
 This app uses PayPal Orders for one-time payments. A separate blue card option appears only for one-time checkout and opens the separately hosted alternate checkout website inside a same-page popup. After it is used, it turns gray and is disabled for the rest of the page session.
 
-The PayPal SDK is never preloaded. When a customer opens checkout, the app refreshes the server-selected payment route, removes any previous PayPal SDK instance, displays the rotating seed loader, and loads a new SDK instance. PayPal buttons remain hidden until each eligible button has rendered a visible iframe.
+The PayPal SDK is never preloaded. When a customer opens checkout, the app loads the SuperAdmin PayPal SDK and displays the rotating seed loader. PayPal buttons remain hidden until each eligible button has rendered a visible iframe.
 
 For your India-registered PayPal Business account, test with PayPal sandbox buyer accounts before switching to live credentials.
 
-SuperAdmin chooses whether payments use the Admin or SuperAdmin PayPal account. The optional `$21 or more` override always routes qualifying payments to SuperAdmin. Admin uses `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID`; SuperAdmin uses the corresponding `SUPER_ADMIN_PAYPAL_*` secrets.
+All new PayPal orders and weekly plans use the `SUPER_ADMIN_PAYPAL_*` credentials. The Admin portal and its historical order calendar remain available. Keep the legacy `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID` secrets only while older Admin payments or subscriptions still need processing.
 
 A valid email address is required at checkout so the order can be delivered. Display name and message remain optional. Checkout creates one-time payments; existing weekly subscriptions continue to be processed by the webhook.
 
-Both PayPal apps must send `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.REFUNDED`, `PAYMENT.SALE.REVERSED`, `BILLING.SUBSCRIPTION.CREATED`, `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.UPDATED`, `BILLING.SUBSCRIPTION.EXPIRED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, and `BILLING.SUBSCRIPTION.PAYMENT.FAILED` to the deployed `paypal-webhook` URL. Keep the route-specific webhook IDs in the existing PayPal secrets.
+The SuperAdmin PayPal app must send `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.REFUNDED`, `PAYMENT.SALE.REVERSED`, `BILLING.SUBSCRIPTION.CREATED`, `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.UPDATED`, `BILLING.SUBSCRIPTION.EXPIRED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, and `BILLING.SUBSCRIPTION.PAYMENT.FAILED` to the deployed `paypal-webhook` URL. Keep the legacy Admin webhook configured while older Admin transactions remain active.
 
 
 

@@ -54,22 +54,10 @@ async function loadCriticalData(
       typeof settingsRow.settings === "object"
     ? settingsRow.settings
     : {};
-  const checkoutRoute =
-    (settings as Record<string, unknown>).checkoutRoute === "superadmin"
-      ? "superadmin"
-      : "standard";
-  const highPaymentSuperAdminEnabled =
-    (settings as Record<string, unknown>).highPaymentSuperAdminEnabled ===
-      true ||
-    (settings as Record<string, unknown>).highPaymentSuperAdminEnabled ===
-      "true";
   return {
     settings,
     payment: {
-      paypalClientId: getPayPalClientId(),
       superAdminPayPalClientId: getPayPalClientId("superadmin"),
-      checkoutRoute,
-      highPaymentSuperAdminEnabled,
       currency: Deno.env.get("PAYPAL_CURRENCY") || "USD",
       env: Deno.env.get("PAYPAL_ENV") || "sandbox",
     },
@@ -165,9 +153,7 @@ Deno.serve(async (request) => {
       : "full";
     const visitorKey = url.searchParams.get("visitorKey") || "";
     const path = sanitizePath(url.searchParams.get("path"));
-    const paymentRoute = url.searchParams.get("paymentRoute") === "superadmin"
-      ? "superadmin"
-      : "standard";
+    const paymentRoute = "superadmin";
     const supabase = getSupabaseAdmin();
     const criticalDataPromise = mode === "content"
       ? Promise.resolve(null)

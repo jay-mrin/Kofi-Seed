@@ -10,7 +10,6 @@ const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
 const ADMIN_PASSWORD = "sowseed";
 const SEED_DOLLAR_VALUE = 7;
 const MIN_DONATION_AMOUNT = 7;
-const HIGH_PAYMENT_THRESHOLD_CENTS = 2100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
 const TOP_BRAND_TITLE = "Seed Garden";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
@@ -149,8 +148,8 @@ const DEFAULT_SETTINGS = {
   topicLabel: "Personalised writing",
   supportTitle: MINIMAL_SUPPORT_TITLE,
   blessingWallEnabled: true,
-  checkoutRoute: "standard",
-  highPaymentSuperAdminEnabled: false,
+  dodoCheckoutVisible: true,
+  paypalCheckoutVisible: true,
 };
 
 const seedFeed = [
@@ -220,6 +219,7 @@ const elements = {
   resetAdminAnalyticsButton: document.querySelector("#resetAdminAnalyticsButton"),
   amountError: document.querySelector("#amountError"),
   amountInput: document.querySelector("#amountInput"),
+  paypalTotalSeeds: document.querySelector("#paypalTotalSeeds"),
   brandTitle: document.querySelector("#brandTitle"),
   cancelAdminLoginButton: document.querySelector("#cancelAdminLoginButton"),
   checkoutButton: document.querySelector("#checkoutButton"),
@@ -262,7 +262,7 @@ const elements = {
   receiptSummary: document.querySelector("#receiptSummary"),
   receiptTitle: document.querySelector("#receiptTitle"),
   retryPaymentButton: document.querySelector("#retryPaymentButton"),
-  saveCheckoutRouteButton: document.querySelector("#saveCheckoutRouteButton"),
+  saveCheckoutDisplayButton: document.querySelector("#saveCheckoutDisplayButton"),
   saveAdminButton: document.querySelector("#saveAdminButton"),
   seedCommentsList: document.querySelector("#seedCommentsList"),
   seedCommentsPanel: document.querySelector("#seedCommentsPanel"),
@@ -272,11 +272,8 @@ const elements = {
   showMoreButtons: document.querySelectorAll("[data-toggle-target]"),
   supportForm: document.querySelector("#supportForm"),
   supportCard: document.querySelector("#support"),
-  supportTitle: document.querySelector("#supportTitle"),
   toast: document.querySelector("#toast"),
   topicPill: document.querySelector("#topicPill"),
-  checkoutRouteOptions: document.querySelectorAll("[data-checkout-route]"),
-  superAdminHighPaymentEnabled: document.querySelector("#superAdminHighPaymentEnabled"),
   adminInputs: {
     blessingWallEnabled: document.querySelector("#adminBlessingWallEnabled"),
     seedPrice: document.querySelector("#adminSeedPrice"),
@@ -290,7 +287,6 @@ const paypalSdkPromises = new Map();
 const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
 let paymentConfig = {
-  paypalClientId: PUBLIC_CONFIG.paypalClientId || "",
   superAdminPayPalClientId: "",
   currency: PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
 };
@@ -333,9 +329,11 @@ function normalizeSettings(settings) {
 
   next.seedPrice = Math.max(Number.parseInt(next.seedPrice, 10) || defaults.seedPrice, MIN_DONATION_AMOUNT);
   next.blessingWallEnabled = next.blessingWallEnabled !== false && next.blessingWallEnabled !== "false";
-  next.checkoutRoute = next.checkoutRoute === "superadmin" ? "superadmin" : "standard";
-  next.highPaymentSuperAdminEnabled =
-    next.highPaymentSuperAdminEnabled === true || next.highPaymentSuperAdminEnabled === "true";
+  const dodoVisibility = settings && Object.hasOwn(settings, "dodoCheckoutVisible")
+    ? settings.dodoCheckoutVisible
+    : settings?.mockCheckoutVisible;
+  next.dodoCheckoutVisible = dodoVisibility !== false && dodoVisibility !== "false";
+  next.paypalCheckoutVisible = next.paypalCheckoutVisible !== false && next.paypalCheckoutVisible !== "false";
 
   Object.keys(defaults).forEach((key) => {
     if (typeof defaults[key] !== "string") return;
@@ -576,7 +574,6 @@ async function trackCheckoutEvent(eventName, donation = pendingDonation) {
         amount: donation.amount || getAmount(),
         eventName,
         path: window.location.pathname || "/",
-        paymentRoute: donation.paymentRoute || getCheckoutRoute(),
         visitorKey: getVisitorKey(),
       },
     });
@@ -619,13 +616,16 @@ function applyBootstrap(payload) {
   if (!payload) return;
 
   if (payload.settings || payload.payment) {
-    state.settings = normalizeSettings({
+    const incomingSettings = payload.settings || {};
+    const mergedSettings = {
       ...state.settings,
-      ...(payload.settings || {}),
-      checkoutRoute: payload.payment?.checkoutRoute || payload.settings?.checkoutRoute,
-      highPaymentSuperAdminEnabled:
-        payload.payment?.highPaymentSuperAdminEnabled ?? payload.settings?.highPaymentSuperAdminEnabled,
-    });
+      ...incomingSettings,
+    };
+    if (!Object.hasOwn(incomingSettings, "dodoCheckoutVisible") &&
+        Object.hasOwn(incomingSettings, "mockCheckoutVisible")) {
+      mergedSettings.dodoCheckoutVisible = incomingSettings.mockCheckoutVisible;
+    }
+    state.settings = normalizeSettings(mergedSettings);
     backendReady = true;
   }
 
@@ -634,7 +634,6 @@ function applyBootstrap(payload) {
 
   if (payload.payment) {
     paymentConfig = {
-      paypalClientId: payload.payment.paypalClientId || PUBLIC_CONFIG.paypalClientId || "",
       superAdminPayPalClientId: payload.payment.superAdminPayPalClientId || "",
       currency: payload.payment.currency || PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
     };
@@ -653,7 +652,6 @@ async function loadBackendData(options = {}) {
   try {
     const params = new URLSearchParams({
       path: window.location.pathname || "/",
-      paymentRoute: getConfiguredCheckoutRoute(),
       visitorKey: getVisitorKey(),
     });
     if (mode !== "full") params.set("mode", mode);
@@ -1639,9 +1637,11 @@ function renderSettings() {
   renderTextWithBreaks(elements.aboutCollapsed, settings.aboutCollapsed);
   renderParagraphs(elements.aboutExpanded, settings.aboutExpanded);
   elements.topicPill.textContent = settings.topicLabel;
-  elements.supportTitle.textContent = settings.supportTitle;
   const dodoTotalAmount = document.querySelector("#dodoTotalAmount");
   if (dodoTotalAmount) dodoTotalAmount.dataset.unitPrice = String(Number(settings.seedPrice) || SEED_DOLLAR_VALUE);
+  const dodoCheckout = document.querySelector("#dodoCheckoutForm");
+  if (dodoCheckout) dodoCheckout.closest(".dodo-checkout-card").hidden = !settings.dodoCheckoutVisible;
+  if (elements.supportCard) elements.supportCard.hidden = !settings.paypalCheckoutVisible;
   if (elements.seedCommentsPanel) {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
   }
@@ -1726,37 +1726,14 @@ function renderAdminForm() {
 
   inputs.seedPrice.value = settings.seedPrice;
   inputs.blessingWallEnabled.checked = Boolean(settings.blessingWallEnabled);
-  if (elements.superAdminHighPaymentEnabled) {
-    elements.superAdminHighPaymentEnabled.checked = Boolean(settings.highPaymentSuperAdminEnabled);
-  }
-  renderCheckoutRouteControls();
+  const dodoCheckoutToggle = document.querySelector("#dodoCheckoutVisible");
+  if (dodoCheckoutToggle) dodoCheckoutToggle.checked = Boolean(settings.dodoCheckoutVisible);
+  const paypalCheckoutToggle = document.querySelector("#paypalCheckoutVisible");
+  if (paypalCheckoutToggle) paypalCheckoutToggle.checked = Boolean(settings.paypalCheckoutVisible);
 }
 
 function getCheckoutRoute() {
-  const configuredRoute = getConfiguredCheckoutRoute();
-  const amountCents = Math.round(Math.max(Number.parseFloat(getAmount()) || 0, 0) * 100);
-
-  return state.settings.highPaymentSuperAdminEnabled && amountCents >= HIGH_PAYMENT_THRESHOLD_CENTS
-    ? "superadmin"
-    : configuredRoute;
-}
-
-function getConfiguredCheckoutRoute() {
-  return state.settings.checkoutRoute === "superadmin" ? "superadmin" : "standard";
-}
-
-function getCheckoutRouteLabel(route = getCheckoutRoute()) {
-  return route === "superadmin" ? "SuperAdmin" : "Admin";
-}
-
-function renderCheckoutRouteControls() {
-  const activeRoute = getConfiguredCheckoutRoute();
-
-  elements.checkoutRouteOptions.forEach((button) => {
-    const isActive = button.dataset.checkoutRoute === activeRoute;
-    button.classList.toggle("is-selected", isActive);
-    button.setAttribute("aria-checked", String(isActive));
-  });
+  return "superadmin";
 }
 
 function renderAdminAnalytics() {
@@ -2033,6 +2010,7 @@ function updateCheckoutLabel() {
   elements.checkoutLabel.textContent = "Sow Your Seed";
   elements.checkoutButton.setAttribute("aria-label", `Sow Your Seed ${money(amount)}`);
   elements.seedPriceLabel.textContent = formatSeedUnits(seedUnits);
+  elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
 }
 
 function getCheckoutUi() {
@@ -2065,14 +2043,12 @@ function getPaymentEmail() {
   return String(getCheckoutUi().emailInput?.value || "").trim();
 }
 
-function getPayPalClientId(paymentRoute = getCheckoutRoute()) {
-  return paymentRoute === "superadmin"
-    ? paymentConfig.superAdminPayPalClientId
-    : paymentConfig.paypalClientId || PUBLIC_CONFIG.paypalClientId;
+function getPayPalClientId() {
+  return paymentConfig.superAdminPayPalClientId;
 }
 
-function isPayPalConfigured(paymentRoute = getCheckoutRoute()) {
-  return Boolean(getPayPalClientId(paymentRoute));
+function isPayPalConfigured() {
+  return Boolean(getPayPalClientId());
 }
 
 function isValidEmailAddress(value) {
@@ -2103,7 +2079,7 @@ function stepSeedAmount(direction) {
 
 function setAmount(amount) {
   const safeAmount = Math.max(Number.parseFloat(amount) || MIN_DONATION_AMOUNT, MIN_DONATION_AMOUNT);
-  elements.amountInput.value = safeAmount;
+  elements.amountInput.value = safeAmount.toFixed(2);
   elements.amountError.textContent = "";
   updateCheckoutLabel();
 }
@@ -2221,9 +2197,8 @@ function waitForPayPalSdk(namespace, timeoutMs = 5000) {
   });
 }
 
-function getPayPalSdkNamespace(paymentRoute, frequency = pendingDonation?.frequency || "once") {
-  const routeName = paymentRoute === "superadmin" ? "SuperAdmin" : "Standard";
-  return `paypalSys${routeName}Once`;
+function getPayPalSdkNamespace() {
+  return "paypalSysSuperAdminOnce";
 }
 
 function resetPayPalSdk(namespace) {
@@ -2243,20 +2218,17 @@ function resetPayPalSdk(namespace) {
 }
 
 function resetAllPayPalSdks() {
-  ["standard", "superadmin"].forEach((route) => {
-    resetPayPalSdk(getPayPalSdkNamespace(route, "once"));
-  });
+  resetPayPalSdk(getPayPalSdkNamespace());
 }
 
-function loadPayPalSdk(paymentRoute = getCheckoutRoute()) {
-  const route = paymentRoute === "superadmin" ? "superadmin" : "standard";
-  const clientId = getPayPalClientId(route);
-  const sdkKey = `${route}:once:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
-  const namespace = getPayPalSdkNamespace(route);
+function loadPayPalSdk() {
+  const clientId = getPayPalClientId();
+  const sdkKey = `superadmin:once:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
+  const namespace = getPayPalSdkNamespace();
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
-    return Promise.reject(new Error(`Missing ${getCheckoutRouteLabel(route)} PayPal client id.`));
+    return Promise.reject(new Error("Missing SuperAdmin PayPal client id."));
   }
 
   if (isValidPayPalSdk(window[namespace]) && activeSdkKey === sdkKey) {
@@ -2452,10 +2424,10 @@ async function renderFreshPayPalButtons() {
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
     const route = getCheckoutRoute();
-    namespace = getPayPalSdkNamespace(route);
+    namespace = getPayPalSdkNamespace();
 
-    if (!isPayPalConfigured(route)) {
-      throw new Error(`${getCheckoutRouteLabel(route)} PayPal checkout is currently unavailable.`);
+    if (!isPayPalConfigured()) {
+      throw new Error("SuperAdmin PayPal checkout is currently unavailable.");
     }
 
     resetAllPayPalSdks();
@@ -2465,10 +2437,7 @@ async function renderFreshPayPalButtons() {
       pendingDonation = { ...pendingDonation, paymentRoute: route };
     }
 
-    const paypal = await loadPayPalSdk(route);
-    if (route !== getCheckoutRoute()) {
-      throw new Error("The payment route changed while PayPal was loading.");
-    }
+    const paypal = await loadPayPalSdk();
 
     const paypalButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
     const paypalCardButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
@@ -2485,10 +2454,6 @@ async function renderFreshPayPalButtons() {
     if (paypalCardEligible) {
       await paypalCardButtons.render(ui.paypalCardButtonContainer);
       await waitForRenderedPayPalButton(ui.paypalCardButtonContainer, "The PayPal debit or credit card button");
-    }
-
-    if (route !== getCheckoutRoute()) {
-      throw new Error("The payment route changed while PayPal was rendering.");
     }
 
     ui.paypalButton.hidden = false;
@@ -2510,7 +2475,7 @@ async function renderFreshPayPalButtons() {
 async function finishVerifiedDonation(payload) {
   const donation = payload.donation;
   const fortuneMessage = payload.fortune || donation?.fortune_message || getRandomFortuneMessage();
-  const paymentRoute = donation?.paymentRoute || payload.paymentRoute || pendingDonation?.paymentRoute || "standard";
+  const paymentRoute = donation?.paymentRoute || payload.paymentRoute || pendingDonation?.paymentRoute || "superadmin";
 
   if (payload.donorAccessToken) {
     setDonorToken(payload.donorAccessToken);
@@ -2684,7 +2649,7 @@ function closeAlternateCheckout(showFailure = false) {
 }
 
 function returnToSowYourSeed() {
-  setActiveView("aboutView", true);
+  setActiveView("homeView", true);
   if (!elements.supportCard) return;
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
@@ -2778,7 +2743,7 @@ function openAdminPanel() {
   renderAdminAnalytics();
   
   if (isSuperAdmin) {
-    setAdminStatus("SuperAdmin ready. Manage payment routing and private collections.", "info", { persist: true });
+    setAdminStatus("SuperAdmin ready. Manage checkout display and private collections.", "info", { persist: true });
   } else {
     setAdminStatus("Admin ready. Manage orders, site settings, and analytics.", "info", { persist: true });
   }
@@ -2822,7 +2787,7 @@ function getAdminSettings() {
 }
 
 function getViewIdFromHash() {
-  if (["#about", "#support", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)) return "aboutView";
+  if (["#about", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)) return "aboutView";
   if (window.location.hash === "#library") return "libraryView";
   return "homeView";
 }
@@ -3124,46 +3089,24 @@ elements.adminLoginDialog.addEventListener("close", () => {
 });
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
-elements.checkoutRouteOptions.forEach((button) => {
-  button.addEventListener("click", () => {
-    const nextRoute = button.dataset.checkoutRoute === "superadmin" ? "superadmin" : "standard";
-    state.settings = normalizeSettings({ ...state.settings, checkoutRoute: nextRoute });
-    renderCheckoutRouteControls();
-    setAdminStatus(`${getCheckoutRouteLabel(nextRoute)} checkout selected. Save to make it live.`, "info", {
-      persist: true,
-    });
-  });
-});
-elements.superAdminHighPaymentEnabled?.addEventListener("change", () => {
-  state.settings = normalizeSettings({
-    ...state.settings,
-    highPaymentSuperAdminEnabled: elements.superAdminHighPaymentEnabled.checked,
-  });
-  setAdminStatus(
-    `$21 SuperAdmin routing ${state.settings.highPaymentSuperAdminEnabled ? "enabled" : "disabled"}. Payments of $21 or more will ${
-      state.settings.highPaymentSuperAdminEnabled ? "go to SuperAdmin PayPal" : "follow the selected route"
-    }. Save to make it live.`,
-    "info",
-    { persist: true },
-  );
-});
-elements.saveCheckoutRouteButton?.addEventListener("click", async () => {
+elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
   const nextSettings = normalizeSettings({
     ...state.settings,
-    checkoutRoute: getConfiguredCheckoutRoute(),
-    highPaymentSuperAdminEnabled: Boolean(
-      elements.superAdminHighPaymentEnabled?.checked ?? state.settings.highPaymentSuperAdminEnabled,
+    dodoCheckoutVisible: Boolean(
+      document.querySelector("#dodoCheckoutVisible")?.checked ?? state.settings.dodoCheckoutVisible,
+    ),
+    paypalCheckoutVisible: Boolean(
+      document.querySelector("#paypalCheckoutVisible")?.checked ?? state.settings.paypalCheckoutVisible,
     ),
   });
 
   await runAdminAction(
     {
-      button: elements.saveCheckoutRouteButton,
+      button: elements.saveCheckoutDisplayButton,
       busyText: "Saving...",
-      loadingMessage: "Saving payment routing...",
-      successMessage: () =>
-        `${getCheckoutRouteLabel(nextSettings.checkoutRoute)} is the default collection account; payments of $21 or more ${nextSettings.highPaymentSuperAdminEnabled ? "go to SuperAdmin" : "follow the default selection"}.`,
-      errorMessage: "Could not save payment routing.",
+      loadingMessage: "Saving checkout display settings...",
+      successMessage: () => "Checkout display settings saved.",
+      errorMessage: "Could not save checkout display settings.",
     },
     async () => {
       if (isBackendConfigured() && getAdminAccessToken()) {
@@ -3172,15 +3115,21 @@ elements.saveCheckoutRouteButton?.addEventListener("click", async () => {
           body: { settings: nextSettings },
           method: "PUT",
         });
+        if (payload.settings?.dodoCheckoutVisible !== nextSettings.dodoCheckoutVisible ||
+            payload.settings?.paypalCheckoutVisible !== nextSettings.paypalCheckoutVisible) {
+          throw new Error("The server did not save both checkout switches. Update the admin-settings function.");
+        }
         state.settings = normalizeSettings(payload.settings || nextSettings);
-        await loadBackendData();
+        await loadBackendData({ throwOnError: true });
+        if (state.settings.dodoCheckoutVisible !== nextSettings.dodoCheckoutVisible ||
+            state.settings.paypalCheckoutVisible !== nextSettings.paypalCheckoutVisible) {
+          throw new Error("The checkout switches did not persist after reloading settings.");
+        }
       } else {
         state.settings = nextSettings;
         saveState();
       }
 
-      resetAllPayPalSdks();
-      renderCheckoutRouteControls();
       renderApp();
     },
   );

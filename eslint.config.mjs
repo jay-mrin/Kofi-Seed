@@ -5,6 +5,7 @@ const browserGlobals = Object.fromEntries(
     "FormData",
     "Image",
     "Intl",
+    "MutationObserver",
     "URL",
     "URLSearchParams",
     "console",

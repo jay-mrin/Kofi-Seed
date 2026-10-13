@@ -6,7 +6,6 @@ type CheckoutEventBody = {
   amount?: number;
   eventName?: string;
   path?: string;
-  paymentRoute?: string;
   visitorKey?: string;
 };
 
@@ -34,7 +33,7 @@ Deno.serve(async (request) => {
     if (!ALLOWED_EVENTS.has(eventName)) return errorResponse("Checkout event is invalid.", 422);
     if (!visitorKey) return errorResponse("Visitor key is required.", 422);
     if (amountCents < MIN_AMOUNT_CENTS) return errorResponse("Amount must be at least $7.", 422);
-    const paymentRoute = body.paymentRoute === "superadmin" ? "superadmin" : "standard";
+    const paymentRoute = "superadmin";
 
     const supabase = getSupabaseAdmin();
 

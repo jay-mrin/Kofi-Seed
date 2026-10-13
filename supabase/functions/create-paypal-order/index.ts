@@ -11,10 +11,6 @@ import {
   getPayPalCurrency,
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
-import {
-  normalizePaymentRoute,
-  resolvePaymentRoute,
-} from "../_shared/payment-routing.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
 type CreateOrderBody = {
@@ -31,29 +27,6 @@ function isValidEmail(value: string) {
 }
 
 const MIN_AMOUNT_CENTS = 700;
-
-async function getCheckoutSettings() {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.from("site_settings").select(
-    "settings",
-  ).eq("id", true).maybeSingle();
-
-  if (error) throw error;
-
-  const settings = data?.settings && typeof data.settings === "object"
-    ? data.settings
-    : {};
-  return {
-    checkoutRoute: normalizePaymentRoute(
-      (settings as Record<string, unknown>).checkoutRoute,
-    ),
-    highPaymentSuperAdminEnabled:
-      (settings as Record<string, unknown>).highPaymentSuperAdminEnabled ===
-        true ||
-      (settings as Record<string, unknown>).highPaymentSuperAdminEnabled ===
-        "true",
-  };
-}
 
 Deno.serve(async (request) => {
   const options = handleOptions(request);
@@ -83,18 +56,10 @@ Deno.serve(async (request) => {
       );
     }
 
-    const { checkoutRoute, highPaymentSuperAdminEnabled } =
-      await getCheckoutSettings();
-    const paymentRoute = resolvePaymentRoute(
-      checkoutRoute,
-      highPaymentSuperAdminEnabled,
-      amountCents,
-    );
-    const sdkRoute = normalizePaymentRoute(body.paymentRoute);
-
-    if (sdkRoute !== paymentRoute) {
+    const paymentRoute = "superadmin";
+    if (body.paymentRoute !== paymentRoute) {
       return errorResponse(
-        "The PayPal collection account changed. Please reopen checkout and try again.",
+        "Please reopen the SuperAdmin PayPal checkout and try again.",
         409,
       );
     }

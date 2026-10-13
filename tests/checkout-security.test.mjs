@@ -19,10 +19,11 @@ test("PayPal capture trusts the server-pinned payment attempt", () => {
   assert.doesNotMatch(source, /body\.donation|paypal_checkout_sessions|resolvePaymentRoute/);
 });
 
-test("PayPal creation rejects a stale SDK route and persists checkout metadata", () => {
+test("PayPal creation accepts only the SuperAdmin SDK route and persists checkout metadata", () => {
   const source = read("supabase/functions/create-paypal-order/index.ts");
 
-  assert.match(source, /sdkRoute !== paymentRoute/);
+  assert.match(source, /const paymentRoute = "superadmin"/);
+  assert.match(source, /body\.paymentRoute !== paymentRoute/);
   assert.match(source, /\.from\("payment_attempts"\)\s*\.insert/);
   assert.match(source, /customer_request: personalizedRequest/);
 });

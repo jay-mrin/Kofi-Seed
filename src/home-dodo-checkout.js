@@ -5,8 +5,12 @@
   const countOutput = document.querySelector("#dodoSeedCount");
   const totalOutput = document.querySelector("#dodoTotalAmount");
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
-  const status = document.querySelector("#dodoCheckoutStatus");
+  const checkoutButton = document.querySelector("#dodoCheckoutButton");
+  const paymentPanel = document.querySelector("#dodoPaymentPanel");
+  const checkoutLoader = document.querySelector("#dodoCheckoutLoader");
+  const comingSoon = document.querySelector("#dodoPaymentComingSoon");
   let seedCount = 1;
+  let revealTimer;
 
   const getUnitPrice = () => Number(totalOutput.dataset.unitPrice) || 7;
   const updateTotal = () => {
@@ -31,11 +35,22 @@
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const name = document.querySelector("#dodoCustomerName");
     const email = document.querySelector("#dodoCustomerEmail");
-    if (!name.reportValidity() || !email.reportValidity()) return;
-    status.textContent = "DodoPayments checkout will be available soon.";
-    status.hidden = false;
+    if (!email.reportValidity()) return;
+
+    window.clearTimeout(revealTimer);
+    paymentPanel.hidden = false;
+    paymentPanel.classList.add("is-loading");
+    checkoutLoader.hidden = false;
+    comingSoon.hidden = true;
+    checkoutButton.classList.add("is-checkout-open");
+    checkoutButton.setAttribute("aria-expanded", "true");
+
+    revealTimer = window.setTimeout(() => {
+      checkoutLoader.hidden = true;
+      paymentPanel.classList.remove("is-loading");
+      comingSoon.hidden = false;
+    }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1100);
   });
 
   new MutationObserver(updateTotal).observe(totalOutput, { attributes: true, attributeFilter: ["data-unit-price"] });

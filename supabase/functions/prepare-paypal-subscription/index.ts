@@ -12,10 +12,6 @@ import {
   getPayPalCurrency,
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
-import {
-  normalizePaymentRoute,
-  resolvePaymentRoute,
-} from "../_shared/payment-routing.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
 type PrepareBody = {
@@ -154,16 +150,10 @@ Deno.serve(async (request) => {
       return errorResponse("Weekly sowing requires a whole seed count at the current seed price.", 422);
     }
 
-    const configuredRoute = normalizePaymentRoute(settings.checkoutRoute);
-    const paymentRoute = resolvePaymentRoute(
-      configuredRoute,
-      settings.highPaymentSuperAdminEnabled === true ||
-        settings.highPaymentSuperAdminEnabled === "true",
-      amountCents,
-    );
-    if (normalizePaymentRoute(body.paymentRoute) !== paymentRoute) {
+    const paymentRoute = "superadmin";
+    if (body.paymentRoute !== paymentRoute) {
       return errorResponse(
-        "The PayPal collection account changed. Please choose Weekly again.",
+        "Please reopen the SuperAdmin PayPal checkout and choose Weekly again.",
         409,
       );
     }

@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=134" />
+    <link rel="stylesheet" href="src/styles.css?v=139" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -233,33 +233,29 @@
           <details class="checkout-routing-details">
             <summary class="admin-super-checkout-heading">
               <span class="checkout-routing-summary-copy">
-                <strong>Payment routing</strong>
-                <small>Choose where PayPal payments are collected</small>
+                <strong>Checkout display</strong>
+                <small>Choose which checkout forms appear on Home</small>
               </span>
               <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="checkout-routing-content">
-              <p class="checkout-routing-description">Choose the PayPal collection account and optionally route payments of $21 or more to SuperAdmin.</p>
-              <div class="checkout-route-options" role="radiogroup" aria-label="Default PayPal collection account">
-                <button class="checkout-route-option" type="button" data-checkout-route="standard" role="radio" aria-checked="true">
-                  <span>Admin</span>
-                  <small>Send payments to the Admin PayPal account.</small>
-                </button>
-                <button class="checkout-route-option" type="button" data-checkout-route="superadmin" role="radio" aria-checked="false">
-                  <span>SuperAdmin</span>
-                  <small>Send payments to the SuperAdmin PayPal account.</small>
-                </button>
-              </div>
-              <div class="checkout-routing-override" aria-label="Payment routing override">
+              <div class="checkout-routing-override">
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="superAdminHighPaymentEnabled" type="checkbox" />
+                  <input id="dodoCheckoutVisible" type="checkbox" checked />
                   <span>
-                    <strong>Route payments of $21 or more to SuperAdmin</strong>
-                    When enabled, every PayPal payment of at least $21 goes to SuperAdmin regardless of the default selection.
+                    <strong>Show Dodo checkout on Home</strong>
+                    Controls whether the Dodo checkout form is visible to visitors.
+                  </span>
+                </label>
+                <label class="admin-toggle checkout-routing-toggle">
+                  <input id="paypalCheckoutVisible" type="checkbox" checked />
+                  <span>
+                    <strong>Show PayPal checkout on Home</strong>
+                    Controls whether the PayPal checkout form is visible to visitors.
                   </span>
                 </label>
               </div>
-              <button class="button button-primary" id="saveCheckoutRouteButton" type="button">Save routing</button>
+              <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save display settings</button>
             </div>
           </details>
         </section>
@@ -300,14 +296,91 @@
               </div>
               <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
             </div>
-            <label class="dodo-field"><span class="visually-hidden">Your Name</span><input id="dodoCustomerName" type="text" autocomplete="name" placeholder="Enter your full name" required /></label>
-            <label class="dodo-field"><span class="visually-hidden">Email Address</span><input id="dodoCustomerEmail" type="email" autocomplete="email" placeholder="Enter your email address" required /><small>We’ll send your seed details to this email.</small></label>
-            <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your Message (optional)</span><textarea id="dodoCustomerMessage" maxlength="500" placeholder="Type your request"></textarea></label>
-            <button class="dodo-proceed-button" type="submit">Proceed to Payment <span aria-hidden="true">→</span></button>
-            <p class="dodo-checkout-status" id="dodoCheckoutStatus" role="status" aria-live="polite" hidden></p>
-            <p class="dodo-secure-note"><span aria-hidden="true">♧</span> Secure payment setup coming soon</p>
+            <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
+            <label class="dodo-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Display name (optional)" /></label>
+            <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message (optional)"></textarea></label>
+            <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-expanded="false" aria-controls="dodoPaymentPanel">Sow Your Seed</button>
+            <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Dodo payment options" hidden>
+              <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Loading Dodo payment options" hidden>
+                <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
+                <span>Preparing your seed…</span>
+              </div>
+              <p class="dodo-payment-coming-soon" id="dodoPaymentComingSoon" role="status" aria-live="polite" hidden>Coming soon</p>
+            </section>
           </form>
         </section>
+        <section class="donation-card minimal-offering" id="support" aria-label="PayPal checkout">
+            <form class="minimal-offering-form" id="supportForm" novalidate>
+              <div class="seed-quantity-row" aria-label="Seed quantity and amount">
+                <div class="paypal-quantity-control">
+                  <button class="seed-stepper-button" id="decreaseSeedButton" type="button" aria-label="Decrease seed quantity">−</button>
+                  <div class="seed-price">
+                    <span class="seed-icon" aria-hidden="true">🌱</span>
+                    <strong id="seedPriceLabel">1 Seed</strong>
+                  </div>
+                  <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
+                </div>
+                <label class="compact-amount-field">
+                  <span>Total Amount</span>
+                  <span class="paypal-total-value">
+                    <span aria-hidden="true">$</span>
+                    <input id="amountInput" type="number" min="7" step="0.01" value="7.00" inputmode="decimal" aria-label="Total amount in US dollars" aria-describedby="amountError" />
+                  </span>
+                  <small id="paypalTotalSeeds">(1 Seed)</small>
+                </label>
+              </div>
+              <small id="amountError" class="error-message compact-amount-error"></small>
+
+              <label class="field minimal-text-field">
+                <span class="visually-hidden">Email for your order</span>
+                <input id="paymentEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-describedby="emailError" required />
+                <small id="emailError" class="error-message"></small>
+              </label>
+
+              <label class="field minimal-text-field">
+                <span class="visually-hidden">Display name</span>
+                <input id="nameInput" type="text" placeholder="Display name (optional)" maxlength="48" autocomplete="name" aria-describedby="nameError" />
+                <small id="nameError" class="error-message"></small>
+              </label>
+
+              <label class="field minimal-text-field textarea-field">
+                <span class="visually-hidden">Your message</span>
+                <textarea id="messageInput" maxlength="180" placeholder="Your message (optional)"></textarea>
+              </label>
+
+              <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
+                <span id="checkoutLabel">Sow Your Seed</span>
+              </button>
+
+              <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
+                <p class="payment-status" id="paymentStatus" role="status" aria-live="polite" hidden></p>
+                <div class="paypal-checkout-loader" id="paypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure PayPal checkout" hidden>
+                  <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
+                  <span>Preparing your seed…</span>
+                </div>
+                <div class="payment-choice card-choice" id="cardButton">
+                  <span>Alternate debit or credit card</span>
+                  <small class="preferred-payment-label">Preferred</small>
+                  <a
+                    class="alternate-card-link"
+                    id="alternateCardCheckoutLink"
+                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                    aria-label="Open debit or credit card checkout popup"
+                    aria-haspopup="dialog"
+                    aria-controls="alternateCheckoutDialog"
+                  >Debit or Credit Card</a>
+                </div>
+                <div class="payment-choice paypal-choice" id="paypalButton">
+                  <span>PayPal</span>
+                  <div class="paypal-button-slot" id="paypalButtonContainer"></div>
+                </div>
+                <div class="payment-choice paypal-card-choice" id="paypalCardButton">
+                  <span>PayPal debit or credit card</span>
+                  <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
+                </div>
+              </section>
+            </form>
+          </section>
         <details class="what-is-seed">
           <summary><span>What is Seed</span><span class="what-is-seed-chevron" aria-hidden="true">⌄</span></summary>
           <div class="what-is-seed-copy">
@@ -549,84 +622,6 @@
             <div class="seed-comments-list" id="seedCommentsList" aria-live="polite"></div>
           </section>
 
-        <section class="donation-card minimal-offering" id="support" aria-labelledby="supportTitle">
-            <details class="support-details">
-              <summary class="support-summary">
-                <span class="support-summary-copy">
-                  <h2 id="supportTitle">Buy a Seed to Sow for the Love <span class="support-heart">💗💕</span></h2>
-                </span>
-                <span class="support-chevron" aria-hidden="true">⌄</span>
-              </summary>
-              <div class="support-details-content">
-                <p class="section-kicker">Personalised digital writing</p>
-            <form class="minimal-offering-form" id="supportForm" novalidate>
-              <div class="seed-quantity-row" aria-label="Seed quantity and amount">
-                <label class="compact-amount-field">
-                  <span class="visually-hidden">Seed offering amount</span>
-                  <span aria-hidden="true">$</span>
-                  <input id="amountInput" type="number" min="7" step="0.01" value="7" inputmode="decimal" aria-describedby="amountError" />
-                </label>
-                <button class="seed-stepper-button" id="decreaseSeedButton" type="button" aria-label="Decrease seed quantity">−</button>
-                <div class="seed-price">
-                  <span class="seed-icon" aria-hidden="true">🌱</span>
-                  <strong id="seedPriceLabel">1 Seed</strong>
-                </div>
-                <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
-              </div>
-              <small id="amountError" class="error-message compact-amount-error"></small>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Email for your order</span>
-                <input id="paymentEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-describedby="emailError" required />
-                <small id="emailError" class="error-message"></small>
-              </label>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Display name</span>
-                <input id="nameInput" type="text" placeholder="Display name (optional)" maxlength="48" autocomplete="name" aria-describedby="nameError" />
-                <small id="nameError" class="error-message"></small>
-              </label>
-
-              <label class="field minimal-text-field textarea-field">
-                <span class="visually-hidden">Your message</span>
-                <textarea id="messageInput" maxlength="180" placeholder="Your message (optional)"></textarea>
-              </label>
-
-              <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
-                <span id="checkoutLabel">Sow Your Seed</span>
-              </button>
-
-              <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
-                <p class="payment-status" id="paymentStatus" role="status" aria-live="polite" hidden></p>
-                <div class="paypal-checkout-loader" id="paypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure PayPal checkout" hidden>
-                  <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
-                  <span>Preparing your seed…</span>
-                </div>
-                <div class="payment-choice card-choice" id="cardButton">
-                  <span>Alternate debit or credit card</span>
-                  <small class="preferred-payment-label">Preferred</small>
-                  <a
-                    class="alternate-card-link"
-                    id="alternateCardCheckoutLink"
-                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                    aria-label="Open debit or credit card checkout popup"
-                    aria-haspopup="dialog"
-                    aria-controls="alternateCheckoutDialog"
-                  >Debit or Credit Card</a>
-                </div>
-                <div class="payment-choice paypal-choice" id="paypalButton">
-                  <span>PayPal</span>
-                  <div class="paypal-button-slot" id="paypalButtonContainer"></div>
-                </div>
-                <div class="payment-choice paypal-card-choice" id="paypalCardButton">
-                  <span>PayPal debit or credit card</span>
-                  <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
-                </div>
-              </section>
-            </form>
-              </div>
-            </details>
-          </section>
       </section>
 
     </main>
@@ -717,8 +712,8 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=109" defer></script>
-    <script src="src/home-dodo-checkout.js?v=1" defer></script>
+    <script src="src/app.js?v=114" defer></script>
+    <script src="src/home-dodo-checkout.js?v=3" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=2" defer></script>
   </body>

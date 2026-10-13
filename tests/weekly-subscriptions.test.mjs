@@ -17,11 +17,11 @@ test("public checkout offers one-time payments while existing subscription proce
   assert.match(webhook, /handleSubscriptionWebhook/);
 });
 
-test("weekly plan preparation pins routing and Monday 6 PM IST", () => {
+test("weekly plan preparation uses SuperAdmin and Monday 6 PM IST", () => {
   const prepare = read("supabase/functions/prepare-paypal-subscription/index.ts");
   const paypal = read("supabase/functions/_shared/paypal.ts");
 
-  assert.match(prepare, /resolvePaymentRoute\([\s\S]*highPaymentSuperAdminEnabled/);
+  assert.match(prepare, /const paymentRoute = "superadmin"/);
   assert.match(prepare, /istDay === 1 \? 7/);
   assert.match(prepare, /12,[\s\S]*30,[\s\S]*0/);
   assert.match(prepare, /amountCents !== seedCount \* seedPriceCents/);

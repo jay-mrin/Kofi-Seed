@@ -154,8 +154,8 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.doesNotMatch(html, /id="paypalCheckoutRetry"/);
   assert.match(app, /async function renderFreshPayPalButtons\(\)[\s\S]*const route = getCheckoutRoute\(\)/);
   assert.match(app, /await loadBackendData\(\{ mode: "critical", throwOnError: true \}\)/);
-  assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(route\)/);
-  assert.match(app, /const paypal = await loadPayPalSdk\(route\)/);
+  assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(\)/);
+  assert.match(app, /const paypal = await loadPayPalSdk\(\)/);
   assert.match(app, /await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /waitForRenderedPayPalButton/);
   assert.match(app, /querySelector\("iframe"\)/);

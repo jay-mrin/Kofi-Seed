@@ -367,7 +367,7 @@ async function tryVerifyWebhook(
 }
 
 export async function verifyPayPalWebhook(headers: Headers, body: string) {
-  const routes = ["standard", "superadmin"];
+  const routes = ["superadmin", "standard"];
 
   for (const paymentRoute of routes) {
     try {
@@ -375,8 +375,7 @@ export async function verifyPayPalWebhook(headers: Headers, body: string) {
 
       if (result) return result;
     } catch (error) {
-      // One PayPal account being unavailable must not prevent verification
-      // against the other independently configured collection account.
+      // Keep verifying legacy Admin events while those transactions remain active.
       console.error(
         `PayPal webhook verification failed for route ${paymentRoute}.`,
         error,

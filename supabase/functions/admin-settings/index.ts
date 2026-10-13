@@ -16,8 +16,8 @@ const ACTIVE_SETTING_KEYS = [
   "supportTitle",
   "seedPrice",
   "blessingWallEnabled",
-  "checkoutRoute",
-  "highPaymentSuperAdminEnabled",
+  "dodoCheckoutVisible",
+  "paypalCheckoutVisible",
 ] as const;
 
 function keepActiveSettings(settings: Record<string, unknown>) {
@@ -34,8 +34,14 @@ function isEnabled(value: unknown) {
   return value === true || value === "true";
 }
 
-function normalizeCheckoutRoute(value: unknown) {
-  return value === "superadmin" ? "superadmin" : "standard";
+function checkoutVisibility(
+  settings: Record<string, unknown>,
+  key: "dodoCheckoutVisible" | "paypalCheckoutVisible",
+) {
+  const value = Object.hasOwn(settings, key)
+    ? settings[key]
+    : key === "dodoCheckoutVisible" ? settings.mockCheckoutVisible : true;
+  return value !== false && value !== "false";
 }
 
 function applySiteSettings(
@@ -72,8 +78,13 @@ Deno.serve(async (request) => {
         "settings",
       ).eq("id", true).single();
       if (error) throw error;
+      const saved = data.settings as Record<string, unknown>;
       return jsonResponse({
-        settings: keepActiveSettings(data.settings as Record<string, unknown>),
+        settings: {
+          ...keepActiveSettings(saved),
+          dodoCheckoutVisible: checkoutVisibility(saved, "dodoCheckoutVisible"),
+          paypalCheckoutVisible: checkoutVisibility(saved, "paypalCheckoutVisible"),
+        },
       });
     }
 
@@ -104,25 +115,20 @@ Deno.serve(async (request) => {
     let settingsToSave = applySiteSettings(existingSettings, submittedSettings);
 
     if (adminProfile.role === "super_admin") {
-      const checkoutRoute = Object.hasOwn(submittedSettings, "checkoutRoute")
-        ? normalizeCheckoutRoute(submittedSettings.checkoutRoute)
-        : normalizeCheckoutRoute(existingSettings.checkoutRoute);
-      const highPaymentSuperAdminEnabled =
-        Object.hasOwn(submittedSettings, "highPaymentSuperAdminEnabled")
-          ? isEnabled(submittedSettings.highPaymentSuperAdminEnabled)
-          : isEnabled(existingSettings.highPaymentSuperAdminEnabled);
       settingsToSave = {
         ...settingsToSave,
-        checkoutRoute,
-        highPaymentSuperAdminEnabled,
+        dodoCheckoutVisible: Object.hasOwn(submittedSettings, "dodoCheckoutVisible")
+          ? isEnabled(submittedSettings.dodoCheckoutVisible)
+          : checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
+        paypalCheckoutVisible: Object.hasOwn(submittedSettings, "paypalCheckoutVisible")
+          ? isEnabled(submittedSettings.paypalCheckoutVisible)
+          : checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
       };
     } else {
       settingsToSave = {
         ...settingsToSave,
-        checkoutRoute: normalizeCheckoutRoute(existingSettings.checkoutRoute),
-        highPaymentSuperAdminEnabled: isEnabled(
-          existingSettings.highPaymentSuperAdminEnabled,
-        ),
+        dodoCheckoutVisible: checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
+        paypalCheckoutVisible: checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
       };
     }
 
