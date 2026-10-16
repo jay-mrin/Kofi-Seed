@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=139" />
+    <link rel="stylesheet" href="src/styles.css?v=142" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -254,6 +254,13 @@
                     Controls whether the PayPal checkout form is visible to visitors.
                   </span>
                 </label>
+                <label class="admin-toggle checkout-routing-toggle">
+                  <input id="alternateCardCheckoutVisible" type="checkbox" checked />
+                  <span>
+                    <strong>Show Debit or Credit Card button</strong>
+                    Controls this card checkout button in both Dodo and PayPal checkout.
+                  </span>
+                </label>
               </div>
               <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save display settings</button>
             </div>
@@ -267,7 +274,7 @@
     <main id="home">
       <section class="creator-shell">
         <div class="cover-frame">
-          <img class="cover-image" src="assets/sow-cover.jpg" width="1983" height="793" decoding="async" alt="Books and a young seedling overlooking a Mediterranean coast at sunrise" />
+          <img class="cover-image" src="assets/sow-cover.jpg" width="1983" height="793" decoding="async" alt="EBooks and a young seedling overlooking a Mediterranean coast at sunrise" />
         </div>
 
         <section class="profile-bar" aria-label="Seed Garden profile">
@@ -306,6 +313,16 @@
                 <span>Preparing your seed…</span>
               </div>
               <p class="dodo-payment-coming-soon" id="dodoPaymentComingSoon" role="status" aria-live="polite" hidden>Coming soon</p>
+              <div class="payment-choice card-choice" id="dodoCardButton">
+                <a
+                  class="alternate-card-link"
+                  id="dodoAlternateCardCheckoutLink"
+                  href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                  aria-label="Open debit or credit card checkout popup"
+                  aria-haspopup="dialog"
+                  aria-controls="alternateCheckoutDialog"
+                >Debit or Credit Card</a>
+              </div>
             </section>
           </form>
         </section>
@@ -384,7 +401,7 @@
         <details class="what-is-seed">
           <summary><span>What is Seed</span><span class="what-is-seed-chevron" aria-hidden="true">⌄</span></summary>
           <div class="what-is-seed-copy">
-            <p>A Seed is love set in motion, strengthened by faith, and guided by wisdom. With each Seed, receive a personalised writing made for your heart—and choose a book from our collection to carry its message with you.</p>
+            <p>A Seed is love set in motion, strengthened by faith, and guided by wisdom. With each Seed, receive a personalised writing made for your heart—and choose an ebook from our collection to carry its message with you.</p>
           </div>
         </details>
         <section class="home-books-preview" aria-labelledby="homeBooksTitle">
@@ -392,54 +409,102 @@
             <div><p class="section-kicker">A glimpse from the library</p><h2 id="homeBooksTitle">Stories to take with you</h2></div>
             <a class="home-books-explore" href="#library" data-section-tab="libraryView">Explore more <span aria-hidden="true">→</span></a>
           </div>
-          <div class="home-books-carousel" id="homeBooksCarousel" aria-label="Books from the library"></div>
+          <div class="home-books-carousel" id="homeBooksCarousel" aria-label="EBooks from the library"></div>
         </section>
       </section>
 
-      <section class="section-view shop-gallery" id="libraryView" data-section-view aria-label="Book collections" hidden>
-        <h2 class="shop-collection-title">Christgarden Bookshelf</h2>
-        <section class="shop-series shop-series-blue" aria-labelledby="series-blue">
-          <header class="shop-series-heading"><div><h3 id="series-blue">Whispers of Grace</h3><p>The Faith &amp; Promise Collection</p></div><span>4 books</span></header>
+      <section class="section-view shop-gallery" id="libraryView" data-section-view aria-label="EBook collections" hidden>
+        <h2 class="shop-collection-title">Christgarden EBooks</h2>
+        <section class="shop-series shop-series-grey" aria-labelledby="series-grey">
+          <header class="shop-series-heading"><div><h3 id="series-grey">The Stories We Leave Behind</h3><p>An Anthology of Ordinary Lives</p></div><span>10 ebooks</span></header>
           <div class="shop-book-grid">
-          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="43" data-book-summary="When prayer feels unanswered and the seasons of life keep changing, one woman learns that faith can grow in the waiting. Through quiet moments of doubt, hope, and renewal, she discovers that every season has its own purpose." data-book-description="A heartfelt story about trusting God through uncertainty, finding patience in seasons of waiting, and holding on to hope as life changes.">
-            <img src="assets/books/a-prayer-between-seasons.jpg" alt="A Prayer Between Seasons book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-pages="35" data-free-ebook-pdf="assets/ebooks/a-kitchen-full-of-history.pdf" data-book-summary="A family kitchen holds more than recipes: it keeps the memories, rituals, and stories that gather around a table. This is a tender reflection on how food carries history from one generation to the next." data-book-description="A warm, intimate story about family memory, inherited recipes, and the everyday rituals that make a kitchen feel like home.">
+            <img src="assets/books/a-kitchen-full-of-history.jpg" alt="A Kitchen Full of History ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>A Prayer Between Seasons</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost" data-original-cost="10"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Prayer Between Seasons">Get</button></div>
+              <h4>A Kitchen Full of History</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost" data-original-cost="2"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Kitchen Full of History">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="39" data-book-summary="A hospital waiting room brings together people carrying fear, uncertainty, and prayers for the ones they love. In shared silences and unexpected kindness, a visitor discovers that grace can meet us even before we know what comes next." data-book-description="An uplifting story of compassion and faith in the midst of illness, uncertainty, and the long hours spent waiting for news.">
-            <img src="assets/books/grace-in-the-waiting-room.jpg" alt="Grace in the Waiting Room book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-pages="44" data-book-summary="From the earliest work of the day to the small acts that keep a community moving, this story honours the people whose labour often goes unseen. It finds dignity and quiet pride in the hands that shape each morning." data-book-description="A portrait of ordinary workers, their daily routines, and the care and skill behind the lives we build together.">
+            <img src="assets/books/hands-that-built-the-morning.jpg" alt="Hands That Built the Morning ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>Grace in the Waiting Room</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Grace in the Waiting Room">Get</button></div>
+              <h4>Hands That Built the Morning</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Hands That Built the Morning">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="64" data-book-summary="A chapel keeps its doors open to everyone who needs a place to pause, grieve, hope, or begin again. As neighbours find their way inside, their stories reveal how a welcoming community can become a source of strength." data-book-description="A gentle, faith-centred portrait of a chapel and the people whose lives meet within its open doors.">
-            <img src="assets/books/the-chapel-of-open-doors.jpg" alt="The Chapel of Open Doors book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-pages="43" data-book-summary="When the monsoon returns, old letters bring distant voices close again. Through rain-soaked memories and words kept for years, a story unfolds about connection, longing, and what we choose to send across time." data-book-description="A reflective tale told through letters, rain, and remembered relationships, set against the changing seasons of the monsoon.">
+            <img src="assets/books/letters-from-the-monsoon.jpg" alt="Letters from the Monsoon ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>The Chapel of Open Doors</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Chapel of Open Doors">Get</button></div>
+              <h4>Letters from the Monsoon</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Letters from the Monsoon">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="58" data-book-summary="A small seed and a promise become a reminder that hope does not need to begin grandly. Through setbacks, prayers, and patient care, a family learns how faith can take root and grow beyond what they first imagined." data-book-description="An encouraging story about faith, perseverance, and the quiet strength of a promise nurtured one day at a time.">
-            <img src="assets/books/the-mustard-seed-promise.jpg" alt="The Mustard Seed Promise book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-pages="36" data-book-summary="In the quiet hours after midnight, a radio host gathers the confessions, songs, and small hopes of strangers. Each broadcast becomes a thread between unseen lives, revealing how companionship can travel through the dark." data-book-description="An atmospheric collection of late-night voices and private moments connected by a beloved radio programme.">
+            <img src="assets/books/midnight-radio-diaries.jpg" alt="Midnight Radio Diaries ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>The Mustard Seed Promise</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Mustard Seed Promise">Get</button></div>
+              <h4>Midnight Radio Diaries</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Midnight Radio Diaries">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="40" data-book-summary="A quiet classroom is full of stories that never make it into a lesson plan. Through the observations of a thoughtful teacher, small gestures and overlooked moments reveal the hopes and worries children carry with them." data-book-description="A compassionate look at teaching, childhood, and the meaningful things that happen between the lines of a school day.">
+            <img src="assets/books/notes-from-a-quiet-classroom.jpg" alt="Notes from a Quiet Classroom ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Notes from a Quiet Classroom</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Notes from a Quiet Classroom">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="31" data-book-summary="On a night train, strangers share a brief stretch of darkness and distance. Their passing conversations and private reflections form a moving portrait of lives in transit, each carrying its own destination and unfinished story." data-book-description="Interwoven glimpses of passengers travelling through the night, and the fleeting encounters that stay with us.">
+            <img src="assets/books/portraits-of-the-night-train.jpg" alt="Portraits of the Night Train ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Portraits of the Night Train</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Portraits of the Night Train">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="44" data-book-summary="In a city shaped by concrete, persistence takes root in unexpected places. This story follows people who keep tending their hopes, showing how community and patience can make room for new growth." data-book-description="A hopeful story about resilience, neighbourhood life, and the small beginnings that can flourish in difficult places.">
+            <img src="assets/books/seeds-beneath-concrete.jpg" alt="Seeds Beneath Concrete ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Seeds Beneath Concrete</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Seeds Beneath Concrete">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="23" data-book-summary="Clay remembers the hands that shaped it. As a maker works with earth, family craft and personal history surface, revealing how skill, patience, and inherited knowledge can speak across generations." data-book-description="A sensory story of pottery, creativity, and the bonds between a craftsperson, their materials, and their past.">
+            <img src="assets/books/the-language-of-clay.jpg" alt="The Language of Clay ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Language of Clay</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Language of Clay">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="32" data-book-summary="A river changes with every season, yet it carries traces of everything along its banks. Through the people whose lives meet the water, this story explores memory, change, and the ties that endure." data-book-description="A lyrical portrait of a river community and the memories, losses, and renewals carried by its waters.">
+            <img src="assets/books/the-memory-of-rivers.jpg" alt="The Memory of Rivers ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>The Memory of Rivers</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Memory of Rivers">Get</button></div>
+              <p class="shop-get-status" role="status" hidden></p>
+            </div>
+          </article>
+          <article class="shop-book" data-book-pages="43" data-book-summary="Thirty steps separate a familiar doorstep from the sea, but each one carries its own memory. A small coastal journey becomes a reflection on change, belonging, and the courage to meet what lies ahead." data-book-description="A gentle, place-rich story about a shoreline, the people who call it home, and a journey measured in small steps.">
+            <img src="assets/books/thirty-steps-to-the-sea.jpg" alt="Thirty Steps to the Sea ebook cover" width="600" height="900" loading="lazy" decoding="async" />
+            <div class="shop-book-details">
+              <h4>Thirty Steps to the Sea</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Thirty Steps to the Sea">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
           </div>
         </section>
         <section class="shop-series shop-series-peach" aria-labelledby="series-peach">
-          <header class="shop-series-heading"><div><h3 id="series-peach">Of Little Things &amp; Passing Days</h3><p>The Quiet Stories Collection</p></div><span>7 books</span></header>
+          <header class="shop-series-heading"><div><h3 id="series-peach">Of Little Things &amp; Passing Days</h3><p>The Quiet Stories Collection</p></div><span>7 ebooks</span></header>
           <div class="shop-book-grid">
-          <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="44" data-book-summary="A neighbourhood map takes shape through small, thoughtful gestures: a shared errand, a remembered name, a kindness offered at just the right moment. As these acts connect one street to another, ordinary places become a portrait of people looking out for one another." data-book-description="A gentle story about community and the quiet ways kindness can make a place feel like home.">
-            <img src="assets/books/a-map-of-small-kindnesses.jpg" alt="A Map of Small Kindnesses book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="44" data-free-ebook-pdf="assets/ebooks/a-map-of-small-kindnesses.pdf" data-book-summary="A neighbourhood map takes shape through small, thoughtful gestures: a shared errand, a remembered name, a kindness offered at just the right moment. As these acts connect one street to another, ordinary places become a portrait of people looking out for one another." data-book-description="A gentle story about community and the quiet ways kindness can make a place feel like home.">
+            <img src="assets/books/a-map-of-small-kindnesses.jpg" alt="A Map of Small Kindnesses ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>A Map of Small Kindnesses</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost" data-original-cost="5"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Map of Small Kindnesses">Get</button></div>
@@ -447,7 +512,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="48" data-book-summary="As summer begins, paper boats carry wishes and messages along the water. A child’s small fleet drifts past familiar corners, gathering memories of friendship, change, and the fleeting magic of June." data-book-description="A nostalgic summer story about childhood, friendship, and the hopes we set afloat.">
-            <img src="assets/books/paper-boats-in-june.jpg" alt="Paper Boats in June book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/paper-boats-in-june.jpg" alt="Paper Boats in June ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>Paper Boats in June</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Paper Boats in June">Get</button></div>
@@ -455,7 +520,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="49" data-book-summary="At low tide, a lantern reveals a path across the shore and brings old memories into view. A quiet coastal community follows its light through a season of change, discovering what can still guide them home." data-book-description="A reflective seaside tale about memory, belonging, and finding direction through uncertain days.">
-            <img src="assets/books/the-lantern-at-low-tide.jpg" alt="The Lantern at Low Tide book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/the-lantern-at-low-tide.jpg" alt="The Lantern at Low Tide ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>The Lantern at Low Tide</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Lantern at Low Tide">Get</button></div>
@@ -463,7 +528,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="47" data-book-summary="An aging blue bicycle has travelled through years of errands, friendships, and growing up. As its rider faces a new chapter, the familiar bicycle becomes a reminder of the people and places that shaped the journey." data-book-description="A tender coming-of-age story about change, treasured memories, and the everyday objects that carry them.">
-            <img src="assets/books/the-last-blue-bicycle.jpg" alt="The Last Blue Bicycle book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/the-last-blue-bicycle.jpg" alt="The Last Blue Bicycle ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>The Last Blue Bicycle</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Last Blue Bicycle">Get</button></div>
@@ -471,7 +536,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="49" data-book-summary="After the rain, an orchard seems newly alive, and the family tending it begins to see its own future differently. Through patient work and changing seasons, buried hopes find room to blossom again." data-book-description="A warmly observed story of family, renewal, and the quiet resilience found in tending the land.">
-            <img src="assets/books/the-orchard-after-rain.jpg" alt="The Orchard After Rain book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/the-orchard-after-rain.jpg" alt="The Orchard After Rain ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>The Orchard After Rain</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Orchard After Rain">Get</button></div>
@@ -479,7 +544,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="49" data-book-summary="A few pots on a windowsill become a small garden, tended through changing light and ordinary days. As the plants grow, so does the gardener’s sense of patience, possibility, and connection to the world outside." data-book-description="A quiet, uplifting story about gardening in a small space and finding renewal in daily rituals.">
-            <img src="assets/books/the-window-garden.jpg" alt="The Window Garden book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/the-window-garden.jpg" alt="The Window Garden ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>The Window Garden</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Window Garden">Get</button></div>
@@ -487,7 +552,7 @@
             </div>
           </article>
           <article class="shop-book" data-book-series="Of Little Things &amp; Passing Days" data-book-pages="47" data-book-summary="A clockmaker who has spent years measuring time begins to notice the moments that cannot be repaired or rewound. An unexpected smile opens the door to old friendships, new possibilities, and a gentler way of living." data-book-description="A charming reflection on time, second chances, and the small surprises that change an ordinary day.">
-            <img src="assets/books/when-the-clockmaker-smiled.jpg" alt="When the Clockmaker Smiled book cover" width="600" height="900" loading="lazy" decoding="async" />
+            <img src="assets/books/when-the-clockmaker-smiled.jpg" alt="When the Clockmaker Smiled ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
               <h4>When the Clockmaker Smiled</h4>
               <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 5 Seeds</p><button class="shop-get-button" type="button" aria-label="Get When the Clockmaker Smiled">Get</button></div>
@@ -496,86 +561,38 @@
           </article>
           </div>
         </section>
-        <section class="shop-series shop-series-grey" aria-labelledby="series-grey">
-          <header class="shop-series-heading"><div><h3 id="series-grey">The Stories We Leave Behind</h3><p>An Anthology of Ordinary Lives</p></div><span>10 books</span></header>
+        <section class="shop-series shop-series-blue" aria-labelledby="series-blue">
+          <header class="shop-series-heading"><div><h3 id="series-blue">Whispers of Grace</h3><p>The Faith &amp; Promise Collection</p></div><span>4 ebooks</span></header>
           <div class="shop-book-grid">
-          <article class="shop-book" data-book-pages="35" data-book-summary="A family kitchen holds more than recipes: it keeps the memories, rituals, and stories that gather around a table. This is a tender reflection on how food carries history from one generation to the next." data-book-description="A warm, intimate story about family memory, inherited recipes, and the everyday rituals that make a kitchen feel like home.">
-            <img src="assets/books/a-kitchen-full-of-history.jpg" alt="A Kitchen Full of History book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="43" data-free-ebook-pdf="assets/ebooks/a-prayer-between-seasons.pdf" data-book-summary="When prayer feels unanswered and the seasons of life keep changing, one woman learns that faith can grow in the waiting. Through quiet moments of doubt, hope, and renewal, she discovers that every season has its own purpose." data-book-description="A heartfelt story about trusting God through uncertainty, finding patience in seasons of waiting, and holding on to hope as life changes.">
+            <img src="assets/books/a-prayer-between-seasons.jpg" alt="A Prayer Between Seasons ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>A Kitchen Full of History</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost" data-original-cost="2"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Kitchen Full of History">Get</button></div>
+              <h4>A Prayer Between Seasons</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost" data-original-cost="10"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get A Prayer Between Seasons">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-pages="44" data-book-summary="From the earliest work of the day to the small acts that keep a community moving, this story honours the people whose labour often goes unseen. It finds dignity and quiet pride in the hands that shape each morning." data-book-description="A portrait of ordinary workers, their daily routines, and the care and skill behind the lives we build together.">
-            <img src="assets/books/hands-that-built-the-morning.jpg" alt="Hands That Built the Morning book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="39" data-book-summary="A hospital waiting room brings together people carrying fear, uncertainty, and prayers for the ones they love. In shared silences and unexpected kindness, a visitor discovers that grace can meet us even before we know what comes next." data-book-description="An uplifting story of compassion and faith in the midst of illness, uncertainty, and the long hours spent waiting for news.">
+            <img src="assets/books/grace-in-the-waiting-room.jpg" alt="Grace in the Waiting Room ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>Hands That Built the Morning</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Hands That Built the Morning">Get</button></div>
+              <h4>Grace in the Waiting Room</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Grace in the Waiting Room">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-pages="43" data-book-summary="When the monsoon returns, old letters bring distant voices close again. Through rain-soaked memories and words kept for years, a story unfolds about connection, longing, and what we choose to send across time." data-book-description="A reflective tale told through letters, rain, and remembered relationships, set against the changing seasons of the monsoon.">
-            <img src="assets/books/letters-from-the-monsoon.jpg" alt="Letters from the Monsoon book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="64" data-book-summary="A chapel keeps its doors open to everyone who needs a place to pause, grieve, hope, or begin again. As neighbours find their way inside, their stories reveal how a welcoming community can become a source of strength." data-book-description="A gentle, faith-centred portrait of a chapel and the people whose lives meet within its open doors.">
+            <img src="assets/books/the-chapel-of-open-doors.jpg" alt="The Chapel of Open Doors ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>Letters from the Monsoon</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Letters from the Monsoon">Get</button></div>
+              <h4>The Chapel of Open Doors</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Chapel of Open Doors">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
-          <article class="shop-book" data-book-pages="36" data-book-summary="In the quiet hours after midnight, a radio host gathers the confessions, songs, and small hopes of strangers. Each broadcast becomes a thread between unseen lives, revealing how companionship can travel through the dark." data-book-description="An atmospheric collection of late-night voices and private moments connected by a beloved radio programme.">
-            <img src="assets/books/midnight-radio-diaries.jpg" alt="Midnight Radio Diaries book cover" width="600" height="900" loading="lazy" decoding="async" />
+          <article class="shop-book" data-book-series="Whispers of Grace" data-book-pages="58" data-book-summary="A small seed and a promise become a reminder that hope does not need to begin grandly. Through setbacks, prayers, and patient care, a family learns how faith can take root and grow beyond what they first imagined." data-book-description="An encouraging story about faith, perseverance, and the quiet strength of a promise nurtured one day at a time.">
+            <img src="assets/books/the-mustard-seed-promise.jpg" alt="The Mustard Seed Promise ebook cover" width="600" height="900" loading="lazy" decoding="async" />
             <div class="shop-book-details">
-              <h4>Midnight Radio Diaries</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Midnight Radio Diaries">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="40" data-book-summary="A quiet classroom is full of stories that never make it into a lesson plan. Through the observations of a thoughtful teacher, small gestures and overlooked moments reveal the hopes and worries children carry with them." data-book-description="A compassionate look at teaching, childhood, and the meaningful things that happen between the lines of a school day.">
-            <img src="assets/books/notes-from-a-quiet-classroom.jpg" alt="Notes from a Quiet Classroom book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>Notes from a Quiet Classroom</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Notes from a Quiet Classroom">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="31" data-book-summary="On a night train, strangers share a brief stretch of darkness and distance. Their passing conversations and private reflections form a moving portrait of lives in transit, each carrying its own destination and unfinished story." data-book-description="Interwoven glimpses of passengers travelling through the night, and the fleeting encounters that stay with us.">
-            <img src="assets/books/portraits-of-the-night-train.jpg" alt="Portraits of the Night Train book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>Portraits of the Night Train</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Portraits of the Night Train">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="44" data-book-summary="In a city shaped by concrete, persistence takes root in unexpected places. This story follows people who keep tending their hopes, showing how community and patience can make room for new growth." data-book-description="A hopeful story about resilience, neighbourhood life, and the small beginnings that can flourish in difficult places.">
-            <img src="assets/books/seeds-beneath-concrete.jpg" alt="Seeds Beneath Concrete book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>Seeds Beneath Concrete</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Seeds Beneath Concrete">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="23" data-book-summary="Clay remembers the hands that shaped it. As a maker works with earth, family craft and personal history surface, revealing how skill, patience, and inherited knowledge can speak across generations." data-book-description="A sensory story of pottery, creativity, and the bonds between a craftsperson, their materials, and their past.">
-            <img src="assets/books/the-language-of-clay.jpg" alt="The Language of Clay book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>The Language of Clay</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Language of Clay">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="32" data-book-summary="A river changes with every season, yet it carries traces of everything along its banks. Through the people whose lives meet the water, this story explores memory, change, and the ties that endure." data-book-description="A lyrical portrait of a river community and the memories, losses, and renewals carried by its waters.">
-            <img src="assets/books/the-memory-of-rivers.jpg" alt="The Memory of Rivers book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>The Memory of Rivers</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Memory of Rivers">Get</button></div>
-              <p class="shop-get-status" role="status" hidden></p>
-            </div>
-          </article>
-          <article class="shop-book" data-book-pages="43" data-book-summary="Thirty steps separate a familiar doorstep from the sea, but each one carries its own memory. A small coastal journey becomes a reflection on change, belonging, and the courage to meet what lies ahead." data-book-description="A gentle, place-rich story about a shoreline, the people who call it home, and a journey measured in small steps.">
-            <img src="assets/books/thirty-steps-to-the-sea.jpg" alt="Thirty Steps to the Sea book cover" width="600" height="900" loading="lazy" decoding="async" />
-            <div class="shop-book-details">
-              <h4>Thirty Steps to the Sea</h4>
-              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 2 Seeds</p><button class="shop-get-button" type="button" aria-label="Get Thirty Steps to the Sea">Get</button></div>
+              <h4>The Mustard Seed Promise</h4>
+              <div class="shop-book-actions"><p class="shop-seed-cost"><span aria-hidden="true">🌱</span> 10 Seeds</p><button class="shop-get-button" type="button" aria-label="Get The Mustard Seed Promise">Get</button></div>
               <p class="shop-get-status" role="status" hidden></p>
             </div>
           </article>
@@ -628,22 +645,27 @@
 
     <dialog class="book-preview-dialog" id="bookPreviewDialog" aria-labelledby="bookPreviewTitle">
       <article class="book-preview-card">
-        <button class="icon-button book-preview-close" id="closeBookPreviewButton" type="button" aria-label="Close book preview">
+        <button class="icon-button book-preview-close" id="closeBookPreviewButton" type="button" aria-label="Close ebook preview">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </button>
         <div class="book-preview-artwork" id="bookPreviewArtwork">
-          <div class="book-flip-stage" id="bookFlipStage">
+          <div class="ebook-pdf-reader" id="freeEbookPdfReader" hidden>
+            <iframe id="freeEbookPdfFrame" title="Free EBook PDF reader" loading="eager"></iframe>
+            <p id="freeEbookPdfStatus" role="status" aria-live="polite"></p>
+          </div>
+          <div class="book-flip-stage" id="bookFlipStage" aria-label="Swipe or use the arrow buttons to turn pages">
             <div class="book-flip-page book-flip-page-back" id="bookFlipBack" aria-hidden="true"></div>
             <div class="book-flip-page book-flip-page-front" id="bookFlipFront"><img class="book-preview-cover" id="bookPreviewCover" src="" alt="" /><div class="book-preview-page-copy" id="bookPreviewPageCopy" hidden><p class="section-kicker"></p><h3></h3><p></p></div></div>
           </div>
           <div class="book-flip-controls" id="bookFlipControls" hidden><button class="book-flip-button" id="bookFlipPrev" type="button" aria-label="Previous preview page">←</button><span id="bookFlipPageLabel" aria-live="polite"></span><button class="book-flip-button" id="bookFlipNext" type="button" aria-label="Next preview page">→</button></div>
+          <p class="book-flip-hint" id="bookFlipHint" hidden>Swipe or use the arrows to read</p>
           <p class="book-preview-pages" id="bookPreviewPages"></p>
         </div>
         <div class="book-preview-copy">
           <p class="section-kicker">Series: THE STORIES WE LEAVE BEHIND</p>
           <h2 id="bookPreviewTitle"></h2>
           <section aria-labelledby="bookPreviewSummaryHeading"><h3 id="bookPreviewSummaryHeading">Summary</h3><p id="bookPreviewSummary"></p></section>
-          <section aria-labelledby="bookPreviewDescriptionHeading"><h3 id="bookPreviewDescriptionHeading">About this book</h3><p id="bookPreviewDescription"></p></section>
+          <section aria-labelledby="bookPreviewDescriptionHeading"><h3 id="bookPreviewDescriptionHeading">About this ebook</h3><p id="bookPreviewDescription"></p></section>
           <a class="book-preview-price" id="bookPreviewGetLink" href="#support">To Get: 2 🌱</a>
         </div>
       </article>
@@ -735,10 +757,10 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=114" defer></script>
-    <script src="src/home-dodo-checkout.js?v=3" defer></script>
+    <script src="src/app.js?v=115" defer></script>
+    <script src="src/home-dodo-checkout.js?v=4" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
-    <script src="src/shop-gallery.js?v=2" defer></script>
-    <script src="src/book-preview.js?v=1" defer></script>
+    <script src="src/shop-gallery.js?v=4" defer></script>
+    <script src="src/book-preview.js?v=4" defer></script>
   </body>
 </html>

@@ -18,6 +18,7 @@ const ACTIVE_SETTING_KEYS = [
   "blessingWallEnabled",
   "dodoCheckoutVisible",
   "paypalCheckoutVisible",
+  "alternateCardCheckoutVisible",
 ] as const;
 
 function keepActiveSettings(settings: Record<string, unknown>) {
@@ -36,7 +37,7 @@ function isEnabled(value: unknown) {
 
 function checkoutVisibility(
   settings: Record<string, unknown>,
-  key: "dodoCheckoutVisible" | "paypalCheckoutVisible",
+  key: "dodoCheckoutVisible" | "paypalCheckoutVisible" | "alternateCardCheckoutVisible",
 ) {
   const value = Object.hasOwn(settings, key)
     ? settings[key]
@@ -84,6 +85,7 @@ Deno.serve(async (request) => {
           ...keepActiveSettings(saved),
           dodoCheckoutVisible: checkoutVisibility(saved, "dodoCheckoutVisible"),
           paypalCheckoutVisible: checkoutVisibility(saved, "paypalCheckoutVisible"),
+          alternateCardCheckoutVisible: checkoutVisibility(saved, "alternateCardCheckoutVisible"),
         },
       });
     }
@@ -123,12 +125,16 @@ Deno.serve(async (request) => {
         paypalCheckoutVisible: Object.hasOwn(submittedSettings, "paypalCheckoutVisible")
           ? isEnabled(submittedSettings.paypalCheckoutVisible)
           : checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
+        alternateCardCheckoutVisible: Object.hasOwn(submittedSettings, "alternateCardCheckoutVisible")
+          ? isEnabled(submittedSettings.alternateCardCheckoutVisible)
+          : checkoutVisibility(currentSettings, "alternateCardCheckoutVisible"),
       };
     } else {
       settingsToSave = {
         ...settingsToSave,
         dodoCheckoutVisible: checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
         paypalCheckoutVisible: checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
+        alternateCardCheckoutVisible: checkoutVisibility(currentSettings, "alternateCardCheckoutVisible"),
       };
     }
 

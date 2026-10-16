@@ -6,10 +6,15 @@
   const descriptionOutput = document.querySelector("#bookPreviewDescription");
   const pagesOutput = document.querySelector("#bookPreviewPages");
   const getLink = document.querySelector("#bookPreviewGetLink");
+  const pdfReader = document.querySelector("#freeEbookPdfReader");
+  const pdfFrame = document.querySelector("#freeEbookPdfFrame");
+  const pdfStatus = document.querySelector("#freeEbookPdfStatus");
+  const previewCard = dialog?.querySelector(".book-preview-card");
   const flipStage = document.querySelector("#bookFlipStage");
   const flipFront = document.querySelector("#bookFlipFront");
   const flipBack = document.querySelector("#bookFlipBack");
   const flipControls = document.querySelector("#bookFlipControls");
+  const flipHint = document.querySelector("#bookFlipHint");
   const flipPrev = document.querySelector("#bookFlipPrev");
   const flipNext = document.querySelector("#bookFlipNext");
   const flipPageLabel = document.querySelector("#bookFlipPageLabel");
@@ -20,6 +25,44 @@
   let previewPages = [];
   let previewPageIndex = 0;
   let turning = false;
+  let activeFreeEbookPdf = "";
+  let pdfLoadVersion = 0;
+  let touchStartX = null;
+
+  const loadFreeEbookPdf = async (relativePath) => {
+    const loadVersion = ++pdfLoadVersion;
+    activeFreeEbookPdf = "";
+    getLink.hidden = true;
+    pdfFrame.hidden = true;
+    pdfFrame.removeAttribute("src");
+    pdfStatus.hidden = false;
+    pdfStatus.textContent = "Loading the free EBook PDF…";
+
+    if (!relativePath) {
+      pdfStatus.textContent = "The PDF for this free EBook has not been added yet.";
+      return;
+    }
+
+    const pdfUrl = new URL(relativePath, document.baseURI);
+    try {
+      const response = await fetch(pdfUrl, { method: "HEAD", cache: "no-store" });
+      if (loadVersion !== pdfLoadVersion) return;
+      if (!response.ok) throw new Error("PDF not found");
+
+      activeFreeEbookPdf = pdfUrl.href;
+      pdfFrame.src = `${pdfUrl.href}#toolbar=1&navpanes=0&view=FitH`;
+      pdfFrame.hidden = false;
+      pdfStatus.hidden = true;
+      getLink.href = pdfUrl.href;
+      getLink.download = pdfUrl.pathname.split("/").pop() || "free-ebook.pdf";
+      getLink.textContent = "Download Free EBook PDF";
+      getLink.setAttribute("aria-label", "Download this free EBook PDF");
+      getLink.hidden = false;
+    } catch {
+      if (loadVersion !== pdfLoadVersion) return;
+      pdfStatus.textContent = "This free EBook PDF is not available yet.";
+    }
+  };
 
   const renderFlipPage = () => {
     const page = previewPages[previewPageIndex];
@@ -60,13 +103,15 @@
   };
 
   const openPreview = (book) => {
+    pdfLoadVersion += 1;
+    activeFreeEbookPdf = "";
     const title = book.querySelector("h4")?.textContent?.trim();
     const cover = book.querySelector("img");
     if (!title || !cover) return;
 
     titleOutput.textContent = title;
     coverOutput.src = cover.currentSrc || cover.src;
-    coverOutput.alt = `${title} book cover`;
+    coverOutput.alt = `${title} ebook cover`;
     const pages = Number.parseInt(book.dataset.bookPages, 10);
     pagesOutput.textContent = Number.isFinite(pages) ? `Page Count: ${pages}` : "";
     const seriesName = book.dataset.bookSeries || "The Stories We Leave Behind";
@@ -75,20 +120,28 @@
     descriptionOutput.textContent = book.dataset.bookDescription || `Part of ${seriesName}.`;
     const seedCost = Number.parseInt(book.querySelector(".shop-seed-cost")?.textContent.match(/\d+/)?.[0], 10);
     const isFreePreview = book.dataset.bookNumber === "1";
+    const pdfPath = isFreePreview ? book.dataset.freeEbookPdf || "" : "";
+    previewCard.classList.toggle("is-pdf-reader", isFreePreview);
+    pdfReader.hidden = !isFreePreview;
+    flipStage.hidden = isFreePreview;
     if (isFreePreview) {
-      const firstPageCopy = book.dataset.bookSummary || "A first look inside this book.";
-      previewPages = [
-        { src: cover.currentSrc || cover.src, alt: `${title} cover` },
-        { copy: firstPageCopy, label: `Free preview · ${seriesName}`, heading: title },
-        { copy: book.dataset.bookDescription || firstPageCopy, label: `Book 1 · ${seriesName}`, heading: "About this story" },
-      ];
+      previewPages = [];
       previewPageIndex = 0;
-      flipControls.hidden = false;
-      getLink.textContent = "Get Free Book 🌱";
+      flipControls.hidden = true;
+      flipHint.hidden = true;
+      pagesOutput.hidden = true;
+      getLink.hidden = true;
+      void loadFreeEbookPdf(pdfPath);
     } else {
       previewPages = [];
       flipControls.hidden = true;
+      flipHint.hidden = true;
+      pagesOutput.hidden = false;
+      getLink.hidden = false;
+      getLink.href = "#support";
+      getLink.removeAttribute("download");
       getLink.textContent = `To Get: ${Number.isFinite(seedCost) ? seedCost : 2} 🌱`;
+      getLink.removeAttribute("aria-label");
     }
     renderFlipPage();
     dialog.showModal();
@@ -100,8 +153,8 @@
       const title = book.querySelector("h4");
       if (!title) return;
       const bookNumber = index + 1;
-      const bookLabel = `Book ${bookNumber}`;
-      title.textContent = title.textContent.replace(/^Book \d+:\s*/, "");
+      const bookLabel = `EBook ${bookNumber}`;
+      title.textContent = title.textContent.replace(/^(?:EBook|Book) \d+:\s*/, "");
       let subtitle = book.querySelector(".shop-book-series-subtitle");
       if (!subtitle) {
         subtitle = document.createElement("p");
@@ -117,7 +170,14 @@
           cost.dataset.originalCost ||= cost.textContent.match(/\d+/)?.[0] || "0";
           cost.innerHTML = '<span aria-hidden="true">🌱</span> Free';
           const getButton = book.querySelector(".shop-get-button");
-          if (getButton) getButton.setAttribute("aria-label", `Get ${title.textContent} free`);
+          if (getButton) {
+            getButton.textContent = "Get Free EBook 🌱";
+            getButton.setAttribute("aria-label", `Open the free ${title.textContent} ebook reader`);
+            getButton.addEventListener("click", (event) => {
+              event.stopPropagation();
+              openPreview(book);
+            });
+          }
         }
       }
       const currentDescription = book.dataset.bookDescription || "";
@@ -133,7 +193,22 @@
   closeButton?.addEventListener("click", () => dialog.close());
   flipPrev?.addEventListener("click", () => turnPage(-1));
   flipNext?.addEventListener("click", () => turnPage(1));
+  flipStage?.addEventListener("touchstart", (event) => {
+    touchStartX = event.changedTouches[0]?.clientX ?? null;
+  }, { passive: true });
+  flipStage?.addEventListener("touchend", (event) => {
+    if (touchStartX === null) return;
+    const delta = event.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(delta) >= 48) turnPage(delta < 0 ? 1 : -1);
+  }, { passive: true });
+  document.addEventListener("keydown", (event) => {
+    if (!dialog.open || !previewPages.length) return;
+    if (event.key === "ArrowRight") turnPage(1);
+    if (event.key === "ArrowLeft") turnPage(-1);
+  });
   getLink?.addEventListener("click", (event) => {
+    if (activeFreeEbookPdf) return;
     event.preventDefault();
     dialog.close();
     const homeTab = document.querySelector('[data-section-tab="homeView"]');
@@ -145,6 +220,12 @@
     if (event.target === dialog) dialog.close();
   });
   dialog.addEventListener("close", () => {
+    pdfLoadVersion += 1;
     coverOutput.removeAttribute("src");
+    pdfFrame.removeAttribute("src");
+    activeFreeEbookPdf = "";
+    pdfReader.hidden = true;
+    flipStage.hidden = false;
+    previewCard.classList.remove("is-pdf-reader");
   });
 })();

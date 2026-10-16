@@ -9,6 +9,7 @@
   const paymentPanel = document.querySelector("#dodoPaymentPanel");
   const checkoutLoader = document.querySelector("#dodoCheckoutLoader");
   const comingSoon = document.querySelector("#dodoPaymentComingSoon");
+  const cardButton = document.querySelector("#dodoCardButton");
   let seedCount = 1;
   let revealTimer;
 
@@ -49,7 +50,7 @@
     revealTimer = window.setTimeout(() => {
       checkoutLoader.hidden = true;
       paymentPanel.classList.remove("is-loading");
-      comingSoon.hidden = false;
+      comingSoon.hidden = !cardButton.hidden;
     }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1100);
   });
 
