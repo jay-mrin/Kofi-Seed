@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=146" />
+    <link rel="stylesheet" href="src/styles.css?v=148" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -307,22 +307,27 @@
             <label class="dodo-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Display name (optional)" /></label>
             <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message (optional)"></textarea></label>
             <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-expanded="false" aria-controls="dodoPaymentPanel">Sow Your Seed</button>
-            <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Dodo payment options" hidden>
+            <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options" hidden>
               <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Loading Dodo payment options" hidden>
                 <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
                 <span id="dodoCheckoutLoaderText">Preparing secure Dodo checkout…</span>
               </div>
+              <span class="dodo-payment-seed" aria-hidden="true">🌱</span>
               <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
-              <div class="payment-choice card-choice" id="dodoCardButton">
-                <a
-                  class="alternate-card-link"
-                  id="dodoAlternateCardCheckoutLink"
-                  href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                  aria-label="Open debit or credit card checkout popup"
-                  aria-haspopup="dialog"
-                  aria-controls="alternateCheckoutDialog"
-                >Debit or Credit Card</a>
+              <div class="dodo-payment-options">
+                <div class="payment-choice card-choice" id="dodoCardButton">
+                  <a
+                    class="alternate-card-link"
+                    id="dodoAlternateCardCheckoutLink"
+                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                    aria-label="Open debit or credit card checkout popup"
+                    aria-haspopup="dialog"
+                    aria-controls="alternateCheckoutDialog"
+                  >Debit or Credit Card</a>
+                </div>
+                <button class="dodo-pay-button" id="dodoPayButton" type="button">Pay with Dodo</button>
               </div>
+              <p class="dodo-payment-guidance">Complete the payment for Your Seed</p>
             </section>
           </form>
         </section>
@@ -758,7 +763,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/app.js?v=121" defer></script>
-    <script src="src/home-dodo-checkout.js?v=6" defer></script>
+    <script src="src/home-dodo-checkout.js?v=7" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>

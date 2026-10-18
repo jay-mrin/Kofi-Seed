@@ -3448,6 +3448,83 @@ legend::after {
   color: #a52d3f;
 }
 
+.dodo-payment-panel {
+  border-color: #b8a279;
+  background: linear-gradient(180deg, #faf5e9, #fffdf7);
+  box-shadow: 0 12px 24px rgba(91, 73, 45, 0.12);
+}
+
+.dodo-payment-seed {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #f4e5c5;
+  box-shadow: 0 0 0 8px rgba(173, 122, 44, 0.08);
+  font-size: 25px;
+  animation: app-loader-spin 2.5s linear infinite;
+}
+
+.dodo-payment-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dodo-payment-options #dodoCardButton[hidden] {
+  display: none;
+}
+
+.dodo-payment-options #dodoCardButton[hidden] + .dodo-pay-button { grid-column: 1 / -1; }
+
+.dodo-payment-options .alternate-card-link,
+.dodo-pay-button {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid #a39172;
+  border-radius: 999px;
+  color: #3f3321;
+  background: #fffaf0;
+  box-shadow: none;
+  font: 800 14px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dodo-pay-button {
+  border-color: var(--button-gold);
+  color: #fff;
+  background: var(--button-gold);
+}
+
+.dodo-payment-options .alternate-card-link:hover {
+  color: #3f3321;
+  background: #f4e5c5;
+  box-shadow: none;
+}
+
+.dodo-pay-button:hover { background: var(--button-gold-hover); }
+.dodo-pay-button:disabled { cursor: wait; }
+
+.dodo-payment-guidance {
+  margin: 16px 0 2px;
+  color: #6d6047;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .dodo-payment-options { grid-template-columns: 1fr; }
+}
+
 .admin-order-preview-label {
   display: inline-block;
   margin: 0 0 12px;

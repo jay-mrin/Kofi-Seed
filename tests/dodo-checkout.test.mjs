@@ -18,6 +18,17 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
 });
 
+test("Sow Your Seed reveals payment choices before Dodo checkout starts", () => {
+  const html = read("index.html");
+  const checkout = read("src/home-dodo-checkout.js");
+  const app = read("src/app.js");
+
+  assert.match(html, /id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"[\s\S]*Complete the payment for Your Seed/);
+  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*paymentPanel\.hidden = false;[\s\S]*dodoPayButton\.focus\(\)/);
+  assert.match(checkout, /dodoPayButton\.addEventListener\("click"[\s\S]*create-dodo-checkout/);
+  assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
+});
+
 test("Dodo payment confirmation verifies provider state before creating an order", () => {
   const orders = read("supabase/functions/_shared/dodo-orders.ts");
 

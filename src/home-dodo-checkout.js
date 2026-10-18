@@ -6,6 +6,7 @@
   const totalOutput = document.querySelector("#dodoTotalAmount");
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
   const checkoutButton = document.querySelector("#dodoCheckoutButton");
+  const dodoPayButton = document.querySelector("#dodoPayButton");
   const paymentPanel = document.querySelector("#dodoPaymentPanel");
   const checkoutLoader = document.querySelector("#dodoCheckoutLoader");
   const loaderText = document.querySelector("#dodoCheckoutLoaderText");
@@ -38,6 +39,7 @@
   const setLoading = (isLoading, message = "Preparing secure Dodo checkout…") => {
     submitting = isLoading;
     checkoutButton.disabled = isLoading;
+    dodoPayButton.disabled = isLoading;
     if (isLoading) paymentPanel.hidden = false;
     paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
@@ -133,8 +135,18 @@
     updateTotal();
   });
 
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (submitting || !emailInput.reportValidity()) return;
+
+    setStatus("");
+    paymentPanel.hidden = false;
+    checkoutButton.classList.add("is-checkout-open");
+    checkoutButton.setAttribute("aria-expanded", "true");
+    dodoPayButton.focus();
+  });
+
+  dodoPayButton.addEventListener("click", async () => {
     if (submitting || !emailInput.reportValidity()) return;
 
     setStatus("");
