@@ -29,6 +29,16 @@ test("Sow Your Seed reveals payment choices before Dodo checkout starts", () => 
   assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
 });
 
+test("the first Dodo card option stays disabled after one opening", () => {
+  const html = read("index.html");
+  const app = read("src/app.js");
+  const closeCheckout = app.match(/function closeAlternateCheckout\(showFailure = false\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.match(html, /id="dodoPayButton"[^>]*>Credit &amp; Debit Card \[2\]<\/button>/);
+  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
+  assert.doesNotMatch(closeCheckout, /dodoAlternateCardCheckoutLink/);
+});
+
 test("Dodo payment confirmation verifies provider state before creating an order", () => {
   const orders = read("supabase/functions/_shared/dodo-orders.ts");
 
