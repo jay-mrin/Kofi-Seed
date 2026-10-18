@@ -310,9 +310,9 @@
             <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Dodo payment options" hidden>
               <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Loading Dodo payment options" hidden>
                 <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
-                <span>Preparing your seed…</span>
+                <span id="dodoCheckoutLoaderText">Preparing secure Dodo checkout…</span>
               </div>
-              <p class="dodo-payment-coming-soon" id="dodoPaymentComingSoon" role="status" aria-live="polite" hidden>Coming soon</p>
+              <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
               <div class="payment-choice card-choice" id="dodoCardButton">
                 <a
                   class="alternate-card-link"
@@ -757,8 +757,8 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=115" defer></script>
-    <script src="src/home-dodo-checkout.js?v=4" defer></script>
+    <script src="src/app.js?v=116" defer></script>
+    <script src="src/home-dodo-checkout.js?v=5" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=4" defer></script>

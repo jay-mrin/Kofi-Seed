@@ -92,7 +92,7 @@ async function loadPublicContent(
     .filter((donation) => {
       if (
         donation.visibility_scope !== "public" ||
-        donation.payment_method !== "paypal"
+        !["paypal", "dodo"].includes(donation.payment_method)
       ) return false;
       const rawPayment =
         donation.raw_payment && typeof donation.raw_payment === "object"
@@ -110,7 +110,7 @@ async function loadPublicContent(
       if (!donation) return true;
       if (
         donation.visibility_scope !== "public" ||
-        donation.payment_method !== "paypal"
+        !["paypal", "dodo"].includes(donation.payment_method)
       ) return false;
       const rawPayment =
         donation.raw_payment && typeof donation.raw_payment === "object"

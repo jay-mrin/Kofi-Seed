@@ -247,7 +247,6 @@ const elements = {
   alternateCardCheckoutLink: document.querySelector("#alternateCardCheckoutLink"),
   dodoAlternateCardCheckoutLink: document.querySelector("#dodoAlternateCardCheckoutLink"),
   dodoCardButton: document.querySelector("#dodoCardButton"),
-  dodoPaymentComingSoon: document.querySelector("#dodoPaymentComingSoon"),
   dodoPaymentPanel: document.querySelector("#dodoPaymentPanel"),
   alternateCheckoutDialog: document.querySelector("#alternateCheckoutDialog"),
   alternateCheckoutFrame: document.querySelector("#alternateCheckoutFrame"),
@@ -996,7 +995,11 @@ function drawPdfInfoCard(commands, { x, y, width, height, label, value, maxChara
 function getProofPdfData(donation) {
   const order = getDigitalOrder(donation) || {};
   const rawOrder = getDonationRawRow(donation);
-  const provider = "PayPal";
+  const provider = getDigitalOrderValue(
+    donation,
+    "provider",
+    donation.paymentMethod === "dodo" ? "Dodo Payments" : "PayPal",
+  );
   const orderNumber = getDigitalOrderValue(
     donation,
     "orderNumber",
@@ -1653,10 +1656,6 @@ function renderSettings() {
   if (elements.cardButton && !elements.inlinePaypalCheckout.hidden) {
     elements.cardButton.hidden = !settings.alternateCardCheckoutVisible;
   }
-  if (elements.dodoPaymentComingSoon && elements.dodoPaymentPanel &&
-      !elements.dodoPaymentPanel.hidden && !elements.dodoPaymentPanel.classList.contains("is-loading")) {
-    elements.dodoPaymentComingSoon.hidden = settings.alternateCardCheckoutVisible;
-  }
   if (elements.seedCommentsPanel) {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
   }
@@ -1864,8 +1863,12 @@ function renderCalendarDetails(context) {
           );
           const captureId = getDigitalOrderValue(
             donation,
-            "paypalCaptureId",
-            donation.captureId || getDonationRawValue(donation, "TransactionId", "Not available"),
+            "providerTransactionId",
+            getDigitalOrderValue(
+              donation,
+              "paypalCaptureId",
+              donation.captureId || getDonationRawValue(donation, "TransactionId", "Not available"),
+            ),
           );
           const contactEmail = getDigitalOrderValue(donation, "contactEmail", "");
           const request = getDigitalOrderValue(donation, "personalizedRequest", donation.message || "No request entered.");
@@ -2007,7 +2010,7 @@ function getPrimaryAdminCalendarContext() {
     dateAttribute: "data-admin-calendar-date",
     details: elements.adminCalendarDetails,
     donations: state.donations,
-    emptyRecordLabel: state.adminProfile?.role === "super_admin" ? "private collection orders" : "Admin PayPal orders",
+    emptyRecordLabel: state.adminProfile?.role === "super_admin" ? "SuperAdmin PayPal orders" : "Admin orders",
     grid: elements.adminCalendarGrid,
     selectedDate: selectedAdminCalendarDate,
     summary: elements.adminCalendarSummary,
@@ -2639,6 +2642,14 @@ function closePaymentFailure(returnToSupport = false) {
   }
 }
 
+async function finishDodoPayment(payload) {
+  while (document.body.classList.contains("app-loading")) {
+    await wait(50);
+  }
+  pendingDonation = null;
+  await finishVerifiedDonation(payload);
+}
+
 function openAlternateCheckout(link) {
   if (!state.settings.alternateCardCheckoutVisible) return;
   const ui = getCheckoutUi();
@@ -2763,11 +2774,11 @@ function openAdminPanel() {
   if (elements.adminDonationHeading) {
     elements.adminDonationHeading.textContent = isSuperAdmin
       ? "SuperAdmin collection calendar"
-      : "1. Admin PayPal order calendar";
+      : "1. Admin order calendar";
   }
   elements.adminCalendarGrid.setAttribute(
     "aria-label",
-    isSuperAdmin ? "Daily SuperAdmin collection records" : "Daily Admin PayPal order records",
+    isSuperAdmin ? "Daily SuperAdmin PayPal order records" : "Daily Admin order records",
   );
 
   const sections = document.querySelectorAll(".admin-section");
@@ -3267,6 +3278,12 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("hashchange", () => {
   if (window.location.hash === "#admin") return;
   setActiveView(getViewIdFromHash());
+});
+
+window.SowYourSeedCheckout = Object.freeze({
+  callEdge,
+  finishDodoPayment,
+  openPaymentFailure,
 });
 
 if (document.readyState === "loading") {

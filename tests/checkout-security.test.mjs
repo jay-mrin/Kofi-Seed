@@ -43,7 +43,7 @@ test("Admin order reads and mutations share the same role scope", () => {
 
   assert.ok(scopeCalls.length >= 4, "GET, PUT, DELETE, and the helper must all use the shared role scope");
   assert.match(source, /role === "super_admin"[\s\S]*payment_route", "superadmin"[\s\S]*visibility_scope", "superadmin_private"/);
-  assert.match(source, /payment_route", "standard"[\s\S]*visibility_scope", "public"[\s\S]*payment_method", "paypal"/);
+  assert.match(source, /payment_route", "standard"[\s\S]*visibility_scope", "public"[\s\S]*\.in\("payment_method", \["paypal", "dodo"\]\)/);
 });
 
 test("webhooks can recover completed captures without trusting browser metadata", () => {

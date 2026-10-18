@@ -60,13 +60,14 @@ function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
   if (role === "super_admin") {
     return query
       .eq("payment_route", "superadmin")
-      .eq("visibility_scope", "superadmin_private");
+      .eq("visibility_scope", "superadmin_private")
+      .eq("payment_method", "paypal");
   }
 
   return query
     .eq("payment_route", "standard")
     .eq("visibility_scope", "public")
-    .eq("payment_method", "paypal");
+    .in("payment_method", ["paypal", "dodo"]);
 }
 
 function mapDigitalOrder(value: any) {
@@ -80,6 +81,9 @@ function mapDigitalOrder(value: any) {
     donationId: order.donation_id,
     paypalOrderId: order.paypal_order_id,
     paypalCaptureId: order.paypal_capture_id,
+    provider: order.payment_provider,
+    providerOrderId: order.provider_order_id,
+    providerTransactionId: order.provider_transaction_id,
     customerName: order.customer_name,
     contactEmail: order.contact_email,
     payerEmail: order.payer_email,
@@ -146,7 +150,7 @@ Deno.serve(async (request) => {
         const { data: donationsToPurge, error: donationsToPurgeError } =
           await applyDateRange(
             supabase.from("donations").select(
-              "id, donor_token_id, paypal_order_id",
+              "id, donor_token_id, paypal_order_id, dodo_checkout_session_id, dodo_payment_id",
             ),
             fromDate,
             toDate,
@@ -164,6 +168,16 @@ Deno.serve(async (request) => {
         const paypalOrderIds = (donationsToPurge || [])
           .map((donation: { paypal_order_id?: string | null }) =>
             donation.paypal_order_id
+          )
+          .filter(Boolean);
+        const dodoSessionIds = (donationsToPurge || [])
+          .map((donation: { dodo_checkout_session_id?: string | null }) =>
+            donation.dodo_checkout_session_id
+          )
+          .filter(Boolean);
+        const dodoPaymentIds = (donationsToPurge || [])
+          .map((donation: { dodo_payment_id?: string | null }) =>
+            donation.dodo_payment_id
           )
           .filter(Boolean);
 
@@ -204,6 +218,22 @@ Deno.serve(async (request) => {
               .delete()
               .in("paypal_order_id", paypalOrderIds);
             if (paymentAttemptError) throw paymentAttemptError;
+          }
+
+          if (dodoSessionIds.length) {
+            const { error: dodoAttemptError } = await supabase
+              .from("payment_attempts")
+              .delete()
+              .in("dodo_checkout_session_id", dodoSessionIds);
+            if (dodoAttemptError) throw dodoAttemptError;
+          }
+
+          if (dodoPaymentIds.length) {
+            const { error: dodoWebhookError } = await supabase
+              .from("dodo_webhook_events")
+              .delete()
+              .in("dodo_payment_id", dodoPaymentIds);
+            if (dodoWebhookError) throw dodoWebhookError;
           }
 
           const { error: donationError } = await supabase.from("donations")
@@ -285,7 +315,7 @@ Deno.serve(async (request) => {
         })
         .eq("donation_id", donationId)
         .select(
-          "id, order_number, donation_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at",
+          "id, order_number, donation_id, payment_provider, provider_order_id, provider_transaction_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at",
         )
         .maybeSingle();
 
@@ -308,7 +338,7 @@ Deno.serve(async (request) => {
 
       let donationQuery = supabase
         .from("donations")
-        .select("id, paypal_order_id")
+        .select("id, paypal_order_id, dodo_checkout_session_id, dodo_payment_id")
         .eq("id", donationId);
 
       donationQuery = applyAdminDonationScope(donationQuery, adminProfile.role);
@@ -333,6 +363,22 @@ Deno.serve(async (request) => {
           .delete()
           .eq("paypal_order_id", donation.paypal_order_id);
         if (paymentAttemptDeleteError) throw paymentAttemptDeleteError;
+      }
+
+      if (donation.dodo_checkout_session_id) {
+        const { error: paymentAttemptDeleteError } = await supabase
+          .from("payment_attempts")
+          .delete()
+          .eq("dodo_checkout_session_id", donation.dodo_checkout_session_id);
+        if (paymentAttemptDeleteError) throw paymentAttemptDeleteError;
+      }
+
+      if (donation.dodo_payment_id) {
+        const { error: webhookDeleteError } = await supabase
+          .from("dodo_webhook_events")
+          .delete()
+          .eq("dodo_payment_id", donation.dodo_payment_id);
+        if (webhookDeleteError) throw webhookDeleteError;
       }
 
       const { error: deleteError } = await supabase.from("donations").delete()
@@ -362,12 +408,14 @@ Deno.serve(async (request) => {
           "paypal_order_id",
           "paypal_capture_id",
           "paypal_payer_email",
+          "dodo_checkout_session_id",
+          "dodo_payment_id",
           "payment_route",
           "visibility_scope",
           "fortune_message",
           "raw_payment",
           "created_at",
-          "digital_orders(id, order_number, donation_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at)",
+          "digital_orders(id, order_number, donation_id, payment_provider, provider_order_id, provider_transaction_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at)",
         ].join(", "),
       )
       .order("created_at", { ascending: false });
@@ -398,8 +446,8 @@ Deno.serve(async (request) => {
         message: donation.supporter_message,
         paymentMethod: donation.payment_method,
         status: donation.paypal_status,
-        orderId: donation.paypal_order_id,
-        captureId: donation.paypal_capture_id,
+        orderId: donation.dodo_checkout_session_id || donation.paypal_order_id,
+        captureId: donation.dodo_payment_id || donation.paypal_capture_id,
         payerEmail: donation.paypal_payer_email,
         paymentRoute: donation.payment_route || "standard",
         visibilityScope: donation.visibility_scope || "public",

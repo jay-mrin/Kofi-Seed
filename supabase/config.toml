@@ -6,6 +6,15 @@ verify_jwt = false
 [functions.create-paypal-order]
 verify_jwt = false
 
+[functions.create-dodo-checkout]
+verify_jwt = false
+
+[functions.confirm-dodo-payment]
+verify_jwt = false
+
+[functions.dodo-webhook]
+verify_jwt = false
+
 [functions.prepare-paypal-subscription]
 verify_jwt = false
 

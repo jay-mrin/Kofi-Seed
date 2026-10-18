@@ -3441,6 +3441,15 @@ legend::after {
   text-align: center;
 }
 
+.dodo-payment-panel .payment-status {
+  margin: 0 8px 12px;
+  text-align: center;
+}
+
+.dodo-payment-panel .payment-status.is-error {
+  color: #a52d3f;
+}
+
 .inline-paypal-checkout .payment-choice + .payment-choice {
   margin-top: 10px;
 }

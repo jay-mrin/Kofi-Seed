@@ -1,6 +1,6 @@
 # Sow Your Seed
 
-A personalised digital-writing platform with Supabase backend support, SuperAdmin PayPal Checkout, role-based admin controls, community blessing comments, order calendars, and fulfillment tracking.
+A personalised digital-writing platform with Supabase backend support, Admin Dodo checkout, SuperAdmin PayPal checkout, role-based controls, community blessing comments, order calendars, and fulfillment tracking.
 
 ## What Runs Locally
 
@@ -12,16 +12,16 @@ npm run dev
 
 Then open `http://127.0.0.1:5173`.
 
-When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, and PayPal checkout are loaded through Supabase Edge Functions.
+When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, Dodo checkout, and PayPal checkout are loaded through Supabase Edge Functions.
 
-Both portals retain their separate calendars and historical payment records. New PayPal checkout attempts and payments belong to SuperAdmin. Each portal uses its own analytics reset timestamp.
+Both portals retain separate calendars and payment records. Historical Admin PayPal orders remain visible alongside new Admin Dodo orders; new PayPal orders belong to SuperAdmin. Each portal uses its own analytics reset timestamp.
 
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
 ## Files
 
 - `index.html` - static app entrypoint
-- `src/app.js` - frontend state, Supabase calls, PayPal SDK wiring
+- `src/app.js` - frontend state, Supabase calls, PayPal SDK wiring, and Dodo return handling
 - `src/styles.css` - responsive UI and modal styling
 - `src/config.js` - local browser config, never store secrets here
 - `.env.example` - server secret placeholders
@@ -69,6 +69,12 @@ on conflict (user_id) do update set email = excluded.email, role = excluded.role
 ```bash
 npx supabase secrets set SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
+npx supabase secrets set DODO_PAYMENTS_ENV="test_mode"
+npx supabase secrets set DODO_PAYMENTS_CURRENCY="USD"
+npx supabase secrets set DODO_PAYMENTS_API_KEY="YOUR_DODO_TEST_API_KEY"
+npx supabase secrets set DODO_PAYMENTS_PRODUCT_ID="YOUR_DODO_PRODUCT_ID"
+npx supabase secrets set DODO_PAYMENTS_WEBHOOK_KEY="YOUR_DODO_WEBHOOK_SECRET"
+npx supabase secrets set DODO_RETURN_URL="https://YOUR_PUBLIC_SITE/"
 npx supabase secrets set PAYPAL_ENV="sandbox"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_ID="YOUR_SUPERADMIN_SANDBOX_CLIENT_ID"
 npx supabase secrets set SUPER_ADMIN_PAYPAL_CLIENT_SECRET="YOUR_SUPERADMIN_SANDBOX_CLIENT_SECRET"
@@ -78,6 +84,8 @@ npx supabase secrets set SITE_ORIGIN="http://127.0.0.1:5173"
 ```
 
 Use the deployed website origin for `SITE_ORIGIN` outside local development.
+
+In Dodo Payments, create a one-time USD product, enable **Pay What You Want**, and set its minimum to $7. Configure the deployed `dodo-webhook` URL for `payment.succeeded`, `payment.failed`, and `payment.cancelled` events. Dodo checkout sessions and verified orders are always scoped to the Admin portal.
 
 7. Deploy functions:
 
@@ -101,7 +109,7 @@ The SuperAdmin PayPal app must send `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.REFU
 
 
 
-Every completed PayPal capture also creates a linked digital-service order for `Personalised Digital Writing - Custom Order Made Writing`. The calendar for the collecting role shows the order ID, PayPal transaction ID, personalised-writing request, fulfillment status, and a proof PDF download for each payment.
+Every completed Dodo or PayPal payment creates a linked digital-service order for `Personalised Digital Writing - Custom Order Made Writing`. The collecting portal shows the provider transaction ID, personalised-writing request, fulfillment status, and a proof PDF download.
 
 ## Verification
 
@@ -111,12 +119,13 @@ Run the local validation suite before deployment:
 npm run check
 ```
 
-Use PayPal sandbox first:
+Use Dodo test mode and PayPal sandbox first:
 
-- Successful wallet capture creates one donation row and returns a fortune.
+- Successful Dodo payment creates one Admin order and returns a fortune.
+- Successful PayPal capture creates one SuperAdmin order and returns a fortune.
 - Debit or credit card checkout redirects to the configured alternate checkout website.
 - Cancelled checkout creates no donation.
-- Duplicate capture/webhook updates do not create duplicate donations.
+- Duplicate Dodo or PayPal confirmation/webhook deliveries do not create duplicate orders.
 - Existing verified subscription sales continue to create exactly one linked seed order.
 - Admin calendar can download a proof PDF for each digital-service order and mark orders fulfilled.
 - Both analytics portals share the total page-visit count while keeping every payment attempt and completed payment private to its checkout owner. Each portal resets independently.
