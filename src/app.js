@@ -311,7 +311,8 @@ function getSampleAdminOrder() {
     id: "sample-admin-order-preview",
     isPreview: true,
     name: "Sample Customer",
-    amount: 7,
+    amount: 14,
+    seedCount: 2,
     frequency: "once",
     paymentMethod: "dodo",
     createdAt,
@@ -322,6 +323,7 @@ function getSampleAdminOrder() {
       providerTransactionId: "SAMPLE-NO-PAYMENT",
       contactEmail: "sample@example.com",
       itemName: DIGITAL_ORDER_ITEM_NAME,
+      redeemedBookTitle: "Letters from the Monsoon",
       personalizedRequest: "A sample request to see how a new SEED order appears in the calendar.",
       fulfillmentStatus: "paid_awaiting_personalized_writing",
       fulfillmentNote: "",
@@ -1902,6 +1904,7 @@ function renderCalendarDetails(context) {
           const contactEmail = getDigitalOrderValue(donation, "contactEmail", "");
           const request = getDigitalOrderValue(donation, "personalizedRequest", donation.message || "No request entered.");
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
+          const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", "");
           const note = getDigitalOrderValue(donation, "fulfillmentNote", "");
           const isFulfilled = status === "fulfilled";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
@@ -1924,7 +1927,7 @@ function renderCalendarDetails(context) {
                 <span><strong>Contact email</strong>${escapeHtml(contactEmail || "Not provided")}</span>
                 <span><strong>Item</strong>${escapeHtml(itemLabel)}</span>
                 <span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>
-                ${context.isAdminPortal ? "<span><strong>Reedemed</strong>&#160;</span>" : ""}
+                ${context.isAdminPortal ? `<span><strong>Reedemed</strong>${escapeHtml(redeemedBookTitle || "Not assigned")}</span>` : ""}
               </div>
               ${context.isAdminPortal ? "" : `<p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>`}
               ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
