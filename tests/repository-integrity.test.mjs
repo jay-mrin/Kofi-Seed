@@ -86,6 +86,14 @@ test("frontend ID selectors and static asset paths resolve", () => {
   }
 });
 
+test("the header does not show a seed-count badge", () => {
+  const html = readRepositoryFile("index.html");
+  const styles = readRepositoryFile("src/styles.css");
+
+  assert.doesNotMatch(html, /class="seed-balance"|aria-label="Seed count:/);
+  assert.doesNotMatch(styles, /\.seed-balance/);
+});
+
 test("public startup loads checkout settings before deferred community content", () => {
   const app = readRepositoryFile("src/app.js");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
