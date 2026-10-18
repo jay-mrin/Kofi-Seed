@@ -80,11 +80,12 @@
     const params = new URLSearchParams(window.location.search);
     if (params.get("dodo_cancelled") === "1") {
       window.sessionStorage.removeItem(donorTokenKey);
-      paymentPanel.hidden = false;
-      checkoutButton.classList.add("is-checkout-open");
-      checkoutButton.setAttribute("aria-expanded", "true");
-      setStatus("Dodo payment was cancelled. You can try again when you are ready.", true);
+      paymentPanel.hidden = true;
+      checkoutButton.classList.remove("is-checkout-open");
+      checkoutButton.setAttribute("aria-expanded", "false");
+      setStatus("");
       cleanDodoReturnParameters();
+      window.SowYourSeedCheckout?.openPaymentFailure?.();
       return;
     }
 

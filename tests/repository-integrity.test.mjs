@@ -112,6 +112,13 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   assert.match(styles, /\.payment-failure-card\s*\{[\s\S]*linear-gradient\(180deg, #1c1720 0%, #0f0c12 100%\)/);
 });
 
+test("cancelled Dodo payments open the seed-not-sown dialog", () => {
+  const checkout = readRepositoryFile("src/home-dodo-checkout.js");
+
+  assert.match(checkout, /params\.get\("dodo_cancelled"\) === "1"[\s\S]*setStatus\(""\)[\s\S]*openPaymentFailure\?\.\(\)/);
+  assert.doesNotMatch(checkout, /Dodo payment was cancelled\. You can try again when you are ready\./);
+});
+
 test("Google AdSense has been removed from active pages and settings", () => {
   const pages = [
     "index.html",
