@@ -1494,7 +1494,7 @@ main {
   z-index: 1;
   width: 100%;
   height: auto;
-  aspect-ratio: 1983 / 793;
+  aspect-ratio: 2048 / 768;
   overflow: hidden;
   border-radius: 0 0 24px 24px;
   background: var(--silver);
