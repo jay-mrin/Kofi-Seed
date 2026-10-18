@@ -32,11 +32,14 @@ test("Sow Your Seed reveals payment choices before Dodo checkout starts", () => 
 test("the first Dodo card option stays disabled after one opening", () => {
   const html = read("index.html");
   const app = read("src/app.js");
-  const closeCheckout = app.match(/function closeAlternateCheckout\(showFailure = false\) \{[\s\S]*?\n\}/)?.[0] || "";
+  const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
 
   assert.match(html, /id="dodoPayButton"[^>]*>Credit &amp; Debit Card \[2\]<\/button>/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
+  assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
+  assert.ok(closeCheckout);
   assert.doesNotMatch(closeCheckout, /dodoAlternateCardCheckoutLink/);
+  assert.doesNotMatch(closeCheckout, /classList\.remove\("is-disabled"\)/);
 });
 
 test("Dodo payment confirmation verifies provider state before creating an order", () => {

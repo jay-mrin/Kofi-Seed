@@ -183,10 +183,12 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
-  assert.match(app, /setPaymentStatus\("Choose a debit\/credit card or PayPal to continue"\)/);
+  assert.match(app, /setPaymentStatus\(paypalCardEligible \|\| state\.settings\.alternateCardCheckoutVisible[\s\S]*"Choose a debit\/credit card or PayPal to continue"/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
-  assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-link\s*\{[\s\S]*background: linear-gradient\(135deg, #6b7280, #9ca3af\)[\s\S]*pointer-events: none/);
+  assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-link\s*\{\s*display: none;/);
+  assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-retry\s*\{\s*display: block;/);
+  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
   assert.match(styles, /\.card-choice\.is-disabled \.preferred-payment-label\s*\{[\s\S]*display: none/);
   assert.match(styles, /\.alternate-checkout-dialog\s*\{[\s\S]*height: min\(880px, calc\(100dvh - 24px\)\)/);
   assert.match(styles, /\.alternate-checkout-frame\s*\{[\s\S]*width: 100%[\s\S]*height: 100%/);

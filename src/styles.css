@@ -2140,6 +2140,8 @@ legend::after {
     filter 160ms ease;
 }
 
+.payment-choice[hidden] { display: none; }
+
 .payment-choice:hover {
   transform: translateY(-2px);
 }
@@ -2221,14 +2223,20 @@ legend::after {
 }
 
 .card-choice.is-disabled .alternate-card-link {
-  border-color: #9ca3af;
-  color: #f3f4f6;
-  background: linear-gradient(135deg, #6b7280, #9ca3af);
-  box-shadow: none;
-  filter: none;
-  cursor: not-allowed;
-  pointer-events: none;
+  display: none;
 }
+
+.alternate-card-retry {
+  display: none;
+  margin: 0;
+  padding: 11px 18px;
+  color: #75674f;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.card-choice.is-disabled .alternate-card-retry { display: block; }
 
 .alternate-checkout-dialog {
   width: min(920px, calc(100% - 24px));

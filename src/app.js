@@ -2733,12 +2733,6 @@ function closeAlternateCheckout() {
     elements.alternateCheckoutDialog.removeAttribute("open");
   }
   if (elements.alternateCheckoutFrame) elements.alternateCheckoutFrame.src = "about:blank";
-  for (const link of [elements.alternateCardCheckoutLink]) {
-    link?.closest(".card-choice")?.classList.remove("is-disabled");
-    link?.removeAttribute("aria-disabled");
-    link?.removeAttribute("tabindex");
-  }
-
 }
 
 function returnToSowYourSeed() {
