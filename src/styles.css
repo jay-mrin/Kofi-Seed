@@ -8,6 +8,8 @@
   --muted: #75674f;
   --line: #e3d4b7;
   --white: #fffdf7;
+  --button-gold: #826d4e;
+  --button-gold-hover: #6d5a3d;
   --shadow: 0 16px 40px rgba(25, 25, 25, 0.1);
   --button-radius: 999px;
   --gradient-border: linear-gradient(135deg, rgba(139, 99, 31, 0.42), rgba(233, 204, 140, 0.46));
@@ -1618,13 +1620,13 @@ main {
 
 .button-primary {
   color: var(--white);
-  background: #ad7a2c;
-  box-shadow: 0 14px 30px rgba(173, 122, 44, 0.18);
+  background: var(--button-gold);
+  box-shadow: 0 10px 22px rgba(91, 73, 45, 0.13);
 }
 
 .button-primary:hover {
-  background: #8b631f;
-  box-shadow: 0 18px 34px rgba(173, 122, 44, 0.24);
+  background: var(--button-gold-hover);
+  box-shadow: 0 14px 26px rgba(91, 73, 45, 0.17);
 }
 
 .button-secondary {
@@ -1908,12 +1910,8 @@ legend::after {
   margin-top: 14px;
   border: 0;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 22% 16%, rgba(255, 255, 255, 0.48), transparent 20%),
-    linear-gradient(135deg, #e9cc8c 0%, #ad7a2c 42%, #654814 100%);
-  box-shadow:
-    0 18px 36px rgba(173, 122, 44, 0.3),
-    0 0 28px rgba(173, 122, 44, 0.24);
+  background: var(--button-gold);
+  box-shadow: 0 10px 22px rgba(91, 73, 45, 0.13);
   font-size: 20px;
   font-weight: 950;
   text-transform: uppercase;
@@ -2000,12 +1998,8 @@ legend::after {
 .seed-stepper-button-plus {
   color: #fff;
   border-color: rgba(173, 122, 44, 0.46);
-  background:
-    radial-gradient(circle at 34% 20%, rgba(255, 255, 255, 0.76), transparent 22%),
-    linear-gradient(145deg, #e9cc8c, #654814);
-  box-shadow:
-    0 15px 30px rgba(173, 122, 44, 0.28),
-    0 0 24px rgba(173, 122, 44, 0.24);
+  background: var(--button-gold);
+  box-shadow: 0 8px 18px rgba(91, 73, 45, 0.14);
 }
 
 .about-panel {
@@ -3602,10 +3596,10 @@ legend::after {
 
 .shop-seed-cost { display: flex; align-items: center; gap: 7px; margin: 0; color: #8b631f; font-size: 17px; font-weight: 700; }
 .shop-book-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.shop-get-button { border: 0; border-radius: 999px; padding: 9px 16px; background: #8b631f; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.shop-get-button { border: 0; border-radius: 999px; padding: 9px 16px; background: var(--button-gold); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .shop-book[data-book-number="1"] .shop-book-actions { align-items: stretch; flex-direction: column; }
 .shop-book[data-book-number="1"] .shop-get-button { width: 100%; }
-.shop-get-button:hover { background: #654814; }
+.shop-get-button:hover { background: var(--button-gold-hover); }
 .shop-get-button:focus-visible { outline: 2px solid #8b631f; outline-offset: 3px; }
 .shop-get-status { margin: 12px 0 0; color: #6d6047; font-size: 12px; }
 @media (max-width: 650px) {
@@ -3740,7 +3734,7 @@ legend::after {
 .dodo-checkout-summary { border-color: rgba(173,122,44,.2); background: rgba(255,255,255,.78); }
 .dodo-quantity-control { background: #fffaf0; }
 .dodo-quantity-control strong { color: var(--ink); font: 800 clamp(18px, 2.8vw, 24px) Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.dodo-quantity-control button { background: #ad7a2c; box-shadow: 0 7px 17px rgba(173,122,44,.2); }
+.dodo-quantity-control button { background: var(--button-gold); box-shadow: 0 7px 17px rgba(91,73,45,.14); }
 .dodo-quantity-control button:first-child { color: #654814; background: #f4e5c5; }
 .dodo-unit-price { border-color: rgba(173,122,44,.3); color: #6d6047; }
 .dodo-unit-price span,.dodo-total > span { font: 600 13px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -3752,8 +3746,8 @@ legend::after {
 .dodo-field input { border-color: #e2d4b5; border-radius: 14px; background: #fff; font: 500 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .dodo-field input:focus { border-color: #ad7a2c; box-shadow: 0 0 0 3px rgba(173,122,44,.12); }
 .dodo-field small { color: #7a6d56; font: 13px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.dodo-proceed-button { background: #ad7a2c; box-shadow: 0 14px 30px rgba(173,122,44,.18); font: 800 17px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.dodo-proceed-button:hover { background: #8b631f; filter: none; }
+.dodo-proceed-button { background: var(--button-gold); box-shadow: 0 10px 22px rgba(91,73,45,.13); font: 800 17px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.dodo-proceed-button:hover { background: var(--button-gold-hover); filter: none; }
 
 .home-checkout-view { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 60px; }
 .home-checkout-view .dodo-checkout-card { margin-top: 0; }
@@ -3942,8 +3936,8 @@ legend::after {
 }
 .home-checkout-view .minimal-offering .seed-stepper-button-plus {
   color: #fff;
-  background: #ad7a2c;
-  box-shadow: 0 7px 17px rgba(173,122,44,.2);
+  background: var(--button-gold);
+  box-shadow: 0 7px 17px rgba(91,73,45,.14);
 }
 .home-checkout-view .minimal-offering .compact-amount-field {
   display: grid;
@@ -4017,11 +4011,11 @@ legend::after {
   margin-top: 22px;
   border-radius: 999px;
   color: #fff;
-  background: #ad7a2c;
-  box-shadow: 0 14px 30px rgba(173,122,44,.18);
+  background: var(--button-gold);
+  box-shadow: 0 10px 22px rgba(91,73,45,.13);
   font: 800 17px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-.home-checkout-view .minimal-offering .checkout-button:hover { background: #8b631f; }
+.home-checkout-view .minimal-offering .checkout-button:hover { background: var(--button-gold-hover); }
 .home-checkout-view .minimal-offering .checkout-button.is-checkout-open { border-radius: 32px 32px 10px 10px; }
 .home-checkout-view .dodo-proceed-button.is-checkout-open { border-radius: 32px 32px 10px 10px; }
 .dodo-payment-coming-soon {
