@@ -1927,7 +1927,7 @@ function renderCalendarDetails(context) {
                 <span><strong>Contact email</strong>${escapeHtml(contactEmail || "Not provided")}</span>
                 <span><strong>Item</strong>${escapeHtml(itemLabel)}</span>
                 <span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>
-                ${context.isAdminPortal ? `<span><strong>Reedemed</strong>${escapeHtml(redeemedBookTitle || "Not assigned")}</span>` : ""}
+                ${context.isAdminPortal ? `<span><strong>Reedemed</strong>${redeemedBookTitle ? escapeHtml(redeemedBookTitle) : "&#160;"}</span>` : ""}
               </div>
               ${context.isAdminPortal ? "" : `<p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>`}
               ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
