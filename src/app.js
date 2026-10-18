@@ -1904,6 +1904,10 @@ function renderCalendarDetails(context) {
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const note = getDigitalOrderValue(donation, "fulfillmentNote", "");
           const isFulfilled = status === "fulfilled";
+          const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
+          const itemLabel = context.isAdminPortal && itemName === DIGITAL_ORDER_ITEM_NAME
+            ? "Seed"
+            : itemName;
           return `
             <article class="admin-calendar-donation${donation.isPreview ? " is-preview" : ""}">
               ${donation.isPreview ? '<p class="admin-order-preview-label">Sample order · No payment was made</p>' : ""}
@@ -1914,14 +1918,15 @@ function renderCalendarDetails(context) {
                 </div>
                 <b>${money(amount)}</b>
               </div>
-              <div class="admin-order-meta">
+              <div class="admin-order-meta${context.isAdminPortal ? " is-admin-order" : ""}">
                 <span><strong>Order ID</strong>${escapeHtml(orderNumber)}</span>
                 <span><strong>Transaction ID</strong>${escapeHtml(captureId)}</span>
                 <span><strong>Contact email</strong>${escapeHtml(contactEmail || "Not provided")}</span>
-                <span><strong>Item</strong>${escapeHtml(order?.itemName || DIGITAL_ORDER_ITEM_NAME)}</span>
+                <span><strong>Item</strong>${escapeHtml(itemLabel)}</span>
                 <span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>
+                ${context.isAdminPortal ? "<span><strong>Reedemed</strong>&#160;</span>" : ""}
               </div>
-              <p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>
+              ${context.isAdminPortal ? "" : `<p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>`}
               ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
                 <span>Fulfillment note</span>
                 <textarea data-fulfillment-note="${escapeHtml(donation.id)}" placeholder="Write proof notes, delivery details, or custom writing summary.">${escapeHtml(note)}</textarea>
@@ -2036,6 +2041,7 @@ function renderCalendarGrid(context) {
 function getPrimaryAdminCalendarContext() {
   return {
     allowDelete: true,
+    isAdminPortal: state.adminProfile?.role === "admin",
     cursor: adminCalendarCursor,
     dateAttribute: "data-admin-calendar-date",
     details: elements.adminCalendarDetails,

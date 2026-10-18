@@ -2861,6 +2861,10 @@ legend::after {
     grid-template-columns: 1fr;
   }
 
+  .admin-order-meta.is-admin-order {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-calendar-summary {
     grid-template-columns: 1fr;
   }
