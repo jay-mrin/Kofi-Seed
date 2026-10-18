@@ -2723,7 +2723,7 @@ function openAlternateCheckout(link) {
   }
 }
 
-function closeAlternateCheckout(showFailure = false) {
+function closeAlternateCheckout() {
   if (!elements.alternateCheckoutDialog) return;
 
   document.body.classList.remove("alternate-checkout-open");
@@ -2739,9 +2739,6 @@ function closeAlternateCheckout(showFailure = false) {
     link?.removeAttribute("tabindex");
   }
 
-  if (showFailure) {
-    window.requestAnimationFrame(openPaymentFailure);
-  }
 }
 
 function returnToSowYourSeed() {
@@ -3298,13 +3295,13 @@ elements.paymentFailureDialog?.addEventListener("click", (event) => {
 elements.paymentFailureDialog?.addEventListener("close", () => {
   document.body.classList.remove("payment-failure-open");
 });
-elements.closeAlternateCheckoutButton?.addEventListener("click", () => closeAlternateCheckout(true));
+elements.closeAlternateCheckoutButton?.addEventListener("click", closeAlternateCheckout);
 elements.alternateCheckoutDialog?.addEventListener("cancel", (event) => {
   event.preventDefault();
-  closeAlternateCheckout(true);
+  closeAlternateCheckout();
 });
 elements.alternateCheckoutDialog?.addEventListener("click", (event) => {
-  if (event.target === elements.alternateCheckoutDialog) closeAlternateCheckout(true);
+  if (event.target === elements.alternateCheckoutDialog) closeAlternateCheckout();
 });
 elements.alternateCheckoutDialog?.addEventListener("close", () => {
   document.body.classList.remove("alternate-checkout-open");

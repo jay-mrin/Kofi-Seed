@@ -108,7 +108,9 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   assert.match(app, /onCancel:[\s\S]*PayPal payment cancelled[\s\S]*openPaymentFailure\(\)/);
   assert.match(app, /onError:[\s\S]*PayPal checkout failed[\s\S]*openPaymentFailure\(\)/);
   assert.match(app, /retryPaymentButton\?\.addEventListener[\s\S]*closePaymentFailure\(true\)/);
-  assert.match(app, /function closeAlternateCheckout\(showFailure = false\)[\s\S]*requestAnimationFrame\(openPaymentFailure\)/);
+  assert.doesNotMatch(app, /function closeAlternateCheckout\([^)]*\) \{[\s\S]*?requestAnimationFrame\(openPaymentFailure\)/);
+  assert.match(app, /closeAlternateCheckoutButton\?\.addEventListener\("click", closeAlternateCheckout\)/);
+  assert.doesNotMatch(app, /closeAlternateCheckout\(true\)/);
   assert.match(styles, /\.payment-failure-card\s*\{[\s\S]*linear-gradient\(180deg, #1c1720 0%, #0f0c12 100%\)/);
 });
 
@@ -179,8 +181,8 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.match(html, /class="preferred-payment-label"[\s\S]*Preferred/);
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
-  assert.match(app, /function openAlternateCheckout\(\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
-  assert.match(app, /\[elements\.alternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(\)/);
+  assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
+  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
   assert.match(app, /setPaymentStatus\("Choose a debit\/credit card or PayPal to continue"\)/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
