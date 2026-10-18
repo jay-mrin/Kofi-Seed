@@ -140,7 +140,7 @@
       getLink.hidden = false;
       getLink.href = "#support";
       getLink.removeAttribute("download");
-      getLink.textContent = `To Get: ${Number.isFinite(seedCost) ? seedCost : 2} 🌱`;
+      getLink.textContent = `To Get: ${Number.isFinite(seedCost) ? seedCost : 2}+ 🌱`;
       getLink.removeAttribute("aria-label");
     }
     renderFlipPage();
