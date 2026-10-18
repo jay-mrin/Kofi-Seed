@@ -3450,6 +3450,19 @@ legend::after {
   color: #a52d3f;
 }
 
+.admin-order-preview-label {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fff2d8;
+  color: #705019;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .inline-paypal-checkout .payment-choice + .payment-choice {
   margin-top: 10px;
 }

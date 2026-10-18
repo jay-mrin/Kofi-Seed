@@ -299,6 +299,35 @@ let alternateCheckoutSource = "paypal";
 const initialAdminCalendarDate = getLatestDonationDateKey();
 let adminCalendarCursor = fromDateKey(initialAdminCalendarDate);
 let selectedAdminCalendarDate = initialAdminCalendarDate;
+const showSampleAdminOrder = new URLSearchParams(window.location.search).get("preview_order") === "1";
+if (showSampleAdminOrder) {
+  selectedAdminCalendarDate = toDateKey(new Date());
+  adminCalendarCursor = fromDateKey(selectedAdminCalendarDate);
+}
+
+function getSampleAdminOrder() {
+  const createdAt = new Date().toISOString();
+  return {
+    id: "sample-admin-order-preview",
+    isPreview: true,
+    name: "Sample Customer",
+    amount: 7,
+    frequency: "once",
+    paymentMethod: "dodo",
+    createdAt,
+    message: "A sample request to see how a new SEED order appears in the calendar.",
+    digitalOrder: {
+      orderNumber: "SAMPLE-SEED-001",
+      provider: "dodo",
+      providerTransactionId: "SAMPLE-NO-PAYMENT",
+      contactEmail: "sample@example.com",
+      itemName: DIGITAL_ORDER_ITEM_NAME,
+      personalizedRequest: "A sample request to see how a new SEED order appears in the calendar.",
+      fulfillmentStatus: "paid_awaiting_personalized_writing",
+      fulfillmentNote: "",
+    },
+  };
+}
 function cloneDefaultSettings() {
   return { ...DEFAULT_SETTINGS };
 }
@@ -1876,7 +1905,8 @@ function renderCalendarDetails(context) {
           const note = getDigitalOrderValue(donation, "fulfillmentNote", "");
           const isFulfilled = status === "fulfilled";
           return `
-            <article class="admin-calendar-donation">
+            <article class="admin-calendar-donation${donation.isPreview ? " is-preview" : ""}">
+              ${donation.isPreview ? '<p class="admin-order-preview-label">Sample order · No payment was made</p>' : ""}
               <div class="admin-calendar-donation-main">
                 <div>
                   <strong>${escapeHtml(name)}</strong>
@@ -1892,7 +1922,7 @@ function renderCalendarDetails(context) {
                 <span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>
               </div>
               <p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>
-              <label class="admin-fulfillment-field">
+              ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
                 <span>Fulfillment note</span>
                 <textarea data-fulfillment-note="${escapeHtml(donation.id)}" placeholder="Write proof notes, delivery details, or custom writing summary.">${escapeHtml(note)}</textarea>
               </label>
@@ -1906,7 +1936,7 @@ function renderCalendarDetails(context) {
                     ? `<button class="button button-danger" type="button" data-delete-donation-record="${escapeHtml(donation.id)}">Delete order</button>`
                     : ""
                 }
-              </div>
+              </div>`}
             </article>
           `;
         })
@@ -2009,7 +2039,9 @@ function getPrimaryAdminCalendarContext() {
     cursor: adminCalendarCursor,
     dateAttribute: "data-admin-calendar-date",
     details: elements.adminCalendarDetails,
-    donations: state.donations,
+    donations: showSampleAdminOrder && state.adminProfile?.role === "admin"
+      ? [getSampleAdminOrder(), ...state.donations]
+      : state.donations,
     emptyRecordLabel: state.adminProfile?.role === "super_admin" ? "SuperAdmin PayPal orders" : "Admin orders",
     grid: elements.adminCalendarGrid,
     selectedDate: selectedAdminCalendarDate,
