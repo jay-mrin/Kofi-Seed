@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=148" />
+    <link rel="stylesheet" href="src/styles.css?v=149" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -314,18 +314,21 @@
               </div>
               <span class="dodo-payment-seed" aria-hidden="true">🌱</span>
               <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
-              <div class="dodo-payment-options">
-                <div class="payment-choice card-choice" id="dodoCardButton">
-                  <a
-                    class="alternate-card-link"
-                    id="dodoAlternateCardCheckoutLink"
-                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                    aria-label="Open debit or credit card checkout popup"
-                    aria-haspopup="dialog"
-                    aria-controls="alternateCheckoutDialog"
-                  >Debit or Credit Card</a>
-                </div>
-                <button class="dodo-pay-button" id="dodoPayButton" type="button">Pay with Dodo</button>
+              <div class="payment-choice card-choice" id="dodoCardButton">
+                <span>Alternate debit or credit card</span>
+                <small class="preferred-payment-label">Preferred</small>
+                <a
+                  class="alternate-card-link"
+                  id="dodoAlternateCardCheckoutLink"
+                  href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                  aria-label="Open debit or credit card checkout popup"
+                  aria-haspopup="dialog"
+                  aria-controls="alternateCheckoutDialog"
+                >Debit or Credit Card</a>
+              </div>
+              <div class="payment-choice dodo-choice">
+                <span>Dodo</span>
+                <button class="dodo-pay-button" id="dodoPayButton" type="button">Dodo</button>
               </div>
               <p class="dodo-payment-guidance">Complete the payment for Your Seed</p>
             </section>
