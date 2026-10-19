@@ -15,6 +15,10 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(create, /payment_provider: "dodo"/);
   assert.match(create, /site_settings[\s\S]*seedPrice/);
   assert.match(dodo, /product_cart:[\s\S]*amount: input\.amountCents/);
+  assert.match(dodo, /allowed_payment_method_types: \["credit", "debit"\]/);
+  assert.match(dodo, /minimal_address: true/);
+  assert.match(dodo, /single_page: true/);
+  assert.match(dodo, /allow_phone_number_collection: false/);
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
 });
 
@@ -34,7 +38,7 @@ test("the first Dodo card option stays disabled after one opening", () => {
   const app = read("src/app.js");
   const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
 
-  assert.match(html, /id="dodoPayButton"[^>]*>Paypal \/ Credit &amp; Debit Card \/ Dodo<\/button>/);
+  assert.match(html, /id="dodoPayButton"[^>]*>Credit or Debit Card \(Dodo\)<\/button>/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
   assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
   assert.ok(closeCheckout);
