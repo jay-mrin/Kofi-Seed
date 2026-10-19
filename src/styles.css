@@ -4028,29 +4028,17 @@ main {
 }
 
 .support-brand-mark {
-  position: relative;
   display: grid;
-  width: 42px;
-  height: 34px;
+  width: 36px;
+  height: 40px;
   place-items: center;
-  border: 4px solid #272b2e;
-  border-radius: 10px 10px 13px 13px;
-  background: #fff;
-  color: #ff5b32;
-  font-size: 19px;
-  line-height: 1;
+  color: #c59632;
 }
 
-.support-brand-mark::after {
-  position: absolute;
-  right: -12px;
-  top: 5px;
-  width: 11px;
-  height: 13px;
-  border: 4px solid #272b2e;
-  border-left: 0;
-  border-radius: 0 10px 10px 0;
-  content: "";
+.support-brand-mark svg {
+  width: 26px;
+  height: 30px;
+  fill: currentColor;
 }
 
 .brand-title {
@@ -4065,9 +4053,17 @@ main {
 }
 
 .menu-button {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   border-radius: 12px;
   background: #f3f1f2;
   box-shadow: none;
+}
+
+.topbar .menu-button svg {
+  width: 24px;
+  height: 24px;
 }
 
 .support-creator-shell {
@@ -4661,18 +4657,13 @@ main {
   }
 
   .support-brand-mark {
-    width: 34px;
-    height: 29px;
-    border-width: 3px;
-    font-size: 16px;
+    width: 30px;
+    height: 34px;
   }
 
-  .support-brand-mark::after {
-    right: -10px;
-    width: 9px;
-    height: 11px;
-    border-width: 3px;
-    border-left: 0;
+  .support-brand-mark svg {
+    width: 22px;
+    height: 26px;
   }
 
   .support-creator-shell {
