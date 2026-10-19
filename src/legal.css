@@ -79,16 +79,6 @@ a {
   color: #17435b;
 }
 
-.legal-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.75rem;
-  margin-top: 3rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.9rem;
-}
 
 @media (max-width: 560px) {
   .legal-shell {

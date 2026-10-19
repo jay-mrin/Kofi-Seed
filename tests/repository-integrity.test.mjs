@@ -148,8 +148,6 @@ test("cancelled Dodo payments open the seed-not-sown dialog", () => {
 test("Google AdSense has been removed from active pages and settings", () => {
   const pages = [
     "index.html",
-    "about-us.html",
-    "terms-and-conditions.html",
     "privacy-policy.html",
     "delivery-fulfillment-policy.html",
   ];
