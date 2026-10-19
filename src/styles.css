@@ -3775,6 +3775,14 @@ legend::after {
 
 .home-checkout-view { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 60px; }
 .home-checkout-view .dodo-checkout-card { margin-top: 0; }
+.seed-checkout-title {
+  width: 100%;
+  max-width: calc(100vw - 72px);
+  margin: 0 auto 18px;
+  color: var(--ink);
+  font: 800 clamp(20px, 3vw, 28px)/1.25 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-align: center;
+}
 .home-checkout-view .donation-card.minimal-offering { width: min(100%, 940px); margin: 24px auto 0; }
 .dodo-unit-price { gap: 2px; }
 .dodo-unit-price span,.dodo-total > span { font-size: 11px; }
@@ -4054,6 +4062,8 @@ legend::after {
   font: 700 18px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 @media (max-width: 680px) {
+  .seed-checkout-title { margin-bottom: 14px; font-size: 18px; }
+  .seed-checkout-title span { display: block; }
   .home-checkout-view .minimal-offering .seed-quantity-row { grid-template-columns: 1fr; gap: 9px; padding: 10px; }
   .home-checkout-view .minimal-offering .checkout-button { min-height: 58px; }
 }
