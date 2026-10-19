@@ -84,7 +84,17 @@ export function createDodoCheckoutSession(input: {
         email: input.email,
         name: input.name,
       },
-      allowed_payment_method_types: ["credit", "debit"],
+      allowed_payment_method_types: [
+        "credit",
+        "debit",
+        "apple_pay",
+        "google_pay",
+        "amazon_pay",
+        "cashapp",
+        "ach",
+        "klarna",
+        "afterpay_clearpay",
+      ],
       minimal_address: true,
       feature_flags: {
         single_page: true,

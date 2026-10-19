@@ -142,18 +142,7 @@
     updateTotal();
   });
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (submitting || !emailInput.reportValidity()) return;
-
-    setStatus("");
-    paymentPanel.hidden = false;
-    checkoutButton.classList.add("is-checkout-open");
-    checkoutButton.setAttribute("aria-expanded", "true");
-    dodoPayButton.focus();
-  });
-
-  dodoPayButton.addEventListener("click", async () => {
+  const startDodoCheckout = async () => {
     if (submitting || !emailInput.reportValidity()) return;
 
     setStatus("");
@@ -179,7 +168,25 @@
       console.warn("Dodo checkout could not start.", error);
       returnToDodoFormWithFailure();
     }
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (submitting || !emailInput.reportValidity()) return;
+
+    if (document.querySelector("#dodoCardButton")?.hidden) {
+      void startDodoCheckout();
+      return;
+    }
+
+    setStatus("");
+    paymentPanel.hidden = false;
+    checkoutButton.classList.add("is-checkout-open");
+    checkoutButton.setAttribute("aria-expanded", "true");
+    dodoPayButton.focus();
   });
+
+  dodoPayButton.addEventListener("click", () => void startDodoCheckout());
 
   new MutationObserver(updateTotal).observe(totalOutput, {
     attributes: true,

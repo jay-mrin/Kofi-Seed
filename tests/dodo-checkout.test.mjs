@@ -15,21 +15,24 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(create, /payment_provider: "dodo"/);
   assert.match(create, /site_settings[\s\S]*seedPrice/);
   assert.match(dodo, /product_cart:[\s\S]*amount: input\.amountCents/);
-  assert.match(dodo, /allowed_payment_method_types: \["credit", "debit"\]/);
+  for (const method of ["credit", "debit", "apple_pay", "google_pay", "amazon_pay", "cashapp", "ach", "klarna", "afterpay_clearpay"]) {
+    assert.match(dodo, new RegExp(`"${method}"`));
+  }
   assert.match(dodo, /minimal_address: true/);
   assert.match(dodo, /single_page: true/);
   assert.match(dodo, /allow_phone_number_collection: false/);
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
 });
 
-test("Sow Your Seed reveals payment choices before Dodo checkout starts", () => {
+test("Sow Your Seed goes directly to Dodo unless alternate cards are enabled", () => {
   const html = read("index.html");
   const checkout = read("src/home-dodo-checkout.js");
   const app = read("src/app.js");
 
   assert.match(html, /id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"[\s\S]*Complete the payment for Your Seed/);
-  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*paymentPanel\.hidden = false;[\s\S]*dodoPayButton\.focus\(\)/);
-  assert.match(checkout, /dodoPayButton\.addEventListener\("click"[\s\S]*create-dodo-checkout/);
+  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*dodoCardButton"\)\?\.hidden\) \{[\s\S]*startDodoCheckout\(\)/);
+  assert.match(checkout, /const startDodoCheckout = async \(\) => \{[\s\S]*create-dodo-checkout/);
+  assert.match(checkout, /dodoPayButton\.addEventListener\("click", \(\) => void startDodoCheckout\(\)\)/);
   assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
 });
 
@@ -38,7 +41,7 @@ test("the first Dodo card option stays disabled after one opening", () => {
   const app = read("src/app.js");
   const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
 
-  assert.match(html, /id="dodoPayButton"[^>]*>Credit or Debit Card \(Dodo\)<\/button>/);
+  assert.match(html, /id="dodoPayButton"[^>]*>Pay securely with Dodo<\/button>/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
   assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
   assert.ok(closeCheckout);
