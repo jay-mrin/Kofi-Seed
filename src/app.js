@@ -2906,8 +2906,6 @@ function getAdminSettings() {
 }
 
 function getViewIdFromHash() {
-  if (["#about", "#recentSeeds", "#seedCommentsPanel"].includes(window.location.hash)) return "aboutView";
-  if (window.location.hash === "#library") return "libraryView";
   return "homeView";
 }
 
