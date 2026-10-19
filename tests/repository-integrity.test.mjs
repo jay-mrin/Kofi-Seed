@@ -106,7 +106,7 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
-test("support goal uses confirmed seed payments without exposing private orders", () => {
+test("support goal uses today's confirmed seed payments and resets every 100 seeds", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
@@ -114,7 +114,11 @@ test("support goal uses confirmed seed payments without exposing private orders"
   assert.match(html, /id="supportGoal"[\s\S]*id="supportGoalFill"[\s\S]*id="supportGoalPercent"/);
   assert.match(app, /function renderGoalProgress\(\)[\s\S]*confirmedSeedCount[\s\S]*goalSeedCount/);
   assert.match(bootstrap, /\.eq\("paypal_status", "COMPLETED"\)/);
-  assert.match(bootstrap, /confirmedSeedCount[\s\S]*goalSeedCount: 100[\s\S]*percentage: Math\.min\(confirmedSeedCount, 100\)/);
+  assert.match(bootstrap, /\.eq\("payment_route", "standard"\)/);
+  assert.match(bootstrap, /\.gte\("created_at", getIndiaDayStart\(\)\)/);
+  assert.match(bootstrap, /Math\.floor\(confirmedSeedAmount \/ 7\)/);
+  assert.match(bootstrap, /todayConfirmedSeedCount % 100/);
+  assert.match(bootstrap, /goalSeedCount: 100[\s\S]*percentage: confirmedSeedCount/);
   assert.match(bootstrap, /confirmedSeedDonations[\s\S]*visibility_scope === "public"/);
 });
 

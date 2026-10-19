@@ -8,6 +8,16 @@ function getUtcHourStart(date = new Date()) {
   return hour.toISOString();
 }
 
+function getIndiaDayStart(date = new Date()) {
+  const indiaOffsetMilliseconds = 5.5 * 60 * 60 * 1000;
+  const indiaDate = new Date(date.getTime() + indiaOffsetMilliseconds);
+  return new Date(Date.UTC(
+    indiaDate.getUTCFullYear(),
+    indiaDate.getUTCMonth(),
+    indiaDate.getUTCDate(),
+  ) - indiaOffsetMilliseconds).toISOString();
+}
+
 function sanitizePath(value: string | null) {
   const path = String(value || "/").trim();
 
@@ -74,6 +84,8 @@ async function loadPublicContent(
         "id, display_name, amount, seed_count, frequency, supporter_message, paypal_status, created_at, payment_route, visibility_scope, payment_method, raw_payment",
       )
       .eq("paypal_status", "COMPLETED")
+      .eq("payment_route", "standard")
+      .gte("created_at", getIndiaDayStart())
       .order("created_at", { ascending: false })
       .limit(1000),
     supabase
@@ -97,16 +109,12 @@ async function loadPublicContent(
           : {};
       return rawPayment.mode !== "test" && rawPayment.product?.type !== "book";
     });
-  const confirmedSeedCount = confirmedSeedDonations.reduce(
-    (total, donation) => {
-      const recordedSeedCount = Number(donation.seed_count);
-      const seedCount = Number.isFinite(recordedSeedCount) && recordedSeedCount > 0
-        ? Math.round(recordedSeedCount)
-        : Math.round(Math.max(Number(donation.amount) || 0, 0) / 7);
-      return total + seedCount;
-    },
+  const confirmedSeedAmount = confirmedSeedDonations.reduce(
+    (total, donation) => total + Math.max(Number(donation.amount) || 0, 0),
     0,
   );
+  const todayConfirmedSeedCount = Math.floor(confirmedSeedAmount / 7);
+  const confirmedSeedCount = todayConfirmedSeedCount % 100;
   const donations = confirmedSeedDonations
     .filter((donation) => donation.visibility_scope === "public")
     .slice(0, 50);
@@ -133,7 +141,9 @@ async function loadPublicContent(
     goalProgress: {
       confirmedSeedCount,
       goalSeedCount: 100,
-      percentage: Math.min(confirmedSeedCount, 100),
+      percentage: confirmedSeedCount,
+      todayConfirmedSeedAmount: confirmedSeedAmount,
+      todayConfirmedSeedCount,
     },
     donations: donations.map((donation) => ({
       id: donation.id,

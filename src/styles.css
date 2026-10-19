@@ -4671,6 +4671,10 @@ main {
   .support-story-column {
     grid-template-columns: 1fr 1fr;
   }
+
+  .support-checkout-column {
+    order: -1;
+  }
 }
 
 @media (max-width: 680px) {
