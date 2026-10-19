@@ -4446,6 +4446,26 @@ main {
   line-height: 1.48;
 }
 
+.support-story-more {
+  margin-top: 8px;
+  color: var(--support-ink);
+  font-size: 16px;
+  line-height: 1.48;
+}
+
+.support-story-more > summary {
+  width: fit-content;
+  color: var(--support-ink);
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.support-story-more > p {
+  margin: 10px 0 0;
+  color: var(--support-ink);
+}
+
 .support-about-details {
   overflow: hidden;
 }
