@@ -4558,6 +4558,16 @@ main {
   background: #f2efef;
 }
 
+.home-checkout-view .dodo-checkout-summary .dodo-quantity-control {
+  grid-column: 1 / -1;
+}
+
+.home-checkout-view .dodo-checkout-summary .dodo-name-field {
+  min-width: 0;
+  align-self: stretch;
+  margin: 0;
+}
+
 .home-checkout-view .dodo-quantity-control,
 .home-checkout-view .paypal-quantity-control {
   min-height: 78px;
@@ -4750,7 +4760,19 @@ main {
 
   .home-checkout-view .dodo-checkout-summary,
   .home-checkout-view .minimal-offering .seed-quantity-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .home-checkout-view .dodo-checkout-summary .dodo-quantity-control {
+    grid-column: 1 / -1;
+  }
+
+  .home-checkout-view .dodo-checkout-summary .dodo-name-field {
+    grid-column: 1;
+  }
+
+  .home-checkout-view .dodo-checkout-summary .dodo-total {
+    grid-column: 2;
   }
 
   .checkout-card-heading h2,

@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=157" />
+    <link rel="stylesheet" href="src/styles.css?v=158" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -348,10 +348,10 @@
                 <strong><output id="dodoSeedCount">1</output> <span>🌱 Seeds</span></strong>
                 <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
               </div>
+              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Display" /></label>
               <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
             </div>
             <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
-            <label class="dodo-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Display name (optional)" /></label>
             <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message (optional)"></textarea></label>
             <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-expanded="false" aria-controls="dodoPaymentPanel">Sow Your Seed</button>
             <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options" hidden>
