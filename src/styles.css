@@ -4565,7 +4565,15 @@ main {
 .home-checkout-view .dodo-checkout-summary .dodo-name-field {
   min-width: 0;
   align-self: stretch;
+  display: flex;
+  align-items: center;
   margin: 0;
+}
+
+.home-checkout-view .dodo-checkout-summary .dodo-name-field input {
+  height: 58px;
+  min-height: 58px;
+  align-self: center;
 }
 
 .home-checkout-view .dodo-quantity-control,
