@@ -348,11 +348,11 @@
                 <strong><output id="dodoSeedCount">1</output> <span>🌱 Seeds</span></strong>
                 <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
               </div>
-              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Display" /></label>
-              <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
+              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Name" /></label>
+              <div class="dodo-total"><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
             </div>
             <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
-            <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message (optional)"></textarea></label>
+            <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message"></textarea></label>
             <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-expanded="false" aria-controls="dodoPaymentPanel">Sow Your Seed</button>
             <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options" hidden>
               <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Opening secure payment" hidden>
@@ -396,7 +396,6 @@
                   <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
                 </div>
                 <label class="compact-amount-field">
-                  <span>Total Amount</span>
                   <span class="paypal-total-value">
                     <span aria-hidden="true">$</span>
                     <input id="amountInput" type="number" min="7" step="0.01" value="7.00" inputmode="decimal" aria-label="Total amount in US dollars" aria-describedby="amountError" />
@@ -414,13 +413,13 @@
 
               <label class="field minimal-text-field">
                 <span class="visually-hidden">Display name</span>
-                <input id="nameInput" type="text" placeholder="Display name (optional)" maxlength="48" autocomplete="name" aria-describedby="nameError" />
+                <input id="nameInput" type="text" placeholder="Name" maxlength="48" autocomplete="name" aria-describedby="nameError" />
                 <small id="nameError" class="error-message"></small>
               </label>
 
               <label class="field minimal-text-field textarea-field">
                 <span class="visually-hidden">Your message</span>
-                <textarea id="messageInput" maxlength="180" placeholder="Your message (optional)"></textarea>
+                <textarea id="messageInput" maxlength="180" placeholder="Your message"></textarea>
               </label>
 
               <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
