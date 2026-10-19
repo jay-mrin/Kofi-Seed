@@ -4477,6 +4477,29 @@ main {
   font-weight: 800;
 }
 
+.support-verse-footer {
+  width: min(900px, calc(100% - 32px));
+  margin: 0 auto 30px;
+  padding: 20px 24px;
+  color: #9a6b13;
+  text-align: center;
+}
+
+.support-verse-footer p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.support-verse-footer cite {
+  display: block;
+  margin-top: 5px;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 600;
+}
+
 .home-checkout-view .dodo-checkout-card,
 .home-checkout-view .donation-card.minimal-offering {
   width: 100%;
@@ -4759,6 +4782,15 @@ main {
   }
 
   .support-story-card .support-story-copy {
+    font-size: 16px;
+  }
+
+  .support-verse-footer {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+  }
+
+  .support-verse-footer p {
     font-size: 16px;
   }
 }
