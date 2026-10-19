@@ -36,7 +36,7 @@
     paymentStatus.hidden = !message;
   };
 
-  const setLoading = (isLoading, message = "Opening secure Dodo payment…") => {
+  const setLoading = (isLoading, message = "Opening Secure Payment for Your Seed.....") => {
     submitting = isLoading;
     checkoutButton.disabled = isLoading;
     dodoPayButton.disabled = isLoading;
