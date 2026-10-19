@@ -34,7 +34,7 @@ test("the first Dodo card option stays disabled after one opening", () => {
   const app = read("src/app.js");
   const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
 
-  assert.match(html, /id="dodoPayButton"[^>]*>Credit &amp; Debit Card \[2\]<\/button>/);
+  assert.match(html, /id="dodoPayButton"[^>]*>Paypal \/ Credit &amp; Debit Card<\/button>/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
   assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
   assert.ok(closeCheckout);

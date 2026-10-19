@@ -3428,19 +3428,6 @@ legend::after {
   box-shadow: 0 12px 24px rgba(91, 73, 45, 0.12);
 }
 
-.dodo-payment-seed {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  margin: 0 auto 18px;
-  border-radius: 50%;
-  background: #f4e5c5;
-  box-shadow: 0 0 0 8px rgba(173, 122, 44, 0.08);
-  font-size: 25px;
-  animation: app-loader-spin 2.5s linear infinite;
-}
-
 .dodo-payment-panel .payment-choice[hidden] { display: none; }
 .dodo-payment-panel .payment-choice + .payment-choice { margin-top: 10px; }
 

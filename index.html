@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=153" />
+    <link rel="stylesheet" href="src/styles.css?v=154" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
@@ -305,10 +305,8 @@
             <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-expanded="false" aria-controls="dodoPaymentPanel">Sow Your Seed</button>
             <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options" hidden>
               <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Loading Dodo payment options" hidden>
-                <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
-                <span id="dodoCheckoutLoaderText">Preparing secure Dodo checkout…</span>
+                <span id="dodoCheckoutLoaderText">Opening secure Dodo payment…</span>
               </div>
-              <span class="dodo-payment-seed" aria-hidden="true">🌱</span>
               <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
               <div class="payment-choice card-choice" id="dodoCardButton">
                 <span>Alternate debit or credit card</span>
@@ -325,7 +323,7 @@
               </div>
               <div class="payment-choice dodo-choice">
                 <span>Dodo</span>
-                <button class="dodo-pay-button" id="dodoPayButton" type="button">Credit &amp; Debit Card [2]</button>
+                <button class="dodo-pay-button" id="dodoPayButton" type="button">Paypal / Credit &amp; Debit Card</button>
               </div>
               <p class="dodo-payment-guidance">Complete the payment for Your Seed</p>
             </section>
@@ -764,7 +762,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/app.js?v=124" defer></script>
-    <script src="src/home-dodo-checkout.js?v=7" defer></script>
+    <script src="src/home-dodo-checkout.js?v=8" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>
