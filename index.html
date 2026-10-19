@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Seed Garden is a personalised digital-writing platform with secure online checkout and email delivery."
+      content="Support Sow Your Seed Here and help faith-filled writing reach more hearts."
     />
-    <title>Seed Garden | Personalised Writing</title>
+    <title>Sow Your Seed Here | Support the Ministry</title>
     <link rel="icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="shortcut icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,19 +18,19 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=154" />
+    <link rel="stylesheet" href="src/styles.css?v=155" />
   </head>
   <body class="app-loading">
-    <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Seed Garden">
+    <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
       <div class="app-loader-card">
         <div class="app-loader-seed" aria-hidden="true">🌱</div>
-        <p>Welcome to Seed Garden✨</p>
+        <p>Welcome to Sow Your Seed Here ✨</p>
       </div>
     </div>
     <header class="topbar">
-      <a class="brand" href="#home" aria-label="Seed Garden home">
-        <img class="brand-avatar" src="assets/golden-cross-seedling-emblem.png" width="512" height="512" decoding="async" alt="Golden cross and seedling emblem" />
-        <span class="brand-title" id="brandTitle">Seed Garden</span>
+      <a class="brand" href="#home" aria-label="Sow Your Seed Here home">
+        <span class="support-brand-mark" aria-hidden="true"><span>♥</span></span>
+        <span class="brand-title" id="brandTitle">Sow Your Seed Here</span>
       </a>
       <button class="menu-button" id="adminMenuButton" type="button" aria-label="Open admin portal" aria-controls="adminPanel" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -267,29 +267,79 @@
     </section>
 
     <main id="home">
-      <section class="creator-shell">
+      <section class="creator-shell support-creator-shell">
         <div class="cover-frame">
           <img class="cover-image" src="assets/sower-sunlit-cover.jpg" width="2048" height="768" decoding="async" alt="A sower scattering seeds across a sunlit landscape" />
+          <div class="cover-copy">
+            <p>Support the ministry</p>
+            <h1>Help us sow words<br />of faith and hope</h1>
+            <span>Your support helps the message travel farther.</span>
+            <a href="#support">Sow a seed <span aria-hidden="true">♥</span></a>
+          </div>
         </div>
 
         <section class="profile-bar" aria-label="Seed Garden profile">
           <div class="profile-copy">
             <h1 id="profileTitle">Sow Your Seed 💫</h1>
-            <p id="followersText">167 Followers</p>
+            <p class="creator-handle">Faith-filled writing · made with purpose</p>
+            <span id="followersText" hidden>167 Followers</span>
           </div>
+          <a class="profile-support-button" href="#support">Sow Your Seed</a>
         </section>
 
-        <nav class="profile-tabs" aria-label="Seed Garden sections">
-          <a class="active" href="#home" data-section-tab="homeView" aria-current="page">Home</a>
-          <a href="#library" data-section-tab="libraryView">Library</a>
-          <a href="#about" data-section-tab="aboutView">About</a>
+        <nav class="profile-tabs" aria-label="Support page sections">
+          <a class="active" href="#support-story" aria-current="page">About</a>
+          <a href="#support">Support</a>
         </nav>
       </section>
 
       <section class="section-view is-active home-checkout-view" id="homeView" data-section-view aria-label="Seed checkout">
+        <div class="support-page-grid">
+          <aside class="support-story-column" id="support-story">
+            <section class="support-story-card">
+              <div class="support-pitch-header">
+                <h2>𓆩💗𓆪 Click the Donate button to sow your seed now. With every seed you sow, you whisper to the universe: “Bring my soulmate to me.” 🌱💫🌹</h2>
+                <button class="support-share-button" id="shareSupportButton" type="button" aria-label="Share this support page">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m15 7 5 5-5 5v-3c-5 0-8 2-10 6 0-7 3-11 10-11V7Z" />
+                  </svg>
+                </button>
+              </div>
+              <div class="support-goal" id="supportGoal" aria-label="0 percent of support goal reached" aria-live="polite">
+                <div class="support-goal-track"><span id="supportGoalFill"></span></div>
+                <p><strong id="supportGoalPercent">0%</strong> of goal</p>
+              </div>
+              <p class="support-story-copy">Welcome, beloved seeker of love. 💗 You didn't arrive by accident. This is your sacred step toward the soulmate your heart whispers for. Every seed you sow is a seed of intention. 🌱 1 seed ($7) – I'm ready. 🌱🌱🌱 3 seeds ($21) – Mind, body, soulmate aligned. 🌱🌱🌱🌱🌱🌱🌱 7 seeds ($49) – Protection over reunion. 𓆩💗𓆪 Click Donate to sow your seed now. Whisper to the universe: “Bring my soulmate to me.” The field is open. 🌱💫🌹</p>
+            </section>
 
+            <details class="support-about-card support-about-details">
+              <summary>
+                <span>About Sowing Your Seed</span>
+                <span class="support-about-chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="support-about-content">
+                <p class="support-about-welcome">❤️ Welcome to Our Spiritual Family ❤️</p>
+                <p>A place for soulmate messages, spiritual guidance, motivation, faith, and uplifting content inspired by Jesus and Archangel Michael. 🙏✨</p>
+                <p>Our goal is to share messages that bring you hope, comfort, strength, and positivity whenever you need them.</p>
+                <p>🌱 If you genuinely enjoy our content, you may support us by sowing a seed. Your support is completely optional and helps us continue creating more spiritual videos and messages.</p>
+                <p>Please note: Seed support does not include any physical product, gift, or item in return. You are simply supporting our content and creative journey.</p>
+                <p>Thank you for being part of our spiritual family. ❤️</p>
+                <p>May Jesus guide your path and may Archangel Michael protect you always. 🙏💙✨</p>
+                <div class="support-about-tags" aria-label="Topics">
+                  <span>Advice</span>
+                  <span>Spirituality</span>
+                </div>
+              </div>
+            </details>
+          </aside>
+
+          <div class="support-checkout-column">
         <section class="dodo-checkout-card" aria-label="Seed selection and checkout details">
-          <h2 class="seed-checkout-title"><span>You havent Sowed</span> <span>Your Seed Yet,</span> <span>Sow Your Seed Now</span></h2>
+          <div class="checkout-card-heading">
+            <p>One-time support</p>
+            <h2 class="seed-checkout-title">Buy a Seed to Sow for the Love You’ve Been Waiting For💓💕</h2>
+            <span>Secure card checkout</span>
+          </div>
           <form id="dodoCheckoutForm" novalidate>
             <div class="dodo-checkout-summary">
               <div class="dodo-quantity-control" aria-label="Seed quantity">
@@ -330,6 +380,11 @@
           </form>
         </section>
         <section class="donation-card minimal-offering" id="support" aria-label="PayPal checkout">
+            <div class="checkout-card-heading">
+              <p>One-time support</p>
+              <h2>Support with PayPal</h2>
+              <span>Choose your seed amount and leave a message</span>
+            </div>
             <form class="minimal-offering-form" id="supportForm" novalidate>
               <div class="seed-quantity-row" aria-label="Seed quantity and amount">
                 <div class="paypal-quantity-control">
@@ -369,7 +424,7 @@
               </label>
 
               <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
-                <span id="checkoutLabel">Sow Your Seed</span>
+                <span id="checkoutLabel">Support this ministry</span>
               </button>
 
               <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
@@ -402,19 +457,8 @@
               </section>
             </form>
           </section>
-        <details class="what-is-seed">
-          <summary><span>What is Seed</span><span class="what-is-seed-chevron" aria-hidden="true">⌄</span></summary>
-          <div class="what-is-seed-copy">
-            <p>A Seed is love set in motion, strengthened by faith, and guided by wisdom. With each Seed, receive a personalised writing made for your heart—and choose an ebook from our collection to carry its message with you.</p>
           </div>
-        </details>
-        <section class="home-books-preview" aria-labelledby="homeBooksTitle">
-          <div class="home-books-heading">
-            <div><p class="section-kicker">A glimpse from the library</p><h2 id="homeBooksTitle">Stories to take with you</h2></div>
-            <a class="home-books-explore" href="#library" data-section-tab="libraryView">Explore more <span aria-hidden="true">→</span></a>
-          </div>
-          <div class="home-books-carousel" id="homeBooksCarousel" aria-label="EBooks from the library"></div>
-        </section>
+        </div>
       </section>
 
       <section class="section-view shop-gallery" id="libraryView" data-section-view aria-label="EBook collections" hidden>
@@ -761,8 +805,8 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=124" defer></script>
-    <script src="src/home-dodo-checkout.js?v=9" defer></script>
+    <script src="src/app.js?v=125" defer></script>
+    <script src="src/home-dodo-checkout.js?v=10" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>

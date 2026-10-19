@@ -106,6 +106,18 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
+test("support goal uses confirmed seed payments without exposing private orders", () => {
+  const html = readRepositoryFile("index.html");
+  const app = readRepositoryFile("src/app.js");
+  const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
+
+  assert.match(html, /id="supportGoal"[\s\S]*id="supportGoalFill"[\s\S]*id="supportGoalPercent"/);
+  assert.match(app, /function renderGoalProgress\(\)[\s\S]*confirmedSeedCount[\s\S]*goalSeedCount/);
+  assert.match(bootstrap, /\.eq\("paypal_status", "COMPLETED"\)/);
+  assert.match(bootstrap, /confirmedSeedCount[\s\S]*goalSeedCount: 100[\s\S]*percentage: Math\.min\(confirmedSeedCount, 100\)/);
+  assert.match(bootstrap, /confirmedSeedDonations[\s\S]*visibility_scope === "public"/);
+});
+
 test("failed and cancelled PayPal payments open the seed-not-sown dialog", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
@@ -150,8 +162,7 @@ test("Google AdSense has been removed from active pages and settings", () => {
 test("optimized page images stay within the initial transfer budget", () => {
   const html = readRepositoryFile("index.html");
   const imageBudgets = {
-    "assets/jesus-profile.jpg": 80 * 1024,
-    "assets/sow-cover.jpg": 260 * 1024,
+    "assets/sower-sunlit-cover.jpg": 260 * 1024,
   };
 
   for (const [assetPath, byteBudget] of Object.entries(imageBudgets)) {
@@ -159,7 +170,7 @@ test("optimized page images stay within the initial transfer budget", () => {
     assert.ok(statSync(path.join(repositoryRoot, assetPath)).size <= byteBudget, `${assetPath} exceeds its byte budget`);
   }
 
-  assert.doesNotMatch(html, /assets\/(?:jesus-profile|sow-cover)\.png/);
+  assert.doesNotMatch(html, /assets\/(?:jesus-profile|sow-cover)\.(?:jpg|png)/);
 });
 
 test("the separate alternate card link opens a same-page popup and then disables", () => {

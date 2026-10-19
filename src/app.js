@@ -10,8 +10,9 @@ const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
 const ADMIN_PASSWORD = "sowseed";
 const SEED_DOLLAR_VALUE = 7;
 const MIN_DONATION_AMOUNT = 7;
+const GOAL_SEED_COUNT = 100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
-const TOP_BRAND_TITLE = "Seed Garden";
+const TOP_BRAND_TITLE = "Sow Your Seed Here";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
   "Choose a Seed Writing from the Seed Garden 🌱💗",
@@ -268,6 +269,10 @@ const elements = {
   retryPaymentButton: document.querySelector("#retryPaymentButton"),
   saveCheckoutDisplayButton: document.querySelector("#saveCheckoutDisplayButton"),
   saveAdminButton: document.querySelector("#saveAdminButton"),
+  shareSupportButton: document.querySelector("#shareSupportButton"),
+  supportGoal: document.querySelector("#supportGoal"),
+  supportGoalFill: document.querySelector("#supportGoalFill"),
+  supportGoalPercent: document.querySelector("#supportGoalPercent"),
   seedCommentsList: document.querySelector("#seedCommentsList"),
   seedCommentsPanel: document.querySelector("#seedCommentsPanel"),
   seedPriceLabel: document.querySelector("#seedPriceLabel"),
@@ -482,11 +487,29 @@ function normalizeAnalytics(analytics) {
   };
 }
 
+function normalizeGoalProgress(goalProgress) {
+  const confirmedSeedCount = Math.max(
+    Number.parseInt(goalProgress?.confirmedSeedCount, 10) || 0,
+    0,
+  );
+  const goalSeedCount = Math.max(
+    Number.parseInt(goalProgress?.goalSeedCount, 10) || GOAL_SEED_COUNT,
+    1,
+  );
+
+  return {
+    confirmedSeedCount,
+    goalSeedCount,
+    percentage: Math.min((confirmedSeedCount / goalSeedCount) * 100, 100),
+  };
+}
+
 function loadState() {
   if (isBackendConfigured()) {
     return {
       analytics: createEmptyAnalytics(),
       donations: [],
+      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: {
         ...cloneDefaultSettings(),
@@ -500,6 +523,7 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
+      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: cloneDefaultSettings(),
     };
@@ -510,6 +534,7 @@ function loadState() {
     return {
       analytics: normalizeAnalytics(parsed.analytics),
       donations: Array.isArray(parsed.donations) ? parsed.donations : seedFeed,
+      goalProgress: normalizeGoalProgress(parsed.goalProgress),
       seedComments: normalizeSeedComments(parsed.seedComments),
       settings: normalizeSettings(parsed.settings),
     };
@@ -517,6 +542,7 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
+      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: cloneDefaultSettings(),
     };
@@ -667,6 +693,7 @@ function applyBootstrap(payload) {
   }
 
   if (Array.isArray(payload.donations)) state.donations = payload.donations;
+  if (payload.goalProgress) state.goalProgress = normalizeGoalProgress(payload.goalProgress);
   if (Array.isArray(payload.seedComments)) state.seedComments = normalizeSeedComments(payload.seedComments);
 
   if (payload.payment) {
@@ -1670,7 +1697,7 @@ function renderParagraphs(element, value) {
 function renderSettings() {
   const settings = state.settings;
 
-  document.title = `${TOP_BRAND_TITLE} | Custom Order Writing`;
+  document.title = `${TOP_BRAND_TITLE} | Support the Ministry`;
   elements.brandTitle.textContent = TOP_BRAND_TITLE;
   elements.profileTitle.textContent = settings.profileTitle;
   elements.followersText.textContent = settings.followersText;
@@ -2069,7 +2096,7 @@ function updateCheckoutLabel() {
   const seedUnits = getSeedUnitsFromAmount(amount, state.settings.seedPrice);
 
   elements.checkoutLabel.textContent = "Sow Your Seed";
-  elements.checkoutButton.setAttribute("aria-label", `Sow Your Seed ${money(amount)}`);
+  elements.checkoutButton.setAttribute("aria-label", `Support this ministry with ${money(amount)}`);
   elements.seedPriceLabel.textContent = formatSeedUnits(seedUnits);
   elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
 }
@@ -2998,8 +3025,21 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function renderGoalProgress() {
+  const goalProgress = normalizeGoalProgress(state.goalProgress);
+  const roundedPercentage = Math.round(goalProgress.percentage);
+
+  elements.supportGoalFill?.style.setProperty("--goal-progress", `${goalProgress.percentage}%`);
+  if (elements.supportGoalPercent) elements.supportGoalPercent.textContent = `${roundedPercentage}%`;
+  elements.supportGoal?.setAttribute(
+    "aria-label",
+    `${roundedPercentage} percent of support goal reached: ${goalProgress.confirmedSeedCount} of ${goalProgress.goalSeedCount} confirmed seeds`,
+  );
+}
+
 function renderApp() {
   renderSettings();
+  renderGoalProgress();
   renderRecentDonations();
   renderSeedComments();
   renderAdminCalendar();
@@ -3113,6 +3153,25 @@ elements.showMoreButtons.forEach((button) => {
 });
 
 elements.supportForm.addEventListener("submit", submitDonation);
+elements.shareSupportButton?.addEventListener("click", async () => {
+  const shareData = {
+    title: "Sow Your Seed Here",
+    text: "Buy a Seed to Sow for the Love You’ve Been Waiting For 💓💕",
+    url: window.location.href,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareData.url);
+    showToast("Support page link copied.");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("The support page link could not be shared.");
+  }
+});
 [elements.alternateCardCheckoutLink, elements.dodoAlternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();

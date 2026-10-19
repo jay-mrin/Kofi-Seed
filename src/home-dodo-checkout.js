@@ -21,13 +21,18 @@
   const getUnitPrice = () => Number(totalOutput.dataset.unitPrice) || 7;
   const updateTotal = () => {
     countOutput.value = String(seedCount);
-    totalOutput.textContent = new Intl.NumberFormat("en-US", {
+    const formattedTotal = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(getUnitPrice() * seedCount);
+    totalOutput.textContent = formattedTotal;
     totalSeedsOutput.textContent = `(${seedCount} ${seedCount === 1 ? "Seed" : "Seeds"})`;
+    if (!paymentPanel || paymentPanel.hidden) {
+      checkoutButton.textContent = "Sow Your Seed";
+      checkoutButton.setAttribute("aria-label", `Sow Your Seed ${formattedTotal}`);
+    }
   };
 
   const setStatus = (message, isError = false) => {

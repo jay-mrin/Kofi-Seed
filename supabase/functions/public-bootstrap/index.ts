@@ -75,7 +75,7 @@ async function loadPublicContent(
       )
       .eq("paypal_status", "COMPLETED")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(1000),
     supabase
       .from("seed_comments")
       .select(
@@ -88,18 +88,27 @@ async function loadPublicContent(
   if (donationsResult.error) throw donationsResult.error;
   if (seedCommentsResult.error) throw seedCommentsResult.error;
 
-  const donations = (donationsResult.data || [])
+  const confirmedSeedDonations = (donationsResult.data || [])
     .filter((donation) => {
-      if (
-        donation.visibility_scope !== "public" ||
-        !["paypal", "dodo"].includes(donation.payment_method)
-      ) return false;
+      if (!["paypal", "dodo"].includes(donation.payment_method)) return false;
       const rawPayment =
         donation.raw_payment && typeof donation.raw_payment === "object"
           ? donation.raw_payment
           : {};
       return rawPayment.mode !== "test" && rawPayment.product?.type !== "book";
-    })
+    });
+  const confirmedSeedCount = confirmedSeedDonations.reduce(
+    (total, donation) => {
+      const recordedSeedCount = Number(donation.seed_count);
+      const seedCount = Number.isFinite(recordedSeedCount) && recordedSeedCount > 0
+        ? Math.round(recordedSeedCount)
+        : Math.round(Math.max(Number(donation.amount) || 0, 0) / 7);
+      return total + seedCount;
+    },
+    0,
+  );
+  const donations = confirmedSeedDonations
+    .filter((donation) => donation.visibility_scope === "public")
     .slice(0, 50);
   const seedComments = (seedCommentsResult.data || []).filter(
     (comment: Record<string, any>) => {
@@ -121,6 +130,11 @@ async function loadPublicContent(
   ).slice(0, 520);
 
   return {
+    goalProgress: {
+      confirmedSeedCount,
+      goalSeedCount: 100,
+      percentage: Math.min(confirmedSeedCount, 100),
+    },
     donations: donations.map((donation) => ({
       id: donation.id,
       name: donation.display_name,
