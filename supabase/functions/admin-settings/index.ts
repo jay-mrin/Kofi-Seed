@@ -41,8 +41,17 @@ function checkoutVisibility(
 ) {
   const value = Object.hasOwn(settings, key)
     ? settings[key]
-    : key === "dodoCheckoutVisible" ? settings.mockCheckoutVisible : true;
+    : key === "dodoCheckoutVisible" ? settings.mockCheckoutVisible : false;
   return value !== false && value !== "false";
+}
+
+function selectedCheckout(settings: Record<string, unknown>) {
+  const dodoEnabled = checkoutVisibility(settings, "dodoCheckoutVisible");
+  const paypalEnabled = checkoutVisibility(settings, "paypalCheckoutVisible");
+  return {
+    dodoCheckoutVisible: dodoEnabled || !paypalEnabled,
+    paypalCheckoutVisible: !dodoEnabled && paypalEnabled,
+  };
 }
 
 function applySiteSettings(
@@ -83,8 +92,7 @@ Deno.serve(async (request) => {
       return jsonResponse({
         settings: {
           ...keepActiveSettings(saved),
-          dodoCheckoutVisible: checkoutVisibility(saved, "dodoCheckoutVisible"),
-          paypalCheckoutVisible: checkoutVisibility(saved, "paypalCheckoutVisible"),
+          ...selectedCheckout(saved),
           alternateCardCheckoutVisible: checkoutVisibility(saved, "alternateCardCheckoutVisible"),
         },
       });
@@ -117,14 +125,17 @@ Deno.serve(async (request) => {
     let settingsToSave = applySiteSettings(existingSettings, submittedSettings);
 
     if (adminProfile.role === "super_admin") {
-      settingsToSave = {
-        ...settingsToSave,
+      const checkoutSelection = selectedCheckout({
         dodoCheckoutVisible: Object.hasOwn(submittedSettings, "dodoCheckoutVisible")
           ? isEnabled(submittedSettings.dodoCheckoutVisible)
           : checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
         paypalCheckoutVisible: Object.hasOwn(submittedSettings, "paypalCheckoutVisible")
           ? isEnabled(submittedSettings.paypalCheckoutVisible)
           : checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
+      });
+      settingsToSave = {
+        ...settingsToSave,
+        ...checkoutSelection,
         alternateCardCheckoutVisible: Object.hasOwn(submittedSettings, "alternateCardCheckoutVisible")
           ? isEnabled(submittedSettings.alternateCardCheckoutVisible)
           : checkoutVisibility(currentSettings, "alternateCardCheckoutVisible"),
@@ -132,8 +143,7 @@ Deno.serve(async (request) => {
     } else {
       settingsToSave = {
         ...settingsToSave,
-        dodoCheckoutVisible: checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
-        paypalCheckoutVisible: checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
+        ...selectedCheckout(currentSettings),
         alternateCardCheckoutVisible: checkoutVisibility(currentSettings, "alternateCardCheckoutVisible"),
       };
     }

@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=159" />
+    <link rel="stylesheet" href="src/styles.css?v=160" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -233,31 +233,31 @@
             <summary class="admin-super-checkout-heading">
               <span class="checkout-routing-summary-copy">
                 <strong>Checkout display</strong>
-                <small>Choose which checkout forms appear on Home</small>
+                <small>Choose the one checkout form shown on Home</small>
               </span>
               <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="checkout-routing-content">
               <div class="checkout-routing-override">
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="dodoCheckoutVisible" type="checkbox" checked />
+                  <input id="dodoCheckoutVisible" type="radio" name="checkoutProvider" value="dodo" checked />
                   <span>
-                    <strong>Show Dodo checkout on Home</strong>
-                    Controls whether the Dodo checkout form is visible to visitors.
+                    <strong>Dodo checkout</strong>
+                    Show the Dodo checkout form on Home.
                   </span>
                 </label>
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="paypalCheckoutVisible" type="checkbox" checked />
+                  <input id="paypalCheckoutVisible" type="radio" name="checkoutProvider" value="paypal" />
                   <span>
-                    <strong>Show PayPal checkout on Home</strong>
-                    Controls whether the PayPal checkout form is visible to visitors.
+                    <strong>PayPal checkout</strong>
+                    Show the PayPal checkout form on Home.
                   </span>
                 </label>
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="alternateCardCheckoutVisible" type="checkbox" checked />
+                  <input id="alternateCardCheckoutVisible" type="checkbox" />
                   <span>
                     <strong>Show Debit or Credit Card button</strong>
-                    Controls this card checkout button in both Dodo and PayPal checkout.
+                    Show the separate card button in the selected checkout form.
                   </span>
                 </label>
               </div>
@@ -450,7 +450,7 @@
                   <span>PayPal</span>
                   <div class="paypal-button-slot" id="paypalButtonContainer"></div>
                 </div>
-                <div class="payment-choice paypal-card-choice" id="paypalCardButton">
+                <div class="payment-choice paypal-card-choice" id="paypalCardButton" hidden>
                   <span>PayPal debit or credit card</span>
                   <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
                 </div>
@@ -798,7 +798,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=128" defer></script>
+    <script src="src/app.js?v=129" defer></script>
     <script src="src/home-dodo-checkout.js?v=11" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

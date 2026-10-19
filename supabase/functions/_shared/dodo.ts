@@ -40,7 +40,7 @@ export function getDodoCurrency() {
 export function getDodoReturnUrl(kind: "success" | "cancel" = "success") {
   const configured = String(Deno.env.get("DODO_RETURN_URL") || Deno.env.get("SITE_ORIGIN") || "").trim();
   if (!configured) throw new Error("Missing DODO_RETURN_URL or SITE_ORIGIN.");
-  const url = new URL(configured);
+  const url = new URL("/", configured);
   url.searchParams.set(kind === "success" ? "dodo_return" : "dodo_cancelled", "1");
   return url.toString();
 }

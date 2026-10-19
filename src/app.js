@@ -150,8 +150,8 @@ const DEFAULT_SETTINGS = {
   supportTitle: MINIMAL_SUPPORT_TITLE,
   blessingWallEnabled: true,
   dodoCheckoutVisible: true,
-  paypalCheckoutVisible: true,
-  alternateCardCheckoutVisible: true,
+  paypalCheckoutVisible: false,
+  alternateCardCheckoutVisible: false,
 };
 
 const seedFeed = [
@@ -373,8 +373,10 @@ function normalizeSettings(settings) {
   const dodoVisibility = settings && Object.hasOwn(settings, "dodoCheckoutVisible")
     ? settings.dodoCheckoutVisible
     : settings?.mockCheckoutVisible;
-  next.dodoCheckoutVisible = dodoVisibility !== false && dodoVisibility !== "false";
-  next.paypalCheckoutVisible = next.paypalCheckoutVisible !== false && next.paypalCheckoutVisible !== "false";
+  const dodoEnabled = dodoVisibility !== false && dodoVisibility !== "false";
+  const paypalEnabled = next.paypalCheckoutVisible === true || next.paypalCheckoutVisible === "true";
+  next.dodoCheckoutVisible = dodoEnabled || !paypalEnabled;
+  next.paypalCheckoutVisible = !next.dodoCheckoutVisible && paypalEnabled;
   next.alternateCardCheckoutVisible = next.alternateCardCheckoutVisible !== false && next.alternateCardCheckoutVisible !== "false";
 
   Object.keys(defaults).forEach((key) => {
@@ -1718,10 +1720,10 @@ function renderSettings() {
   const dodoCheckout = document.querySelector("#dodoCheckoutForm");
   if (dodoCheckout) dodoCheckout.closest(".dodo-checkout-card").hidden = !settings.dodoCheckoutVisible;
   if (elements.supportCard) elements.supportCard.hidden = !settings.paypalCheckoutVisible;
-  if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible;
-  if (elements.cardButton && !elements.inlinePaypalCheckout.hidden) {
-    elements.cardButton.hidden = !settings.alternateCardCheckoutVisible;
-  }
+  if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
+  if (elements.cardButton) elements.cardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.paypalCheckoutVisible;
+  if (elements.paypalCardButton && !settings.alternateCardCheckoutVisible) elements.paypalCardButton.hidden = true;
+  if (elements.retryPaymentButton) elements.retryPaymentButton.href = settings.dodoCheckoutVisible ? "#seedCheckoutCard" : "#support";
   if (elements.seedCommentsPanel) {
     elements.seedCommentsPanel.hidden = !settings.blessingWallEnabled;
   }
@@ -2220,7 +2222,7 @@ function setPayPalCheckoutLoading(isLoading) {
 
   if (isLoading) {
     ui.paypalButton.hidden = false;
-    ui.paypalCardButton.hidden = false;
+    ui.paypalCardButton.hidden = !state.settings.alternateCardCheckoutVisible;
     ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
   }
 }
@@ -2230,7 +2232,7 @@ function updatePayPalVisibility() {
   const showPayPal = isPayPalConfigured();
 
   ui.paypalButton.hidden = !showPayPal;
-  ui.paypalCardButton.hidden = !showPayPal;
+  ui.paypalCardButton.hidden = !showPayPal || !state.settings.alternateCardCheckoutVisible;
   ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
 
   return showPayPal;
@@ -2525,9 +2527,12 @@ async function renderFreshPayPalButtons() {
     const paypal = await loadPayPalSdk();
 
     const paypalButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
-    const paypalCardButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
+    const showCardCheckout = state.settings.alternateCardCheckoutVisible;
+    const paypalCardButtons = showCardCheckout
+      ? paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD))
+      : null;
     const paypalEligible = paypalButtons.isEligible();
-    const paypalCardEligible = paypalCardButtons.isEligible();
+    const paypalCardEligible = Boolean(paypalCardButtons?.isEligible());
 
     if (!paypalEligible) {
       throw new Error("PayPal did not return an eligible checkout option.");
@@ -2542,9 +2547,9 @@ async function renderFreshPayPalButtons() {
     }
 
     ui.paypalButton.hidden = false;
-    ui.paypalCardButton.hidden = !paypalCardEligible;
+    ui.paypalCardButton.hidden = !paypalCardEligible || !state.settings.alternateCardCheckoutVisible;
     ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
-    setPaymentStatus(paypalCardEligible || state.settings.alternateCardCheckoutVisible
+    setPaymentStatus(state.settings.alternateCardCheckoutVisible
       ? "Choose a debit/credit card or PayPal to continue"
       : "Choose PayPal to continue");
   } catch (error) {
@@ -2679,8 +2684,16 @@ function openPaymentFailure(source = alternateCheckoutSource) {
   if (source === "dodo" || source === "paypal") {
     alternateCheckoutSource = source;
   }
+  if (document.body.classList.contains("app-loading")) {
+    void (async () => {
+      while (document.body.classList.contains("app-loading")) await wait(50);
+      openPaymentFailure(source);
+    })();
+    return;
+  }
   if (!elements.paymentFailureDialog || elements.paymentFailureDialog.open) return;
 
+  setActiveView("homeView", true);
   document.body.classList.add("payment-failure-open");
   if (typeof elements.paymentFailureDialog.showModal === "function") {
     elements.paymentFailureDialog.showModal();
@@ -2758,13 +2771,14 @@ function closeAlternateCheckout() {
 
 function returnToSowYourSeed() {
   setActiveView("homeView", true);
-  const checkoutCard = alternateCheckoutSource === "dodo"
+  const useDodoCheckout = state.settings.dodoCheckoutVisible;
+  const checkoutCard = useDodoCheckout
     ? elements.dodoCardButton?.closest(".dodo-checkout-card")
     : elements.supportCard;
   if (!checkoutCard) return;
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  (alternateCheckoutSource === "dodo"
+  (useDodoCheckout
     ? document.querySelector("#dodoCustomerEmail")
     : elements.paymentEmailInput)?.focus({ preventScroll: true });
   checkoutCard.scrollIntoView({ behavior, block: "start" });
@@ -3234,14 +3248,11 @@ elements.adminLoginDialog.addEventListener("close", () => {
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
 elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
+  const paypalSelected = document.querySelector("#paypalCheckoutVisible")?.checked === true;
   const nextSettings = normalizeSettings({
     ...state.settings,
-    dodoCheckoutVisible: Boolean(
-      document.querySelector("#dodoCheckoutVisible")?.checked ?? state.settings.dodoCheckoutVisible,
-    ),
-    paypalCheckoutVisible: Boolean(
-      document.querySelector("#paypalCheckoutVisible")?.checked ?? state.settings.paypalCheckoutVisible,
-    ),
+    dodoCheckoutVisible: !paypalSelected,
+    paypalCheckoutVisible: paypalSelected,
     alternateCardCheckoutVisible: Boolean(
       document.querySelector("#alternateCardCheckoutVisible")?.checked ?? state.settings.alternateCardCheckoutVisible,
     ),

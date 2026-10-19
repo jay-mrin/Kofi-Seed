@@ -837,6 +837,26 @@ a {
   transform: translateX(20px);
 }
 
+.admin-form .checkout-routing-toggle input[type="radio"] {
+  width: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: #fffaf0;
+}
+
+.admin-form .checkout-routing-toggle input[type="radio"]::before {
+  width: 14px;
+  height: 14px;
+  margin: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-form .checkout-routing-toggle input[type="radio"]:checked::before {
+  background: #b87b12;
+  transform: none;
+}
+
 .admin-toggle span {
   display: grid;
   gap: 3px;
