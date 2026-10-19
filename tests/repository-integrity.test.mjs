@@ -128,9 +128,10 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   const styles = readRepositoryFile("src/styles.css");
 
   assert.match(html, /id="paymentFailureDialog"[\s\S]*Your Seed Was Not Sown\.\.\.[\s\S]*id="retryPaymentButton"[\s\S]*SOW YOUR SEED NOW[\s\S]*Galatians 6:7/);
-  assert.match(app, /INSTRUMENT_DECLINED[\s\S]*openPaymentFailure\(\)[\s\S]*actions\.restart\(\)/);
-  assert.match(app, /onCancel:[\s\S]*PayPal payment cancelled[\s\S]*openPaymentFailure\(\)/);
-  assert.match(app, /onError:[\s\S]*PayPal checkout failed[\s\S]*openPaymentFailure\(\)/);
+  assert.match(app, /INSTRUMENT_DECLINED[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
+  assert.match(app, /onCancel:[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
+  assert.match(app, /onError:[\s\S]*PayPal checkout failed[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
+  assert.match(app, /function openPaymentFailure\(source = alternateCheckoutSource\)[\s\S]*alternateCheckoutSource = source/);
   assert.match(app, /retryPaymentButton\?\.addEventListener[\s\S]*closePaymentFailure\(true\)/);
   assert.doesNotMatch(app, /function closeAlternateCheckout\([^)]*\) \{[\s\S]*?requestAnimationFrame\(openPaymentFailure\)/);
   assert.match(app, /closeAlternateCheckoutButton\?\.addEventListener\("click", closeAlternateCheckout\)/);
@@ -141,8 +142,20 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
 test("cancelled Dodo payments open the seed-not-sown dialog", () => {
   const checkout = readRepositoryFile("src/home-dodo-checkout.js");
 
-  assert.match(checkout, /params\.get\("dodo_cancelled"\) === "1"[\s\S]*setStatus\(""\)[\s\S]*openPaymentFailure\?\.\(\)/);
+  assert.match(checkout, /returnToDodoFormWithFailure[\s\S]*openPaymentFailure\?\.\("dodo"\)/);
+  assert.match(checkout, /params\.get\("dodo_cancelled"\) === "1"[\s\S]*returnToDodoFormWithFailure\(\)/);
   assert.doesNotMatch(checkout, /Dodo payment was cancelled\. You can try again when you are ready\./);
+});
+
+test("edge requests normalize the configured CORS origin and hide alternate cards by default", () => {
+  const http = readRepositoryFile("supabase/functions/_shared/http.ts");
+  const html = readRepositoryFile("index.html");
+  const app = readRepositoryFile("src/app.js");
+
+  assert.match(http, /new URL\(configuredOrigin\)\.origin/);
+  assert.match(html, /id="dodoCardButton" hidden/);
+  assert.match(html, /id="cardButton" hidden/);
+  assert.match(app, /The payment service could not be reached\. Check your connection and try again\./);
 });
 
 test("Google AdSense has been removed from active pages and settings", () => {

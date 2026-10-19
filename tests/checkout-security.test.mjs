@@ -69,9 +69,9 @@ test("declined PayPal instruments remain retryable across API, browser, and webh
   assert.match(capture, /status: "started"/);
   assert.match(capture, /captures\.find\(\(capture\) => capture\?\.status === "COMPLETED"\)/);
   assert.match(capture, /captures\.at\(-1\)/);
-  assert.match(app, /onApprove: async \(data, actions\)/);
+  assert.match(app, /onApprove: async \(data\)/);
   assert.match(app, /error\?\.code === "INSTRUMENT_DECLINED"/);
-  assert.match(app, /return actions\.restart\(\)/);
+  assert.match(app, /INSTRUMENT_DECLINED[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
   assert.match(webhook, /eventType !== "PAYMENT\.CAPTURE\.COMPLETED"/);
   assert.match(webhook, /lastCaptureWebhook: event/);
   assert.match(webhook, /PAYMENT_CAPTURE_\$\{normalizedStatus\}/);

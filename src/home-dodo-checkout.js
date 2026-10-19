@@ -49,8 +49,18 @@
     paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
     loaderText.textContent = message;
-    checkoutButton.classList.add("is-checkout-open");
-    checkoutButton.setAttribute("aria-expanded", "true");
+    const isPanelOpen = !paymentPanel.hidden;
+    checkoutButton.classList.toggle("is-checkout-open", isPanelOpen);
+    checkoutButton.setAttribute("aria-expanded", String(isPanelOpen));
+  };
+
+  const returnToDodoFormWithFailure = () => {
+    setLoading(false);
+    paymentPanel.hidden = true;
+    checkoutButton.classList.remove("is-checkout-open");
+    checkoutButton.setAttribute("aria-expanded", "false");
+    setStatus("");
+    window.SowYourSeedCheckout?.openPaymentFailure?.("dodo");
   };
 
   const cleanDodoReturnParameters = () => {
@@ -87,24 +97,16 @@
     const params = new URLSearchParams(window.location.search);
     if (params.get("dodo_cancelled") === "1") {
       window.sessionStorage.removeItem(donorTokenKey);
-      paymentPanel.hidden = true;
-      checkoutButton.classList.remove("is-checkout-open");
-      checkoutButton.setAttribute("aria-expanded", "false");
-      setStatus("");
       cleanDodoReturnParameters();
-      window.SowYourSeedCheckout?.openPaymentFailure?.();
+      returnToDodoFormWithFailure();
       return;
     }
 
     if (params.get("dodo_return") !== "1") return;
     const paymentId = String(params.get("payment_id") || "").trim();
     if (!paymentId) {
-      paymentPanel.hidden = false;
-      checkoutButton.classList.add("is-checkout-open");
-      checkoutButton.setAttribute("aria-expanded", "true");
-      setLoading(false);
-      setStatus("Dodo returned without a payment reference. Please contact support if you were charged.", true);
       cleanDodoReturnParameters();
+      returnToDodoFormWithFailure();
       return;
     }
 
@@ -121,8 +123,8 @@
       checkoutButton.classList.remove("is-checkout-open");
       checkoutButton.setAttribute("aria-expanded", "false");
     } catch (error) {
-      setStatus(error?.message || "Dodo payment confirmation failed. Please contact support if you were charged.", true);
-      window.SowYourSeedCheckout?.openPaymentFailure?.();
+      console.warn("Dodo payment confirmation failed.", error);
+      returnToDodoFormWithFailure();
     } finally {
       setLoading(false);
       cleanDodoReturnParameters();
@@ -174,8 +176,8 @@
       window.location.assign(payload.checkoutUrl);
     } catch (error) {
       window.sessionStorage.removeItem(donorTokenKey);
-      setLoading(false);
-      setStatus(error?.message || "Dodo checkout could not start. Please try again.", true);
+      console.warn("Dodo checkout could not start.", error);
+      returnToDodoFormWithFailure();
     }
   });
 

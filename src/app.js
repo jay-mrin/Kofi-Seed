@@ -609,12 +609,20 @@ async function callEdge(functionName, options = {}) {
     ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
   };
-  const response = await fetch(edgeUrl(functionName), {
-    method: options.method || "POST",
-    headers,
-    cache: "no-store",
-    body: options.body instanceof FormData ? options.body : options.body ? JSON.stringify(options.body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(edgeUrl(functionName), {
+      method: options.method || "POST",
+      headers,
+      cache: "no-store",
+      body: options.body instanceof FormData ? options.body : options.body ? JSON.stringify(options.body) : undefined,
+    });
+  } catch (cause) {
+    const error = new Error("The payment service could not be reached. Check your connection and try again.");
+    error.code = "NETWORK_ERROR";
+    error.cause = cause;
+    throw error;
+  }
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -2436,7 +2444,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
       await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
       return payload.id;
     },
-    onApprove: async (data, actions) => {
+    onApprove: async (data) => {
       setPaymentStatus("Confirming your custom order with PayPal...");
       try {
         const payload = await callEdge("capture-paypal-order", {
@@ -2449,39 +2457,22 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
             "That payment method was declined. Please choose another PayPal payment method.",
             true,
           );
-          openPaymentFailure();
-          return actions.restart();
+          closeInlinePayPalCheckout();
+          openPaymentFailure("paypal");
+          return;
         }
 
         throw error;
       }
     },
     onCancel: () => {
-      const ui = getCheckoutUi();
-      clearPayPalButtons();
-      resetAllPayPalSdks();
-      ui.paypalButton.hidden = true;
-      ui.paypalCardButton.hidden = true;
-      ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
-      setPaymentStatus(state.settings.alternateCardCheckoutVisible
-        ? "PayPal payment cancelled. You can continue with debit or credit card instead."
-        : "PayPal payment cancelled. Please try again.", true);
-      openPaymentFailure();
+      closeInlinePayPalCheckout();
+      openPaymentFailure("paypal");
     },
     onError: (error) => {
-      const ui = getCheckoutUi();
-      clearPayPalButtons();
-      resetAllPayPalSdks();
-      ui.paypalButton.hidden = true;
-      ui.paypalCardButton.hidden = true;
-      ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
-      setPaymentStatus(
-        error?.message || (state.settings.alternateCardCheckoutVisible
-          ? "PayPal checkout failed. Continue with debit or credit card instead."
-          : "PayPal checkout failed. Please try again."),
-        true,
-      );
-      openPaymentFailure();
+      console.warn("PayPal checkout failed.", error);
+      closeInlinePayPalCheckout();
+      openPaymentFailure("paypal");
     },
   };
 }
@@ -2684,7 +2675,10 @@ function closeReceipt() {
   elements.receiptDialog.close();
 }
 
-function openPaymentFailure() {
+function openPaymentFailure(source = alternateCheckoutSource) {
+  if (source === "dodo" || source === "paypal") {
+    alternateCheckoutSource = source;
+  }
   if (!elements.paymentFailureDialog || elements.paymentFailureDialog.open) return;
 
   document.body.classList.add("payment-failure-open");

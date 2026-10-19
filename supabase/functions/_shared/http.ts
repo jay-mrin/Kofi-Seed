@@ -1,5 +1,16 @@
+function getAllowedOrigin() {
+  const configuredOrigin = String(Deno.env.get("SITE_ORIGIN") || "*").trim();
+  if (!configuredOrigin || configuredOrigin === "*") return "*";
+
+  try {
+    return new URL(configuredOrigin).origin;
+  } catch {
+    return configuredOrigin.replace(/\/+$/, "");
+  }
+}
+
 export const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("SITE_ORIGIN") || "*",
+  "Access-Control-Allow-Origin": getAllowedOrigin(),
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-donor-token, x-visitor-key",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
