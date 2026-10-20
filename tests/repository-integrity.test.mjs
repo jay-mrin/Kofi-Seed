@@ -198,7 +198,7 @@ test("optimized page images stay within the initial transfer budget", () => {
   assert.doesNotMatch(html, /assets\/(?:jesus-profile|sow-cover)\.(?:jpg|png)/);
 });
 
-test("the separate alternate card link opens a same-page popup and then disables", () => {
+test("PayPal and PayPal card use the SDK while the alternate card follows its toggle", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
   const styles = readRepositoryFile("src/styles.css");
@@ -211,23 +211,29 @@ test("the separate alternate card link opens a same-page popup and then disables
   assert.match(app, /const paypal = await loadPayPalSdk\(\)/);
   assert.match(app, /await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /waitForRenderedPayPalButton/);
-  assert.match(app, /querySelector\("iframe"\)/);
-  assert.match(app, /paypal\.Buttons\(buildPayPalButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
-  assert.match(app, /await paypalCardButtons\.render\(ui\.paypalCardButtonContainer\)/);
-  assert.match(app, /waitForRenderedPayPalButton\(ui\.paypalCardButtonContainer/);
+  assert.match(app, /querySelectorAll\("iframe"\)/);
+  assert.match(app, /paypalCardButtons = paypal\.Buttons\(buildPayPalButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
+  assert.match(app, /paypalCardEligible = paypalCardButtons\.isEligible\(\)/);
+  assert.match(app, /ui\.paypalCardButton\.hidden = false;[\s\S]*await paypalCardButtons\.render\(ui\.paypalCardButtonContainer\)[\s\S]*waitForRenderedPayPalButton\(ui\.paypalCardButtonContainer/);
+  assert.match(app, /catch \(cardError\) \{[\s\S]*ui\.paypalCardButton\.hidden = true;[\s\S]*ui\.paypalCardButtonContainer\.innerHTML = "";/);
+  assert.match(app, /ui\.paypalCardButton\.hidden = !paypalCardReady/);
+  assert.doesNotMatch(app, /ui\.paypalCardButton\.hidden = [^;]*alternateCardCheckoutVisible/);
+  assert.match(html, /id="paypalPaymentDialog"[\s\S]*id="paymentEmailInput"[\s\S]*id="messageInput"[\s\S]*id="paypalButton"/);
+  assert.match(app, /elements\.paypalPaymentDialog\.showModal\(\)/);
   assert.match(
     html,
     /id="alternateCardCheckoutLink"[\s\S]*href="https:\/\/sowseed-receiver-seed-alternate-server\.vercel\.app\/"[\s\S]*aria-haspopup="dialog"[\s\S]*aria-controls="alternateCheckoutDialog"/,
   );
   assert.match(html, /id="alternateCheckoutDialog"[\s\S]*id="alternateCheckoutFrame"[\s\S]*src="about:blank"[\s\S]*allow="payment"/);
   assert.match(html, /class="alternate-checkout-fallback"[\s\S]*<strong>If the server is down try other debit card payment button<\/strong>/);
-  assert.match(html, /id="cardButton"[\s\S]*id="alternateCardCheckoutLink"[\s\S]*id="paypalButton"[\s\S]*id="paypalCardButton"/);
+  assert.match(html, /id="paypalButton"[\s\S]*id="paypalCardButton"[\s\S]*id="cardButton"[\s\S]*id="alternateCardCheckoutLink"/);
   assert.match(html, /class="preferred-payment-label"[\s\S]*Preferred/);
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
-  assert.match(app, /setPaymentStatus\(state\.settings\.alternateCardCheckoutVisible[\s\S]*"Choose a debit\/credit card or PayPal to continue"/);
+  assert.match(app, /ui\.cardButton\.hidden = !state\.settings\.alternateCardCheckoutVisible/);
+  assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
   assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-link\s*\{\s*display: none;/);

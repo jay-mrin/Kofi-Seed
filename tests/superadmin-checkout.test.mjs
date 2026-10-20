@@ -31,3 +31,15 @@ test("legacy Admin records and webhooks remain available", () => {
   assert.match(capture, /paymentAttempt\.payment_route === "superadmin"/);
   assert.match(paypal, /const routes = \["superadmin", "standard"\]/);
 });
+
+test("SuperAdmin Checkout keeps the PayPal form independent of the Home display choice", () => {
+  const html = read("index.html");
+  const app = read("src/app.js");
+
+  assert.match(html, /id="superAdminPayPalSection" hidden>[\s\S]*<strong>Checkout<\/strong>[\s\S]*id="superAdminCheckoutHost"/);
+  assert.ok(html.indexOf('id="superAdminCheckoutHost"') < html.indexOf('id="adminForm"'));
+  assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*destination\.appendChild\(elements\.supportCard\)[\s\S]*elements\.supportCard\.hidden = !inPortal && !state\.settings\.paypalCheckoutVisible/);
+  assert.match(app, /placePayPalCheckoutInPortal\(isSuperAdmin\)/);
+  assert.match(app, /function closeAdminPanel\(\) \{\s*placePayPalCheckoutInPortal\(false\)/);
+  assert.match(app, /const inSuperAdminPortal = elements\.supportCard\.parentElement === elements\.superAdminCheckoutHost;[\s\S]*elements\.supportCard\.hidden = !inSuperAdminPortal && !settings\.paypalCheckoutVisible/);
+});

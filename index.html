@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=164" />
+    <link rel="stylesheet" href="src/styles.css?v=166" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -115,6 +115,19 @@
       </div>
 
       <div class="admin-status" id="adminActionStatus" role="status" aria-live="polite" hidden></div>
+
+      <section class="admin-section admin-super-checkout-section superadmin-paypal-section" id="superAdminPayPalSection" hidden>
+        <details class="checkout-routing-details">
+          <summary class="admin-super-checkout-heading">
+            <span class="checkout-routing-summary-copy">
+              <strong>Checkout</strong>
+              <small>PayPal checkout for SuperAdmin</small>
+            </span>
+            <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="home-checkout-view superadmin-checkout-host" id="superAdminCheckoutHost"></div>
+        </details>
+      </section>
 
       <form class="admin-form admin-portal-grid" id="adminForm">
 
@@ -257,7 +270,7 @@
                   <input id="alternateCardCheckoutVisible" type="checkbox" />
                   <span>
                     <strong>Show Debit or Credit Card button</strong>
-                    Show the separate card button in the selected checkout form.
+                    Show the separate alternate card button in the selected checkout form.
                   </span>
                 </label>
               </div>
@@ -271,26 +284,6 @@
     </section>
 
     <main id="home">
-      <section class="creator-shell support-creator-shell">
-        <div class="cover-frame">
-          <img class="cover-image" src="assets/sower-sunlit-cover.jpg" width="2048" height="768" decoding="async" alt="A sower scattering seeds across a sunlit landscape" />
-          <div class="cover-copy">
-            <h1>Sow Your Seed for<br />Your Love &amp; Soulmate</h1>
-            <span>Your support helps the message travel farther.</span>
-            <a href="#seedCheckoutCard">Sow a seed <span aria-hidden="true">♥</span></a>
-          </div>
-        </div>
-
-        <section class="profile-bar" aria-label="Seed Garden profile">
-          <div class="profile-copy">
-            <h1 id="profileTitle">Sow Your Seed 💫</h1>
-            <p class="creator-handle">Finding Love - Soulmate - Protection</p>
-            <span id="followersText" hidden>167 Followers</span>
-          </div>
-        </section>
-
-      </section>
-
       <section class="section-view is-active home-checkout-view" id="homeView" data-section-view aria-label="Seed checkout">
         <div class="support-page-grid">
           <div class="support-checkout-column">
@@ -347,16 +340,14 @@
         </section>
         <section class="donation-card minimal-offering" id="support" aria-label="PayPal checkout">
             <div class="checkout-card-heading">
-              <h2>Support with PayPal</h2>
-              <span>Choose your seed amount and leave a message</span>
+              <h2 class="seed-checkout-title">Buy a Seed to Sow for the Love You’ve Been Waiting For💓💕</h2>
             </div>
             <form class="minimal-offering-form" id="supportForm" novalidate>
               <div class="seed-quantity-row" aria-label="Seed quantity and amount">
                 <div class="paypal-quantity-control">
                   <button class="seed-stepper-button" id="decreaseSeedButton" type="button" aria-label="Decrease seed quantity">−</button>
                   <div class="seed-price">
-                    <span class="seed-icon" aria-hidden="true">🌱</span>
-                    <strong id="seedPriceLabel">1 Seed</strong>
+                    <strong><span id="seedPriceLabel">1</span> <span>🌱 Seeds</span></strong>
                   </div>
                   <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
                 </div>
@@ -368,48 +359,37 @@
                   </span>
                   <small id="paypalTotalSeeds">(1 Seed)</small>
                 </label>
+                <label class="field minimal-text-field paypal-name-field">
+                  <span class="visually-hidden">Display name</span>
+                  <input id="nameInput" type="text" placeholder="Name" maxlength="48" autocomplete="name" aria-describedby="nameError" />
+                  <small id="nameError" class="error-message"></small>
+                </label>
               </div>
               <small id="amountError" class="error-message compact-amount-error"></small>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Email for your order</span>
-                <input id="paymentEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-describedby="emailError" required />
-                <small id="emailError" class="error-message"></small>
-              </label>
-
-              <label class="field minimal-text-field">
-                <span class="visually-hidden">Display name</span>
-                <input id="nameInput" type="text" placeholder="Name" maxlength="48" autocomplete="name" aria-describedby="nameError" />
-                <small id="nameError" class="error-message"></small>
-              </label>
-
-              <label class="field minimal-text-field textarea-field">
-                <span class="visually-hidden">Your message</span>
-                <textarea id="messageInput" maxlength="180" placeholder="Your message"></textarea>
-              </label>
-
-              <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-expanded="false" aria-controls="inlinePaypalCheckout">
-                <span id="checkoutLabel">Support this ministry</span>
+              <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-haspopup="dialog" aria-expanded="false" aria-controls="paypalPaymentDialog">
+                <span id="checkoutLabel">Sow Your Spiritual Seed Now</span>
               </button>
-
+              <dialog class="seed-payment-dialog" id="paypalPaymentDialog" aria-labelledby="paypalPaymentTitle">
+                <div class="seed-payment-dialog-card">
+                  <div class="seed-payment-dialog-heading">
+                    <h2 id="paypalPaymentTitle">Complete your seed</h2>
+                    <button class="seed-payment-dialog-close" id="closePaypalPaymentDialog" type="button" aria-label="Close payment options">×</button>
+                  </div>
+                  <label class="field minimal-text-field">
+                    <span class="visually-hidden">Email for your order</span>
+                    <input id="paymentEmailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-describedby="emailError" required />
+                    <small id="emailError" class="error-message"></small>
+                  </label>
+                  <label class="field minimal-text-field textarea-field">
+                    <span class="visually-hidden">Your message</span>
+                    <textarea id="messageInput" maxlength="180" placeholder="Your message"></textarea>
+                  </label>
+                  <button class="dodo-pay-button paypal-continue-button" id="paypalContinueButton" type="button">Continue with PayPal ➡️</button>
               <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
                 <p class="payment-status" id="paymentStatus" role="status" aria-live="polite" hidden></p>
                 <div class="paypal-checkout-loader" id="paypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure PayPal checkout" hidden>
                   <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
                   <span>Preparing your seed…</span>
-                </div>
-                <div class="payment-choice card-choice" id="cardButton" hidden>
-                  <span>Alternate debit or credit card</span>
-                  <small class="preferred-payment-label">Preferred</small>
-                  <a
-                    class="alternate-card-link"
-                    id="alternateCardCheckoutLink"
-                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                    aria-label="Open debit or credit card checkout popup"
-                    aria-haspopup="dialog"
-                    aria-controls="alternateCheckoutDialog"
-                  >Debit or Credit Card</a>
-                  <p class="alternate-card-retry" aria-live="polite">Try Again</p>
                 </div>
                 <div class="payment-choice paypal-choice" id="paypalButton">
                   <span>PayPal</span>
@@ -419,10 +399,43 @@
                   <span>PayPal debit or credit card</span>
                   <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
                 </div>
+                <div class="payment-choice card-choice" id="cardButton" hidden>
+                  <span>Alternate debit or credit card</span>
+                  <small class="preferred-payment-label">Preferred</small>
+                  <a
+                    class="alternate-card-link"
+                    id="alternateCardCheckoutLink"
+                    href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                    aria-label="Open alternate debit or credit card checkout popup"
+                    aria-haspopup="dialog"
+                    aria-controls="alternateCheckoutDialog"
+                  >Debit or Credit Card</a>
+                  <p class="alternate-card-retry" aria-live="polite">Try Again</p>
+                </div>
               </section>
+                </div>
+              </dialog>
             </form>
           </section>
           </div>
+          <section class="creator-shell support-creator-shell">
+            <div class="cover-frame">
+              <img class="cover-image" src="assets/sower-sunlit-cover.jpg" width="2048" height="768" decoding="async" alt="A sower scattering seeds across a sunlit landscape" />
+              <div class="cover-copy">
+                <h1>Sow Your Seed for<br />Your Love &amp; Soulmate</h1>
+                <span>Your support helps the message travel farther.</span>
+                <a href="#seedCheckoutCard">Sow a seed <span aria-hidden="true">♥</span></a>
+              </div>
+            </div>
+
+            <section class="profile-bar" aria-label="Seed Garden profile">
+              <div class="profile-copy">
+                <h1 id="profileTitle">Sow Your Seed 💫</h1>
+                <p class="creator-handle">Finding Love - Soulmate - Protection</p>
+                <span id="followersText" hidden>167 Followers</span>
+              </div>
+            </section>
+          </section>
           <aside class="support-story-column" id="support-story">
             <section class="support-story-card">
               <div class="support-pitch-header">
@@ -804,7 +817,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=130" defer></script>
+    <script src="src/app.js?v=133" defer></script>
     <script src="src/home-dodo-checkout.js?v=13" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

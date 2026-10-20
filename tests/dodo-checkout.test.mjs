@@ -40,14 +40,15 @@ test("Sow Your Seed opens a details and payment-options dialog", () => {
   assert.match(app, /document\.querySelector\("#dodoCheckoutButton"\)/);
 });
 
-test("seed checkout follows the profile heading without an extra button", () => {
+test("seed checkout appears above the cover and profile heading without an extra button", () => {
   const html = read("index.html");
   const styles = read("src/styles.css");
 
   assert.doesNotMatch(html, /class="profile-support-button"/);
-  assert.ok(html.indexOf("Finding Love - Soulmate - Protection") < html.indexOf('id="homeView"'));
   assert.ok(html.indexOf('id="homeView"') < html.indexOf('id="seedCheckoutCard"'));
-  assert.ok(html.indexOf('id="seedCheckoutCard"') < html.indexOf('id="support-story"'));
+  assert.ok(html.indexOf('id="seedCheckoutCard"') < html.indexOf('class="cover-frame"'));
+  assert.ok(html.indexOf('class="cover-frame"') < html.indexOf("Finding Love - Soulmate - Protection"));
+  assert.ok(html.indexOf("Finding Love - Soulmate - Protection") < html.indexOf('id="support-story"'));
   assert.match(styles, /\.support-page-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
 });
 

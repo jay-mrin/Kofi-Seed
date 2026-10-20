@@ -4087,8 +4087,11 @@ main {
 }
 
 .support-creator-shell {
+  overflow: hidden;
   width: min(1120px, calc(100% - 32px));
+  border-radius: 28px;
   background: #fff;
+  box-shadow: 0 10px 34px rgba(58, 38, 52, 0.045);
 }
 
 .support-creator-shell .cover-frame {
@@ -4230,6 +4233,10 @@ main {
   gap: 20px;
   align-items: start;
   margin: 0 auto;
+}
+
+.support-page-grid > .support-creator-shell {
+  width: 100%;
 }
 
 .support-story-column,
@@ -4696,6 +4703,7 @@ main {
 
   .support-creator-shell {
     width: 100%;
+    border-radius: 22px;
   }
 
   .support-creator-shell .cover-frame {
@@ -4923,4 +4931,134 @@ main {
 
 .seed-payment-dialog .dodo-pay-button:hover {
   background: var(--support-pink-dark);
+}
+
+/* Keep the PayPal checkout aligned with the Dodo card at every width. */
+.home-checkout-view .minimal-offering .seed-quantity-row {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, .28fr);
+  margin-bottom: 0;
+}
+
+.home-checkout-view .minimal-offering .paypal-quantity-control {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.home-checkout-view .minimal-offering .seed-price {
+  flex: 1 1 auto;
+}
+
+.home-checkout-view .minimal-offering .seed-price strong {
+  min-width: 0;
+  font-size: clamp(18px, 2.8vw, 24px);
+  white-space: nowrap;
+}
+
+.home-checkout-view .minimal-offering .compact-amount-field {
+  min-width: 0;
+  padding: 5px;
+}
+
+.home-checkout-view .minimal-offering .paypal-total-value {
+  justify-content: center;
+  width: 100%;
+}
+
+.home-checkout-view .minimal-offering .compact-amount-field input {
+  width: 4.5ch;
+  max-width: calc(100% - 1ch);
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.home-checkout-view .minimal-offering .seed-quantity-row .paypal-name-field {
+  display: block;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.home-checkout-view .minimal-offering .paypal-name-field input {
+  min-height: 58px;
+}
+
+.home-checkout-view .minimal-offering .checkout-button {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.home-checkout-view .minimal-offering .checkout-button.is-checkout-open {
+  border-radius: 999px;
+}
+
+.home-checkout-view .seed-payment-dialog .minimal-text-field {
+  display: block;
+  margin-top: 16px;
+}
+
+.home-checkout-view .seed-payment-dialog .minimal-text-field input,
+.home-checkout-view .seed-payment-dialog .minimal-text-field textarea {
+  display: block;
+  width: 100%;
+}
+
+.home-checkout-view .seed-payment-dialog .inline-paypal-checkout {
+  margin-top: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.home-checkout-view .seed-payment-dialog .paypal-continue-button {
+  margin-top: 22px;
+}
+
+.home-checkout-view .seed-payment-dialog .paypal-continue-button[hidden] {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .home-checkout-view .minimal-offering .seed-quantity-row {
+    grid-template-columns: minmax(0, 1fr) clamp(76px, 27%, 100px);
+    gap: 8px;
+  }
+
+  .home-checkout-view .minimal-offering .paypal-quantity-control {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .home-checkout-view .minimal-offering .seed-stepper-button {
+    width: clamp(28px, 9vw, 40px);
+    height: clamp(28px, 9vw, 40px);
+    flex-basis: clamp(28px, 9vw, 40px);
+  }
+
+  .home-checkout-view .minimal-offering .seed-price strong {
+    font-size: clamp(12px, 3.6vw, 17px);
+  }
+
+  .home-checkout-view .minimal-offering .paypal-total-value {
+    font-size: clamp(17px, 5vw, 22px);
+  }
+}
+
+.superadmin-paypal-section {
+  width: min(1440px, 100%);
+  margin: 0 auto 22px;
+}
+
+.superadmin-checkout-host.home-checkout-view {
+  width: 100%;
+  margin: 0;
+  padding: 16px 0 0;
+  background: transparent;
+}
+
+.superadmin-checkout-host .donation-card.minimal-offering {
+  width: min(980px, 100%);
+  margin: 0 auto;
 }
