@@ -24,18 +24,20 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
 });
 
-test("Sow Your Seed goes directly to Dodo unless alternate cards are enabled", () => {
+test("Sow Your Seed opens a details and payment-options dialog", () => {
   const html = read("index.html");
   const checkout = read("src/home-dodo-checkout.js");
   const app = read("src/app.js");
 
-  assert.match(html, /id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"[\s\S]*Complete the payment for Your Seed/);
-  assert.match(html, /id="dodoCheckoutButton"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
+  assert.match(html, /id="dodoCheckoutButton"[^>]*aria-controls="dodoPaymentDialog"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
+  assert.match(html, /id="dodoPaymentDialog"[\s\S]*id="dodoCustomerEmail"[\s\S]*id="dodoCustomerMessage"[\s\S]*id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"/);
   assert.match(checkout, /checkoutButton\.textContent = "Sow Your Spiritual Seed Now"/);
-  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*dodoCardButton"\)\?\.hidden\) \{[\s\S]*startDodoCheckout\(\)/);
+  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*paymentDialog\.showModal\(\)/);
   assert.match(checkout, /const startDodoCheckout = async \(\) => \{[\s\S]*create-dodo-checkout/);
   assert.match(checkout, /dodoPayButton\.addEventListener\("click", \(\) => void startDodoCheckout\(\)\)/);
+  assert.match(checkout, /paymentDialog\.addEventListener\("cancel"[\s\S]*closePaymentDialog\(\)/);
   assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
+  assert.match(app, /document\.querySelector\("#dodoCheckoutButton"\)/);
 });
 
 test("seed amount sits beside the quantity control on narrow screens", () => {

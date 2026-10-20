@@ -7,6 +7,8 @@
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
   const checkoutButton = document.querySelector("#dodoCheckoutButton");
   const dodoPayButton = document.querySelector("#dodoPayButton");
+  const paymentDialog = document.querySelector("#dodoPaymentDialog");
+  const closePaymentDialogButton = document.querySelector("#closeDodoPaymentDialog");
   const paymentPanel = document.querySelector("#dodoPaymentPanel");
   const checkoutLoader = document.querySelector("#dodoCheckoutLoader");
   const loaderText = document.querySelector("#dodoCheckoutLoaderText");
@@ -29,10 +31,8 @@
     }).format(getUnitPrice() * seedCount);
     totalOutput.textContent = formattedTotal;
     totalSeedsOutput.textContent = `(${seedCount} ${seedCount === 1 ? "Seed" : "Seeds"})`;
-    if (!paymentPanel || paymentPanel.hidden) {
-      checkoutButton.textContent = "Sow Your Spiritual Seed Now";
-      checkoutButton.setAttribute("aria-label", `Sow Your Spiritual Seed Now ${formattedTotal}`);
-    }
+    checkoutButton.textContent = "Sow Your Spiritual Seed Now";
+    checkoutButton.setAttribute("aria-label", `Sow Your Spiritual Seed Now ${formattedTotal}`);
   };
 
   const setStatus = (message, isError = false) => {
@@ -45,20 +45,24 @@
     submitting = isLoading;
     checkoutButton.disabled = isLoading;
     dodoPayButton.disabled = isLoading;
-    if (isLoading) paymentPanel.hidden = false;
+    closePaymentDialogButton.disabled = isLoading;
     paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
     loaderText.textContent = message;
-    const isPanelOpen = !paymentPanel.hidden;
-    checkoutButton.classList.toggle("is-checkout-open", isPanelOpen);
-    checkoutButton.setAttribute("aria-expanded", String(isPanelOpen));
+  };
+
+  const closePaymentDialog = () => {
+    if (paymentDialog.open && typeof paymentDialog.close === "function") {
+      paymentDialog.close();
+    } else {
+      paymentDialog.removeAttribute("open");
+    }
+    checkoutButton.setAttribute("aria-expanded", "false");
   };
 
   const returnToDodoFormWithFailure = () => {
     setLoading(false);
-    paymentPanel.hidden = true;
-    checkoutButton.classList.remove("is-checkout-open");
-    checkoutButton.setAttribute("aria-expanded", "false");
+    closePaymentDialog();
     setStatus("");
     window.SowYourSeedCheckout?.openPaymentFailure?.("dodo");
   };
@@ -119,9 +123,7 @@
       form.reset();
       seedCount = 1;
       updateTotal();
-      paymentPanel.hidden = true;
-      checkoutButton.classList.remove("is-checkout-open");
-      checkoutButton.setAttribute("aria-expanded", "false");
+      closePaymentDialog();
     } catch (error) {
       console.warn("Dodo payment confirmation failed.", error);
       returnToDodoFormWithFailure();
@@ -172,21 +174,28 @@
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (submitting || !emailInput.reportValidity()) return;
-
-    if (document.querySelector("#dodoCardButton")?.hidden) {
-      void startDodoCheckout();
-      return;
-    }
+    if (submitting || paymentDialog.open) return;
 
     setStatus("");
-    paymentPanel.hidden = false;
-    checkoutButton.classList.add("is-checkout-open");
+    if (typeof paymentDialog.showModal === "function") {
+      paymentDialog.showModal();
+    } else {
+      paymentDialog.setAttribute("open", "");
+    }
     checkoutButton.setAttribute("aria-expanded", "true");
-    dodoPayButton.focus();
+    emailInput.focus();
   });
 
   dodoPayButton.addEventListener("click", () => void startDodoCheckout());
+  closePaymentDialogButton.addEventListener("click", closePaymentDialog);
+  paymentDialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    if (!submitting) closePaymentDialog();
+  });
+  paymentDialog.addEventListener("click", (event) => {
+    if (event.target === paymentDialog && !submitting) closePaymentDialog();
+  });
+  paymentDialog.addEventListener("close", () => checkoutButton.setAttribute("aria-expanded", "false"));
 
   new MutationObserver(updateTotal).observe(totalOutput, {
     attributes: true,

@@ -4888,3 +4888,72 @@ main {
     width: 60%;
   }
 }
+
+.seed-payment-dialog {
+  width: min(520px, calc(100% - 28px));
+  max-height: calc(100dvh - 28px);
+  padding: 0;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 24px;
+  color: var(--support-ink);
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(38, 24, 34, 0.3);
+}
+
+.seed-payment-dialog::backdrop {
+  background: rgba(38, 24, 34, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.seed-payment-dialog-card {
+  padding: clamp(20px, 5vw, 30px);
+}
+
+.seed-payment-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.seed-payment-dialog-heading h2 {
+  margin: 0;
+  font-size: clamp(21px, 5vw, 27px);
+  line-height: 1.2;
+}
+
+.seed-payment-dialog-close {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  color: #6d6269;
+  background: #f2efef;
+  font-size: 29px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.home-checkout-view .seed-payment-dialog .dodo-field {
+  margin-top: 16px;
+}
+
+.home-checkout-view .seed-payment-dialog .dodo-payment-panel {
+  margin-top: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.seed-payment-dialog .dodo-pay-button {
+  min-height: 54px;
+  background: var(--support-pink);
+}
+
+.seed-payment-dialog .dodo-pay-button:hover {
+  background: var(--support-pink-dark);
+}

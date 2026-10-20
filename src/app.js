@@ -2747,6 +2747,9 @@ function openAlternateCheckout(link) {
   }
   if (!checkoutUrl || !elements.alternateCheckoutDialog || !elements.alternateCheckoutFrame) return;
 
+  if (link === elements.dodoAlternateCardCheckoutLink) {
+    document.querySelector("#dodoPaymentDialog")?.close();
+  }
   elements.alternateCheckoutFrame.src = checkoutUrl;
   document.body.classList.add("alternate-checkout-open");
 
@@ -2779,7 +2782,7 @@ function returnToSowYourSeed() {
 
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   (useDodoCheckout
-    ? document.querySelector("#dodoCustomerEmail")
+    ? document.querySelector("#dodoCheckoutButton")
     : elements.paymentEmailInput)?.focus({ preventScroll: true });
   checkoutCard.scrollIntoView({ behavior, block: "start" });
 }
@@ -3182,6 +3185,8 @@ elements.shareSupportButton?.addEventListener("click", async () => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();
     if (!state.settings.alternateCardCheckoutVisible) return;
+    if (link === elements.dodoAlternateCardCheckoutLink &&
+        !document.querySelector("#dodoCustomerEmail")?.reportValidity()) return;
     const cardButton = link.closest(".card-choice");
     if (cardButton?.classList.contains("is-disabled")) return;
 
