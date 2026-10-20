@@ -38,6 +38,15 @@ test("Sow Your Seed goes directly to Dodo unless alternate cards are enabled", (
   assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
 });
 
+test("seed amount sits beside the quantity control on narrow screens", () => {
+  const html = read("index.html");
+  const styles = read("src/styles.css");
+
+  assert.match(html, /id="dodoIncreaseSeeds"[\s\S]*class="dodo-total"[\s\S]*id="dodoCustomerName"/);
+  assert.match(styles, /\.home-checkout-view \.dodo-checkout-summary \.dodo-total \{\s*grid-column: 2;\s*grid-row: 1;/);
+  assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) clamp\(76px, 27%, 100px\)/);
+});
+
 test("the first Dodo card option stays disabled after one opening", () => {
   const html = read("index.html");
   const app = read("src/app.js");
