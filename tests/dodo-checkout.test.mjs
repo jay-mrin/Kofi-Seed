@@ -30,6 +30,8 @@ test("Sow Your Seed goes directly to Dodo unless alternate cards are enabled", (
   const app = read("src/app.js");
 
   assert.match(html, /id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"[\s\S]*Complete the payment for Your Seed/);
+  assert.match(html, /id="dodoCheckoutButton"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
+  assert.match(checkout, /checkoutButton\.textContent = "Sow Your Spiritual Seed Now"/);
   assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*dodoCardButton"\)\?\.hidden\) \{[\s\S]*startDodoCheckout\(\)/);
   assert.match(checkout, /const startDodoCheckout = async \(\) => \{[\s\S]*create-dodo-checkout/);
   assert.match(checkout, /dodoPayButton\.addEventListener\("click", \(\) => void startDodoCheckout\(\)\)/);

@@ -30,8 +30,8 @@
     totalOutput.textContent = formattedTotal;
     totalSeedsOutput.textContent = `(${seedCount} ${seedCount === 1 ? "Seed" : "Seeds"})`;
     if (!paymentPanel || paymentPanel.hidden) {
-      checkoutButton.textContent = "Sow Your Seed";
-      checkoutButton.setAttribute("aria-label", `Sow Your Seed ${formattedTotal}`);
+      checkoutButton.textContent = "Sow Your Spiritual Seed Now";
+      checkoutButton.setAttribute("aria-label", `Sow Your Spiritual Seed Now ${formattedTotal}`);
     }
   };
 
