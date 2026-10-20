@@ -44,6 +44,7 @@ test("seed amount sits beside the quantity control on narrow screens", () => {
 
   assert.match(html, /id="dodoIncreaseSeeds"[\s\S]*class="dodo-total"[\s\S]*id="dodoCustomerName"/);
   assert.match(styles, /\.home-checkout-view \.dodo-checkout-summary \.dodo-total \{\s*grid-column: 2;\s*grid-row: 1;/);
+  assert.match(styles, /\.home-checkout-view \.dodo-checkout-summary \.dodo-name-field \{\s*grid-column: 1 \/ -1;/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) clamp\(76px, 27%, 100px\)/);
 });
 

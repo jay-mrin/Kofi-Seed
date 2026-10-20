@@ -4593,7 +4593,7 @@ main {
 }
 
 .home-checkout-view .dodo-checkout-summary .dodo-name-field {
-  grid-column: 1;
+  grid-column: 1 / -1;
   grid-row: 2;
   min-width: 0;
   align-self: stretch;
@@ -4825,7 +4825,7 @@ main {
   }
 
   .home-checkout-view .dodo-checkout-summary .dodo-name-field {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
   }
 
