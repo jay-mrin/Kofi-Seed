@@ -3409,9 +3409,9 @@ legend::after {
 
 .dodo-payment-guidance {
   margin: 16px 0 2px;
-  color: #6d6047;
-  font-size: 13px;
-  font-weight: 700;
+  color: #1f1f1f;
+  font-size: 15px;
+  font-weight: 800;
   text-align: center;
 }
 
