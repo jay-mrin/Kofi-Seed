@@ -106,19 +106,29 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
-test("support goal uses today's confirmed seed payments and resets every 100 seeds", () => {
+test("support goal uses cumulative confirmed seed payments and resets every $700", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
+  const migration = readRepositoryFile("supabase/migrations/202610200001_cumulative_seed_goal.sql");
+  const campaignStart = readRepositoryFile("supabase/migrations/202610200004_sunday_seed_goal_start.sql");
+  const publicScope = readRepositoryFile("supabase/migrations/202610200005_public_seed_goal_scope.sql");
 
   assert.match(html, /id="supportGoal"[\s\S]*id="supportGoalFill"[\s\S]*id="supportGoalPercent"/);
-  assert.match(app, /function renderGoalProgress\(\)[\s\S]*confirmedSeedCount[\s\S]*goalSeedCount/);
-  assert.match(bootstrap, /\.eq\("paypal_status", "COMPLETED"\)/);
+  assert.match(app, /function normalizeGoalProgress\(goalProgress\)[\s\S]*confirmedAmountCents[\s\S]*goalAmountCents/);
+  assert.match(bootstrap, /supabase\.rpc\("get_confirmed_seed_total_cents"\)/);
+  assert.match(bootstrap, /const goalAmountCents = 70000/);
+  assert.match(bootstrap, /goalTotalResult\.data[\s\S]*% goalAmountCents/);
+  assert.match(migration, /d\.paypal_status = 'COMPLETED'/);
+  assert.match(migration, /d\.payment_method in \('paypal', 'dodo'\)/);
+  assert.match(migration, /d\.raw_payment->>'mode' is distinct from 'test'/);
+  assert.match(migration, /d\.raw_payment#>>'\{product,type\}' is distinct from 'book'/);
+  assert.match(campaignStart, /d\.created_at >= '2026-10-17 18:30:00\+00'::timestamptz/);
+  assert.match(campaignStart, /d\.raw_payment#>>'\{product,type\}' = 'seed'/);
+  assert.match(publicScope, /d\.payment_route = 'standard'/);
+  assert.match(publicScope, /d\.visibility_scope = 'public'/);
   assert.match(bootstrap, /\.eq\("payment_route", "standard"\)/);
   assert.match(bootstrap, /\.gte\("created_at", getIndiaDayStart\(\)\)/);
-  assert.match(bootstrap, /Math\.floor\(confirmedSeedAmount \/ 7\)/);
-  assert.match(bootstrap, /todayConfirmedSeedCount % 100/);
-  assert.match(bootstrap, /goalSeedCount: 100[\s\S]*percentage: confirmedSeedCount/);
   assert.match(bootstrap, /confirmedSeedDonations[\s\S]*visibility_scope === "public"/);
 });
 

@@ -77,7 +77,7 @@ async function loadCriticalData(
 async function loadPublicContent(
   supabase: ReturnType<typeof getSupabaseAdmin>,
 ) {
-  const [donationsResult, seedCommentsResult] = await Promise.all([
+  const [donationsResult, seedCommentsResult, goalTotalResult] = await Promise.all([
     supabase
       .from("donations")
       .select(
@@ -95,10 +95,12 @@ async function loadPublicContent(
       )
       .order("created_at", { ascending: false })
       .limit(1000),
+    supabase.rpc("get_confirmed_seed_total_cents"),
   ]);
 
   if (donationsResult.error) throw donationsResult.error;
   if (seedCommentsResult.error) throw seedCommentsResult.error;
+  if (goalTotalResult.error) throw goalTotalResult.error;
 
   const confirmedSeedDonations = (donationsResult.data || [])
     .filter((donation) => {
@@ -109,12 +111,9 @@ async function loadPublicContent(
           : {};
       return rawPayment.mode !== "test" && rawPayment.product?.type !== "book";
     });
-  const confirmedSeedAmount = confirmedSeedDonations.reduce(
-    (total, donation) => total + Math.max(Number(donation.amount) || 0, 0),
-    0,
-  );
-  const todayConfirmedSeedCount = Math.floor(confirmedSeedAmount / 7);
-  const confirmedSeedCount = todayConfirmedSeedCount % 100;
+  const goalAmountCents = 70000;
+  const confirmedAmountCents = Math.max(Number(goalTotalResult.data) || 0, 0) % goalAmountCents;
+  const confirmedSeedCount = Math.floor(confirmedAmountCents / 700);
   const donations = confirmedSeedDonations
     .filter((donation) => donation.visibility_scope === "public")
     .slice(0, 50);
@@ -141,9 +140,9 @@ async function loadPublicContent(
     goalProgress: {
       confirmedSeedCount,
       goalSeedCount: 100,
-      percentage: confirmedSeedCount,
-      todayConfirmedSeedAmount: confirmedSeedAmount,
-      todayConfirmedSeedCount,
+      confirmedAmountCents,
+      goalAmountCents,
+      percentage: confirmedAmountCents / 700,
     },
     donations: donations.map((donation) => ({
       id: donation.id,

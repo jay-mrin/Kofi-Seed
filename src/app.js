@@ -498,11 +498,21 @@ function normalizeGoalProgress(goalProgress) {
     Number.parseInt(goalProgress?.goalSeedCount, 10) || GOAL_SEED_COUNT,
     1,
   );
+  const goalAmountCents = Math.max(
+    Number.parseInt(goalProgress?.goalAmountCents, 10) || goalSeedCount * SEED_DOLLAR_VALUE * 100,
+    1,
+  );
+  const confirmedAmountCents = Math.max(
+    Number.parseInt(goalProgress?.confirmedAmountCents, 10) || confirmedSeedCount * SEED_DOLLAR_VALUE * 100,
+    0,
+  ) % goalAmountCents;
 
   return {
-    confirmedSeedCount,
+    confirmedSeedCount: Math.floor(confirmedAmountCents / (SEED_DOLLAR_VALUE * 100)),
     goalSeedCount,
-    percentage: Math.min((confirmedSeedCount / goalSeedCount) * 100, 100),
+    confirmedAmountCents,
+    goalAmountCents,
+    percentage: (confirmedAmountCents / goalAmountCents) * 100,
   };
 }
 
@@ -3042,7 +3052,7 @@ function renderGoalProgress() {
   if (elements.supportGoalPercent) elements.supportGoalPercent.textContent = `${roundedPercentage}%`;
   elements.supportGoal?.setAttribute(
     "aria-label",
-    `${roundedPercentage} percent of support goal reached: ${goalProgress.confirmedSeedCount} of ${goalProgress.goalSeedCount} confirmed seeds`,
+    `${roundedPercentage} percent of support goal reached: $${(goalProgress.confirmedAmountCents / 100).toFixed(2)} of $${(goalProgress.goalAmountCents / 100).toFixed(2)} in confirmed seed payments`,
   );
 }
 
