@@ -73,7 +73,7 @@ async function ensureDigitalOrder(
     provider_order_id: payment.checkout_session_id,
     provider_transaction_id: payment.payment_id,
     customer_name: donation.display_name,
-    contact_email: attempt.contact_email || payment.customer?.email,
+    contact_email: attempt.contact_email,
     payer_email: payment.customer?.email || attempt.contact_email,
     amount: Number(attempt.amount),
     currency: attempt.currency,
@@ -153,9 +153,6 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   ) {
     throw new Error("Dodo payment details do not match the checkout attempt.");
   }
-  const payerEmail = String(payment.customer?.email || attempt.contact_email || "").trim();
-  if (!payerEmail) throw new Error("Dodo payment is missing a customer email.");
-  const payerName = String(payment.customer?.name || attempt.display_name || "Customer").trim() || "Customer";
 
   const { data: existing, error: existingError } = await supabase
     .from("donations")
@@ -182,9 +179,9 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
       product: { type: "seed", itemName: ITEM_NAME },
       payment,
       digitalOrder: {
-        customerName: payerName,
-        contactEmail: payerEmail,
-        payerEmail,
+        customerName: attempt.display_name,
+        contactEmail: attempt.contact_email,
+        payerEmail: payment.customer?.email || attempt.contact_email,
         provider: "dodo",
         providerOrderId: sessionId,
         providerTransactionId: normalizedPaymentId,
@@ -198,7 +195,7 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
       },
     };
     const { data: created, error: createError } = await supabase.from("donations").insert({
-      display_name: payerName,
+      display_name: attempt.display_name || payment.customer?.name || "Customer",
       amount: Number(attempt.amount),
       seed_count: seedCount,
       frequency: "once",
@@ -249,8 +246,6 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   const previousRaw = attempt.raw_payment && typeof attempt.raw_payment === "object" ? attempt.raw_payment : {};
   const { error: confirmError } = await supabase.from("payment_attempts").update({
     status: "confirmed",
-    display_name: payerName,
-    contact_email: payerEmail,
     dodo_payment_id: normalizedPaymentId,
     failure_reason: null,
     raw_payment: { ...previousRaw, payment },

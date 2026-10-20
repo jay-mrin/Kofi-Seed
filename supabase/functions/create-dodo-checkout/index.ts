@@ -32,7 +32,7 @@ Deno.serve(async (request) => {
     if (!Number.isSafeInteger(seedCount) || seedCount < 1 || seedCount > 999) {
       return errorResponse("Choose between 1 and 999 seeds.", 422);
     }
-    if (email && !isValidEmail(email)) return errorResponse("A valid email is required for the order detail.", 422);
+    if (!isValidEmail(email)) return errorResponse("A valid email is required for the order detail.", 422);
     if (!/^[a-f0-9-]{64,160}$/i.test(donorAccessToken)) {
       return errorResponse("The secure checkout token is invalid. Please refresh and try again.", 422);
     }

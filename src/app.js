@@ -249,6 +249,9 @@ const elements = {
   paymentFailureDialog: document.querySelector("#paymentFailureDialog"),
   paymentStatus: document.querySelector("#paymentStatus"),
   alternateCardCheckoutLink: document.querySelector("#alternateCardCheckoutLink"),
+  dodoAlternateCardCheckoutLink: document.querySelector("#dodoAlternateCardCheckoutLink"),
+  dodoCardButton: document.querySelector("#dodoCardButton"),
+  dodoPaymentPanel: document.querySelector("#dodoPaymentPanel"),
   alternateCheckoutDialog: document.querySelector("#alternateCheckoutDialog"),
   alternateCheckoutFrame: document.querySelector("#alternateCheckoutFrame"),
   closeAlternateCheckoutButton: document.querySelector("#closeAlternateCheckoutButton"),
@@ -1735,6 +1738,7 @@ function renderSettings() {
     const inSuperAdminPortal = elements.supportCard.parentElement === elements.superAdminCheckoutHost;
     elements.supportCard.hidden = !inSuperAdminPortal && !settings.paypalCheckoutVisible;
   }
+  if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
   if (elements.cardButton) elements.cardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.paypalCheckoutVisible;
   if (elements.paypalCardButton) elements.paypalCardButton.hidden = true;
   if (elements.retryPaymentButton) elements.retryPaymentButton.href = settings.dodoCheckoutVisible ? "#seedCheckoutCard" : "#support";
@@ -2775,14 +2779,24 @@ function openAlternateCheckout(link) {
   let checkoutUrl = rawCheckoutUrl;
   if (rawCheckoutUrl) {
     const url = new URL(rawCheckoutUrl);
-    alternateCheckoutSource = "paypal";
-    url.searchParams.set("amount", String(pendingDonation?.amount || getActiveCheckoutAmount()));
-    url.searchParams.set("email", pendingDonation?.email || getPaymentEmail());
-    url.searchParams.set("name", pendingDonation?.name || ui.nameInput?.value.trim() || "");
+    const isDodoCheckout = link === elements.dodoAlternateCardCheckoutLink;
+    alternateCheckoutSource = isDodoCheckout ? "dodo" : "paypal";
+    url.searchParams.set("amount", String(isDodoCheckout
+      ? (Number(document.querySelector("#dodoSeedCount")?.value) || 1) * (Number(state.settings.seedPrice) || SEED_DOLLAR_VALUE)
+      : pendingDonation?.amount || getActiveCheckoutAmount()));
+    url.searchParams.set("email", isDodoCheckout
+      ? document.querySelector("#dodoCustomerEmail")?.value.trim() || ""
+      : pendingDonation?.email || getPaymentEmail());
+    url.searchParams.set("name", isDodoCheckout
+      ? document.querySelector("#dodoCustomerName")?.value.trim() || ""
+      : pendingDonation?.name || ui.nameInput?.value.trim() || "");
     checkoutUrl = url.toString();
   }
   if (!checkoutUrl || !elements.alternateCheckoutDialog || !elements.alternateCheckoutFrame) return;
 
+  if (link === elements.dodoAlternateCardCheckoutLink) {
+    document.querySelector("#dodoPaymentDialog")?.close();
+  }
   elements.alternateCheckoutFrame.src = checkoutUrl;
   document.body.classList.add("alternate-checkout-open");
 
@@ -2809,7 +2823,7 @@ function returnToSowYourSeed() {
   setActiveView("homeView", true);
   const useDodoCheckout = state.settings.dodoCheckoutVisible;
   const checkoutCard = useDodoCheckout
-    ? document.querySelector("#seedCheckoutCard")
+    ? elements.dodoCardButton?.closest(".dodo-checkout-card")
     : elements.supportCard;
   if (!checkoutCard) return;
 
@@ -3230,10 +3244,12 @@ elements.shareSupportButton?.addEventListener("click", async () => {
     if (error?.name !== "AbortError") showToast("The support page link could not be shared.");
   }
 });
-[elements.alternateCardCheckoutLink].forEach((link) => {
+[elements.alternateCardCheckoutLink, elements.dodoAlternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();
     if (!state.settings.alternateCardCheckoutVisible) return;
+    if (link === elements.dodoAlternateCardCheckoutLink &&
+        !document.querySelector("#dodoCustomerEmail")?.reportValidity()) return;
     const cardButton = link.closest(".card-choice");
     if (cardButton?.classList.contains("is-disabled")) return;
 

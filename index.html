@@ -299,12 +299,43 @@
                 <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
               </div>
               <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$7.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
+              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Name" /></label>
             </div>
-            <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit">Sow Your Spiritual Seed Now</button>
-            <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Opening secure payment" hidden>
-              <span id="dodoCheckoutLoaderText">Opening secure card checkout...</span>
-            </div>
-            <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
+            <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-haspopup="dialog" aria-expanded="false" aria-controls="dodoPaymentDialog">Sow Your Spiritual Seed Now</button>
+            <dialog class="seed-payment-dialog" id="dodoPaymentDialog" aria-labelledby="dodoPaymentTitle">
+              <div class="seed-payment-dialog-card">
+                <div class="seed-payment-dialog-heading">
+                  <h2 id="dodoPaymentTitle">Complete your seed</h2>
+                  <button class="seed-payment-dialog-close" id="closeDodoPaymentDialog" type="button" aria-label="Close payment options">×</button>
+                </div>
+                <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
+                <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message"></textarea></label>
+                <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options">
+                  <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Opening secure payment" hidden>
+                    <span id="dodoCheckoutLoaderText">Opening Secure Payment for Your Seed.....</span>
+                  </div>
+                  <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
+                  <div class="payment-choice card-choice" id="dodoCardButton" hidden>
+                    <span>Alternate debit or credit card</span>
+                    <small class="preferred-payment-label">Preferred</small>
+                    <a
+                      class="alternate-card-link"
+                      id="dodoAlternateCardCheckoutLink"
+                      href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
+                      aria-label="Open debit or credit card checkout popup"
+                      aria-haspopup="dialog"
+                      aria-controls="alternateCheckoutDialog"
+                    >Debit or Credit Card</a>
+                    <p class="alternate-card-retry" aria-live="polite">Try Again</p>
+                  </div>
+                  <div class="payment-choice dodo-choice">
+                    <span>Dodo</span>
+                    <button class="dodo-pay-button" id="dodoPayButton" type="button">Sow Your Seed Now ➡️</button>
+                  </div>
+                  <p class="dodo-payment-guidance">Complete The Payment To Get Your Seed</p>
+                </section>
+              </div>
+            </dialog>
           </form>
         </section>
         <section class="donation-card minimal-offering" id="support" aria-label="PayPal checkout">
@@ -787,7 +818,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/app.js?v=133" defer></script>
-    <script src="src/home-dodo-checkout.js?v=14" defer></script>
+    <script src="src/home-dodo-checkout.js?v=13" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>

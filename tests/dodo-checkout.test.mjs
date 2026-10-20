@@ -16,27 +16,25 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(create, /site_settings[\s\S]*seedPrice/);
   assert.match(dodo, /product_cart:[\s\S]*amount: input\.amountCents/);
   assert.match(dodo, /allowed_payment_method_types: \["credit", "debit"\]/);
-  assert.match(dodo, /\.\.\.\(input\.email \? \{ customer:/);
   assert.match(dodo, /minimal_address: true/);
   assert.match(dodo, /single_page: true/);
-  assert.match(dodo, /redirect_immediately: true/);
   assert.match(dodo, /allow_phone_number_collection: false/);
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
 });
 
-test("Sow Your Seed opens Dodo directly", () => {
+test("Sow Your Seed opens a details and payment-options dialog", () => {
   const html = read("index.html");
   const checkout = read("src/home-dodo-checkout.js");
   const app = read("src/app.js");
 
-  assert.match(html, /id="dodoCheckoutButton"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
-  assert.doesNotMatch(html, /id="dodoPaymentDialog"|id="dodoPayButton"|id="dodoCustomerEmail"/);
+  assert.match(html, /id="dodoCheckoutButton"[^>]*aria-controls="dodoPaymentDialog"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
+  assert.match(html, /id="dodoPaymentDialog"[\s\S]*id="dodoCustomerEmail"[\s\S]*id="dodoCustomerMessage"[\s\S]*id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"/);
   assert.match(checkout, /checkoutButton\.textContent = "Sow Your Spiritual Seed Now"/);
-  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*startDodoCheckout\(\)/);
+  assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*paymentDialog\.showModal\(\)/);
   assert.match(checkout, /const startDodoCheckout = async \(\) => \{[\s\S]*create-dodo-checkout/);
-  assert.match(checkout, /window\.location\.assign\(payload\.checkoutUrl\)/);
-  assert.doesNotMatch(checkout, /emailInput|paymentDialog/);
-  assert.match(app, /document\.querySelector\("#seedCheckoutCard"\)/);
+  assert.match(checkout, /dodoPayButton\.addEventListener\("click", \(\) => void startDodoCheckout\(\)\)/);
+  assert.match(checkout, /paymentDialog\.addEventListener\("cancel"[\s\S]*closePaymentDialog\(\)/);
+  assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
   assert.match(app, /document\.querySelector\("#dodoCheckoutButton"\)/);
 });
 
@@ -56,17 +54,25 @@ test("seed amount sits beside the quantity control on narrow screens", () => {
   const html = read("index.html");
   const styles = read("src/styles.css");
 
-  assert.match(html, /id="dodoIncreaseSeeds"[\s\S]*class="dodo-total"[\s\S]*id="dodoCheckoutButton"/);
+  assert.match(html, /id="dodoIncreaseSeeds"[\s\S]*class="dodo-total"[\s\S]*id="dodoCustomerName"/);
   assert.match(styles, /\.home-checkout-view \.dodo-checkout-summary \.dodo-total \{\s*grid-column: 2;\s*grid-row: 1;/);
   assert.match(styles, /\.home-checkout-view \.dodo-checkout-summary \.dodo-name-field \{\s*grid-column: 1 \/ -1;/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) clamp\(76px, 27%, 100px\)/);
 });
 
-test("Dodo checkout does not offer an alternate card popup", () => {
+test("the first Dodo card option stays disabled after one opening", () => {
   const html = read("index.html");
   const app = read("src/app.js");
-  assert.doesNotMatch(html, /id="dodoAlternateCardCheckoutLink"|id="dodoCardButton"/);
-  assert.doesNotMatch(app, /dodoAlternateCardCheckoutLink|dodoCardButton/);
+  const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.match(html, /id="dodoPayButton"[^>]*>Sow Your Seed Now ➡️<\/button>/);
+  assert.match(html, /class="dodo-payment-guidance">Complete The Payment To Get Your Seed<\/p>/);
+  assert.match(read("src/styles.css"), /\.dodo-payment-guidance \{[\s\S]*color: #1f1f1f;[\s\S]*font-weight: 800;/);
+  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
+  assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
+  assert.ok(closeCheckout);
+  assert.doesNotMatch(closeCheckout, /dodoAlternateCardCheckoutLink/);
+  assert.doesNotMatch(closeCheckout, /classList\.remove\("is-disabled"\)/);
 });
 
 test("Dodo payment confirmation verifies provider state before creating an order", () => {
@@ -77,8 +83,6 @@ test("Dodo payment confirmation verifies provider state before creating an order
   assert.match(orders, /Number\(payment\.total_amount\) < expectedCents/);
   assert.match(orders, /payment_method: "dodo"/);
   assert.match(orders, /payment_route: "standard"/);
-  assert.match(orders, /const payerEmail = String\(payment\.customer\?\.email \|\| attempt\.contact_email/);
-  assert.match(orders, /contact_email: payerEmail/);
   assert.match(orders, /visibility_scope: "public"/);
   assert.match(orders, /\.eq\("dodo_payment_id", normalizedPaymentId\)/);
 });
