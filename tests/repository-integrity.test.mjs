@@ -163,7 +163,7 @@ test("edge requests normalize the configured CORS origin and hide alternate card
   const app = readRepositoryFile("src/app.js");
 
   assert.match(http, /new URL\(configuredOrigin\)\.origin/);
-  assert.match(html, /id="dodoCardButton" hidden/);
+  assert.doesNotMatch(html, /id="dodoCardButton"/);
   assert.match(html, /id="cardButton" hidden/);
   assert.match(app, /The payment service could not be reached\. Check your connection and try again\./);
 });
@@ -231,7 +231,7 @@ test("PayPal and PayPal card use the SDK while the alternate card follows its to
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
-  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
+  assert.match(app, /\[elements\.alternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
   assert.match(app, /ui\.cardButton\.hidden = !state\.settings\.alternateCardCheckoutVisible/);
   assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
   assert.match(styles, /\.alternate-card-link\s*\{/);

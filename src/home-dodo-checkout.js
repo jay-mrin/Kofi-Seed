@@ -6,16 +6,9 @@
   const totalOutput = document.querySelector("#dodoTotalAmount");
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
   const checkoutButton = document.querySelector("#dodoCheckoutButton");
-  const dodoPayButton = document.querySelector("#dodoPayButton");
-  const paymentDialog = document.querySelector("#dodoPaymentDialog");
-  const closePaymentDialogButton = document.querySelector("#closeDodoPaymentDialog");
-  const paymentPanel = document.querySelector("#dodoPaymentPanel");
   const checkoutLoader = document.querySelector("#dodoCheckoutLoader");
   const loaderText = document.querySelector("#dodoCheckoutLoaderText");
   const paymentStatus = document.querySelector("#dodoPaymentStatus");
-  const emailInput = document.querySelector("#dodoCustomerEmail");
-  const nameInput = document.querySelector("#dodoCustomerName");
-  const messageInput = document.querySelector("#dodoCustomerMessage");
   let seedCount = 1;
   let submitting = false;
   const donorTokenKey = "sow-your-seed-dodo-donor-token";
@@ -44,25 +37,12 @@
   const setLoading = (isLoading, message = "Opening Secure Payment for Your Seed.....") => {
     submitting = isLoading;
     checkoutButton.disabled = isLoading;
-    dodoPayButton.disabled = isLoading;
-    closePaymentDialogButton.disabled = isLoading;
-    paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
     loaderText.textContent = message;
   };
 
-  const closePaymentDialog = () => {
-    if (paymentDialog.open && typeof paymentDialog.close === "function") {
-      paymentDialog.close();
-    } else {
-      paymentDialog.removeAttribute("open");
-    }
-    checkoutButton.setAttribute("aria-expanded", "false");
-  };
-
   const returnToDodoFormWithFailure = () => {
     setLoading(false);
-    closePaymentDialog();
     setStatus("");
     window.SowYourSeedCheckout?.openPaymentFailure?.("dodo");
   };
@@ -123,7 +103,6 @@
       form.reset();
       seedCount = 1;
       updateTotal();
-      closePaymentDialog();
     } catch (error) {
       console.warn("Dodo payment confirmation failed.", error);
       returnToDodoFormWithFailure();
@@ -145,7 +124,7 @@
   });
 
   const startDodoCheckout = async () => {
-    if (submitting || !emailInput.reportValidity()) return;
+    if (submitting) return;
 
     setStatus("");
     setLoading(true);
@@ -157,9 +136,6 @@
       const payload = await checkout.callEdge("create-dodo-checkout", {
         body: {
           seedCount,
-          email: emailInput.value.trim(),
-          name: nameInput.value.trim(),
-          message: messageInput.value.trim(),
           donorAccessToken,
         },
       });
@@ -174,28 +150,8 @@
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (submitting || paymentDialog.open) return;
-
-    setStatus("");
-    if (typeof paymentDialog.showModal === "function") {
-      paymentDialog.showModal();
-    } else {
-      paymentDialog.setAttribute("open", "");
-    }
-    checkoutButton.setAttribute("aria-expanded", "true");
-    emailInput.focus();
+    if (!submitting) void startDodoCheckout();
   });
-
-  dodoPayButton.addEventListener("click", () => void startDodoCheckout());
-  closePaymentDialogButton.addEventListener("click", closePaymentDialog);
-  paymentDialog.addEventListener("cancel", (event) => {
-    event.preventDefault();
-    if (!submitting) closePaymentDialog();
-  });
-  paymentDialog.addEventListener("click", (event) => {
-    if (event.target === paymentDialog && !submitting) closePaymentDialog();
-  });
-  paymentDialog.addEventListener("close", () => checkoutButton.setAttribute("aria-expanded", "false"));
 
   new MutationObserver(updateTotal).observe(totalOutput, {
     attributes: true,
