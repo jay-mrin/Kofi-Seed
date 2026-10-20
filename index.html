@@ -311,8 +311,9 @@
                 <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
                 <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message"></textarea></label>
                 <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options">
-                  <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Opening secure payment" hidden>
-                    <span id="dodoCheckoutLoaderText">Opening Secure Payment for Your Seed.....</span>
+                  <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Processing your seed" hidden>
+                    <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
+                    <span id="dodoCheckoutLoaderText">Processing Your Seed.....</span>
                   </div>
                   <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
                   <div class="payment-choice card-choice" id="dodoCardButton" hidden>
@@ -818,7 +819,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/app.js?v=133" defer></script>
-    <script src="src/home-dodo-checkout.js?v=13" defer></script>
+    <script src="src/home-dodo-checkout.js?v=14" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>
