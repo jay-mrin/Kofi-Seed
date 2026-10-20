@@ -4169,8 +4169,8 @@ main {
 }
 
 .support-creator-shell .profile-bar {
-  grid-template-columns: minmax(0, 1fr) auto;
-  padding: 24px 8px 20px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 24px 8px 14px;
   background: #fff;
 }
 
@@ -4200,25 +4200,6 @@ main {
   line-height: 1.45;
 }
 
-.profile-support-button {
-  display: inline-flex;
-  min-width: 190px;
-  min-height: 52px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  color: #fff;
-  background: var(--support-pink);
-  box-shadow: 0 10px 24px rgba(255, 60, 172, 0.22);
-  font-size: 17px;
-  font-weight: 900;
-  text-decoration: none;
-}
-
-.profile-support-button:hover {
-  background: var(--support-pink-dark);
-}
-
 .support-creator-shell .profile-tabs {
   min-height: 62px;
   gap: 38px;
@@ -4238,14 +4219,14 @@ main {
 
 .home-checkout-view {
   width: 100%;
-  padding: 26px 16px 72px;
+  padding: 10px 16px 72px;
   background: var(--support-surface);
 }
 
 .support-page-grid {
   display: grid;
-  width: min(1120px, 100%);
-  grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.4fr);
+  width: min(980px, 100%);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
   margin: 0 auto;
@@ -4692,9 +4673,6 @@ main {
     grid-template-columns: 1fr 1fr;
   }
 
-  .support-checkout-column {
-    order: -1;
-  }
 }
 
 @media (max-width: 680px) {
@@ -4761,7 +4739,7 @@ main {
   }
 
   .support-creator-shell .profile-bar {
-    padding: 18px;
+    padding: 18px 18px 12px;
   }
 
   .support-creator-shell .profile-copy h1 {
@@ -4772,18 +4750,12 @@ main {
     font-size: 12px;
   }
 
-  .profile-support-button {
-    min-width: 112px;
-    min-height: 46px;
-    font-size: 15px;
-  }
-
   .support-creator-shell .profile-tabs {
     padding: 0 18px;
   }
 
   .home-checkout-view {
-    padding: 18px 12px 50px;
+    padding: 8px 12px 50px;
   }
 
   .support-story-column {
@@ -4876,11 +4848,6 @@ main {
 @media (max-width: 420px) {
   .support-creator-shell .profile-bar {
     grid-template-columns: 1fr;
-  }
-
-  .profile-support-button {
-    width: 100%;
-    margin-top: 13px;
   }
 
   .cover-copy {
