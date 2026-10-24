@@ -222,6 +222,7 @@ const elements = {
   amountError: document.querySelector("#amountError"),
   amountInput: document.querySelector("#amountInput"),
   paypalTotalSeeds: document.querySelector("#paypalTotalSeeds"),
+  weeklySeedToggle: document.querySelector("#weeklySeedToggle"),
   brandTitle: document.querySelector("#brandTitle"),
   cancelAdminLoginButton: document.querySelector("#cancelAdminLoginButton"),
   checkoutButton: document.querySelector("#checkoutButton"),
@@ -2234,7 +2235,7 @@ function setPayPalCheckoutLoading(isLoading) {
   if (isLoading) {
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
+    ui.cardButton.hidden = elements.weeklySeedToggle.checked || !state.settings.alternateCardCheckoutVisible;
   }
 }
 
@@ -2244,15 +2245,9 @@ function updatePayPalVisibility() {
 
   ui.paypalButton.hidden = !showPayPal;
   ui.paypalCardButton.hidden = true;
-  ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
+  ui.cardButton.hidden = elements.weeklySeedToggle.checked || !state.settings.alternateCardCheckoutVisible;
 
   return showPayPal;
-}
-
-function chooseOneTimeSowing() {
-  if (!pendingDonation) return;
-  pendingDonation.frequency = "once";
-  openInlinePayPalCheckout();
 }
 
 function submitDonation(event) {
@@ -2276,7 +2271,7 @@ function submitDonation(event) {
 
   trackCheckoutEvent("checkout_button_clicked", pendingDonation);
   closeInlinePayPalCheckout();
-  chooseOneTimeSowing();
+  openInlinePayPalCheckout();
 }
 
 function isValidPayPalSdk(paypal) {
@@ -2306,8 +2301,8 @@ function waitForPayPalSdk(namespace, timeoutMs = 5000) {
   });
 }
 
-function getPayPalSdkNamespace() {
-  return "paypalSysSuperAdminOnce";
+function getPayPalSdkNamespace(weekly = elements.weeklySeedToggle.checked) {
+  return weekly ? "paypalSysSuperAdminWeekly" : "paypalSysSuperAdminOnce";
 }
 
 function resetPayPalSdk(namespace) {
@@ -2327,13 +2322,14 @@ function resetPayPalSdk(namespace) {
 }
 
 function resetAllPayPalSdks() {
-  resetPayPalSdk(getPayPalSdkNamespace());
+  resetPayPalSdk(getPayPalSdkNamespace(false));
+  resetPayPalSdk(getPayPalSdkNamespace(true));
 }
 
-function loadPayPalSdk() {
+function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked) {
   const clientId = getPayPalClientId();
-  const sdkKey = `superadmin:once:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
-  const namespace = getPayPalSdkNamespace();
+  const sdkKey = `superadmin:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
+  const namespace = getPayPalSdkNamespace(weekly);
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
@@ -2357,9 +2353,9 @@ function loadPayPalSdk() {
     const params = new URLSearchParams({
       "client-id": clientId,
       currency: paymentConfig.currency || CONFIG.currency,
-      intent: "capture",
+      intent: weekly ? "subscription" : "capture",
       components: "buttons",
-      "enable-funding": "card",
+      ...(weekly ? { vault: "true" } : { "enable-funding": "card" }),
       "disable-funding": "credit,paylater,venmo",
     });
     const finish = (callback, value) => {
@@ -2490,6 +2486,81 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
   };
 }
 
+function buildPayPalSubscriptionButtonOptions(paypal) {
+  let checkoutToken = "";
+  return {
+    fundingSource: paypal.FUNDING.PAYPAL,
+    style: { layout: "horizontal", shape: "pill", label: "subscribe", tagline: false, height: 44 },
+    createSubscription: async (_data, actions) => {
+      if (!pendingDonation || pendingDonation.frequency !== "weekly") {
+        throw new Error("Weekly checkout details are missing.");
+      }
+      const email = requirePaymentEmail();
+      const amount = getActiveCheckoutAmount();
+      const seedPriceCents = Math.round(Number(state.settings.seedPrice) * 100);
+      const amountCents = Math.round(amount * 100);
+      if (!seedPriceCents || amountCents < seedPriceCents || amountCents % seedPriceCents !== 0) {
+        setPaymentStatus("Choose a whole number of seeds for weekly sowing.", true);
+        throw new Error("Weekly sowing requires a whole number of seeds.");
+      }
+      pendingDonation = {
+        ...pendingDonation,
+        name: elements.nameInput.value.trim(),
+        email,
+        amount,
+        message: elements.messageInput.value.trim(),
+      };
+      setPaymentStatus("Preparing your weekly PayPal subscription...");
+      const prepared = await callEdge("prepare-paypal-subscription", {
+        body: {
+          amount,
+          seedCount: amountCents / seedPriceCents,
+          name: pendingDonation.name,
+          email,
+          message: pendingDonation.message,
+          paymentRoute: getCheckoutRoute(),
+        },
+      });
+      checkoutToken = prepared.checkoutToken;
+      await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
+      return actions.subscription.create({
+        plan_id: prepared.planId,
+        start_time: prepared.startTime,
+        custom_id: checkoutToken,
+      });
+    },
+    onApprove: async (data) => {
+      try {
+        setPaymentStatus("Confirming your weekly subscription...");
+        const result = await callEdge("confirm-paypal-subscription", {
+          body: { checkoutToken, subscriptionId: data.subscriptionID },
+        });
+        closeInlinePayPalCheckout();
+        pendingDonation = null;
+        elements.supportForm.reset();
+        elements.paymentEmailInput.value = "";
+        setAmount(getInitialDonationAmount());
+        updateCheckoutLabel();
+        elements.receiptTitle.textContent = "Weekly sowing started";
+        elements.receiptSummary.textContent = `Your PayPal subscription ${data.subscriptionID} is ${result.subscription.status}. PayPal charges the selected amount now and schedules weekly billing for Mondays at 7:30 AM India time. You can cancel through PayPal.`;
+        elements.receiptSummary.hidden = false;
+        openReceipt();
+      } catch (error) {
+        console.warn("PayPal subscription confirmation is pending.", error);
+        setPaymentStatus(`PayPal approved subscription ${data.subscriptionID}, but we could not confirm it here. Check your PayPal account before trying again, and contact support with this ID.`, true);
+      }
+    },
+    onCancel: () => {
+      closeInlinePayPalCheckout();
+      openPaymentFailure("paypal");
+    },
+    onError: (error) => {
+      console.warn("PayPal subscription failed.", error);
+      setPaymentStatus(error?.message || "Weekly PayPal checkout failed. Please try again.", true);
+    },
+  };
+}
+
 function renderPayPalButtons() {
   if (paypalRenderPromise) return paypalRenderPromise;
 
@@ -2503,6 +2574,7 @@ function renderPayPalButtons() {
 async function renderFreshPayPalButtons() {
   let namespace = "";
   const ui = getCheckoutUi();
+  const weekly = pendingDonation?.frequency === "weekly";
 
   clearPayPalButtons();
   setPaymentStatus("");
@@ -2511,8 +2583,8 @@ async function renderFreshPayPalButtons() {
   if (!isBackendConfigured() || !backendReady) {
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
-    setPaymentStatus(state.settings.alternateCardCheckoutVisible
+    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
+    setPaymentStatus(!weekly && state.settings.alternateCardCheckoutVisible
       ? "PayPal is unavailable. Continue with the alternate debit or credit card instead."
       : "PayPal is currently unavailable.");
     setPayPalCheckoutLoading(false);
@@ -2522,7 +2594,7 @@ async function renderFreshPayPalButtons() {
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
     const route = getCheckoutRoute();
-    namespace = getPayPalSdkNamespace();
+    namespace = getPayPalSdkNamespace(weekly);
 
     if (!isPayPalConfigured()) {
       throw new Error("SuperAdmin PayPal checkout is currently unavailable.");
@@ -2535,7 +2607,21 @@ async function renderFreshPayPalButtons() {
       pendingDonation = { ...pendingDonation, paymentRoute: route };
     }
 
-    const paypal = await loadPayPalSdk();
+    const paypal = await loadPayPalSdk(weekly);
+
+    if (weekly) {
+      const subscriptionButtons = paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal));
+      if (!subscriptionButtons.isEligible()) {
+        throw new Error("PayPal subscriptions are unavailable for this account.");
+      }
+      await subscriptionButtons.render(ui.paypalButtonContainer);
+      await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal subscription button");
+      ui.paypalButton.hidden = false;
+      ui.paypalCardButton.hidden = true;
+      ui.cardButton.hidden = true;
+      setPaymentStatus("Pay the selected amount now, then weekly on Mondays at 7:30 AM India time.");
+      return;
+    }
 
     const paypalButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
     const paypalCardButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
@@ -2566,7 +2652,7 @@ async function renderFreshPayPalButtons() {
 
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = !paypalCardReady;
-    ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
+    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
     setPaymentStatus(paypalCardEligible && !paypalCardReady
       ? "PayPal debit or credit card is temporarily unavailable. You can continue with PayPal."
       : paypalCardReady
@@ -2577,8 +2663,8 @@ async function renderFreshPayPalButtons() {
     if (namespace) resetPayPalSdk(namespace);
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = !state.settings.alternateCardCheckoutVisible;
-    setPaymentStatus(error?.message || (state.settings.alternateCardCheckoutVisible
+    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
+    setPaymentStatus(error?.message || (!weekly && state.settings.alternateCardCheckoutVisible
       ? "PayPal could not load. Continue with the alternate debit or credit card instead."
       : "PayPal could not load. Please try again."), true);
   } finally {
@@ -2675,10 +2761,29 @@ function continueWithPayPal() {
     return;
   }
 
+  if (elements.weeklySeedToggle.checked) {
+    const priceCents = Math.round(Number(state.settings.seedPrice) * 100);
+    const amountCents = Math.round(getAmount() * 100);
+    if (!elements.nameInput.value.trim()) {
+      elements.nameError.textContent = "Add your name for weekly sowing.";
+      closeInlinePayPalCheckout();
+      elements.nameInput.focus();
+      return;
+    }
+    elements.nameError.textContent = "";
+    if (!priceCents || amountCents % priceCents !== 0) {
+      elements.amountError.textContent = "Weekly sowing requires a whole number of seeds.";
+      closeInlinePayPalCheckout();
+      elements.amountInput.focus();
+      return;
+    }
+  }
+
   ui.emailError.textContent = "";
   pendingDonation = {
     ...pendingDonation,
     email: getPaymentEmail(),
+    frequency: elements.weeklySeedToggle.checked ? "weekly" : "once",
     message: ui.messageInput.value.trim(),
   };
   elements.paypalContinueButton.hidden = true;
@@ -2691,7 +2796,7 @@ function continueWithPayPal() {
     return;
   }
   setPayPalCheckoutLoading(false);
-  setPaymentStatus(state.settings.alternateCardCheckoutVisible
+  setPaymentStatus(pendingDonation?.frequency !== "weekly" && state.settings.alternateCardCheckoutVisible
     ? "PayPal is unavailable. Continue with the alternate debit or credit card instead."
     : "PayPal is currently unavailable.");
 }
@@ -3219,6 +3324,10 @@ elements.showMoreButtons.forEach((button) => {
 });
 
 elements.supportForm.addEventListener("submit", submitDonation);
+elements.weeklySeedToggle.addEventListener("change", () => {
+  elements.amountError.textContent = "";
+  elements.nameError.textContent = "";
+});
 elements.paypalContinueButton.addEventListener("click", continueWithPayPal);
 elements.closePaypalPaymentDialog.addEventListener("click", closeInlinePayPalCheckout);
 elements.paypalPaymentDialog.addEventListener("cancel", (event) => {

@@ -385,7 +385,12 @@
                     <span class="visually-hidden">Your message</span>
                     <textarea id="messageInput" maxlength="180" placeholder="Your message"></textarea>
                   </label>
-                  <button class="dodo-pay-button paypal-continue-button" id="paypalContinueButton" type="button">Continue with PayPal ➡️</button>
+                  <label class="weekly-seed-option" for="weeklySeedToggle">
+                    <strong>Sow Seed Weekly</strong>
+                    <input id="weeklySeedToggle" type="checkbox" />
+                    <span class="weekly-seed-switch" aria-hidden="true"></span>
+                  </label>
+                  <button class="dodo-pay-button paypal-continue-button" id="paypalContinueButton" type="button">Continue To Seed</button>
               <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
                 <p class="payment-status" id="paymentStatus" role="status" aria-live="polite" hidden></p>
                 <div class="paypal-checkout-loader" id="paypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure PayPal checkout" hidden>

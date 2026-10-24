@@ -207,8 +207,8 @@ test("PayPal and PayPal card use the SDK while the alternate card follows its to
   assert.doesNotMatch(html, /id="paypalCheckoutRetry"/);
   assert.match(app, /async function renderFreshPayPalButtons\(\)[\s\S]*const route = getCheckoutRoute\(\)/);
   assert.match(app, /await loadBackendData\(\{ mode: "critical", throwOnError: true \}\)/);
-  assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(\)/);
-  assert.match(app, /const paypal = await loadPayPalSdk\(\)/);
+  assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(weekly\)/);
+  assert.match(app, /const paypal = await loadPayPalSdk\(weekly\)/);
   assert.match(app, /await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /waitForRenderedPayPalButton/);
   assert.match(app, /querySelectorAll\("iframe"\)/);
@@ -232,7 +232,7 @@ test("PayPal and PayPal card use the SDK while the alternate card follows its to
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
-  assert.match(app, /ui\.cardButton\.hidden = !state\.settings\.alternateCardCheckoutVisible/);
+  assert.match(app, /ui\.cardButton\.hidden = weekly \|\| !state\.settings\.alternateCardCheckoutVisible/);
   assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);

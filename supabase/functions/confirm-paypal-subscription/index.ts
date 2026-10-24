@@ -59,7 +59,7 @@ Deno.serve(async (request) => {
     if (subscription.plan_id !== membership.paypal_plan_id) {
       return errorResponse("PayPal returned a different weekly plan.", 409);
     }
-    if (subscription.custom_id && subscription.custom_id !== checkoutToken) {
+    if (subscription.custom_id !== checkoutToken) {
       return errorResponse("PayPal returned a different checkout reference.", 409);
     }
 

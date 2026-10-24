@@ -33,15 +33,17 @@ function isValidEmail(value: string) {
 export function getNextMondayBillingAt(now = new Date()) {
   const istClock = new Date(now.getTime() + IST_OFFSET_MINUTES * 60_000);
   const istDay = istClock.getUTCDay();
-  const daysUntilMonday = istDay === 1 ? 7 : (8 - istDay) % 7;
-  return new Date(Date.UTC(
+  const daysUntilMonday = (8 - istDay) % 7;
+  const monday = new Date(Date.UTC(
     istClock.getUTCFullYear(),
     istClock.getUTCMonth(),
     istClock.getUTCDate() + daysUntilMonday,
-    12,
-    30,
+    2,
+    0,
     0,
   ));
+  if (monday <= now) monday.setUTCDate(monday.getUTCDate() + 7);
+  return monday;
 }
 
 async function ensureWeeklyPlan(
