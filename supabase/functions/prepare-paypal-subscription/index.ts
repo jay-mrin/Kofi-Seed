@@ -16,7 +16,6 @@ import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
 type PrepareBody = {
   amount?: number;
-  seedCount?: number;
   name?: string;
   email?: string;
   message?: string;
@@ -126,15 +125,14 @@ Deno.serve(async (request) => {
 
     const body = await readJson<PrepareBody>(request);
     const amountCents = parseMoneyToCents(body.amount);
-    const seedCount = Number(body.seedCount);
     const name = String(body.name || "").trim().slice(0, 80);
     const email = String(body.email || "").trim().toLowerCase().slice(0, 160);
     const customerMessage = String(body.message || "").trim().slice(0, 180);
 
     if (!name) return errorResponse("Name is required for weekly sowing.", 422);
     if (!isValidEmail(email)) return errorResponse("A valid email is required.", 422);
-    if (amountCents < MIN_AMOUNT_CENTS || !Number.isInteger(seedCount) || seedCount < 1) {
-      return errorResponse("Choose at least one whole seed.", 422);
+    if (amountCents < MIN_AMOUNT_CENTS) {
+      return errorResponse("Enter at least $7 for weekly sowing.", 422);
     }
 
     const supabase = getSupabaseAdmin();
@@ -148,9 +146,7 @@ Deno.serve(async (request) => {
       ? settingsRow.settings as Record<string, unknown>
       : {};
     const seedPriceCents = Math.round(Math.max(Number(settings.seedPrice) || 7, 1) * 100);
-    if (amountCents !== seedCount * seedPriceCents) {
-      return errorResponse("Weekly sowing requires a whole seed count at the current seed price.", 422);
-    }
+    const seedCount = Math.max(1, Math.round(amountCents / seedPriceCents));
 
     const paymentRoute = "superadmin";
     if (body.paymentRoute !== paymentRoute) {

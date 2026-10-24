@@ -2355,7 +2355,8 @@ function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked) {
       currency: paymentConfig.currency || CONFIG.currency,
       intent: weekly ? "subscription" : "capture",
       components: "buttons",
-      ...(weekly ? { vault: "true" } : { "enable-funding": "card" }),
+      ...(weekly ? { vault: "true" } : {}),
+      "enable-funding": "card",
       "disable-funding": "credit,paylater,venmo",
     });
     const finish = (callback, value) => {
@@ -2486,23 +2487,23 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
   };
 }
 
-function buildPayPalSubscriptionButtonOptions(paypal) {
+function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
   let checkoutToken = "";
   return {
-    fundingSource: paypal.FUNDING.PAYPAL,
-    style: { layout: "horizontal", shape: "pill", label: "subscribe", tagline: false, height: 44 },
+    fundingSource,
+    style: {
+      layout: "horizontal",
+      shape: "pill",
+      ...(fundingSource === paypal.FUNDING.PAYPAL ? { label: "subscribe" } : {}),
+      tagline: false,
+      height: 44,
+    },
     createSubscription: async (_data, actions) => {
       if (!pendingDonation || pendingDonation.frequency !== "weekly") {
         throw new Error("Weekly checkout details are missing.");
       }
       const email = requirePaymentEmail();
       const amount = getActiveCheckoutAmount();
-      const seedPriceCents = Math.round(Number(state.settings.seedPrice) * 100);
-      const amountCents = Math.round(amount * 100);
-      if (!seedPriceCents || amountCents < seedPriceCents || amountCents % seedPriceCents !== 0) {
-        setPaymentStatus("Choose a whole number of seeds for weekly sowing.", true);
-        throw new Error("Weekly sowing requires a whole number of seeds.");
-      }
       pendingDonation = {
         ...pendingDonation,
         name: elements.nameInput.value.trim(),
@@ -2514,7 +2515,6 @@ function buildPayPalSubscriptionButtonOptions(paypal) {
       const prepared = await callEdge("prepare-paypal-subscription", {
         body: {
           amount,
-          seedCount: amountCents / seedPriceCents,
           name: pendingDonation.name,
           email,
           message: pendingDonation.message,
@@ -2610,16 +2610,31 @@ async function renderFreshPayPalButtons() {
     const paypal = await loadPayPalSdk(weekly);
 
     if (weekly) {
-      const subscriptionButtons = paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal));
+      const subscriptionButtons = paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal, paypal.FUNDING.PAYPAL));
+      const subscriptionCardButtons = paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal, paypal.FUNDING.CARD));
       if (!subscriptionButtons.isEligible()) {
         throw new Error("PayPal subscriptions are unavailable for this account.");
       }
       await subscriptionButtons.render(ui.paypalButtonContainer);
       await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal subscription button");
+      let cardReady = false;
+      if (subscriptionCardButtons.isEligible()) {
+        ui.paypalCardButton.hidden = false;
+        try {
+          await subscriptionCardButtons.render(ui.paypalCardButtonContainer);
+          await waitForRenderedPayPalButton(ui.paypalCardButtonContainer, "The PayPal subscription card button");
+          cardReady = true;
+        } catch (cardError) {
+          console.warn("PayPal subscription card button could not load.", cardError);
+          ui.paypalCardButtonContainer.innerHTML = "";
+        }
+      }
       ui.paypalButton.hidden = false;
-      ui.paypalCardButton.hidden = true;
+      ui.paypalCardButton.hidden = !cardReady;
       ui.cardButton.hidden = true;
-      setPaymentStatus("Pay the selected amount now, then weekly on Mondays at 7:30 AM India time.");
+      setPaymentStatus(cardReady
+        ? "Choose PayPal or a debit or credit card for your weekly subscription."
+        : "PayPal's debit or credit card option is unavailable for this subscription. Continue with PayPal.");
       return;
     }
 
@@ -2762,8 +2777,6 @@ function continueWithPayPal() {
   }
 
   if (elements.weeklySeedToggle.checked) {
-    const priceCents = Math.round(Number(state.settings.seedPrice) * 100);
-    const amountCents = Math.round(getAmount() * 100);
     if (!elements.nameInput.value.trim()) {
       elements.nameError.textContent = "Add your name for weekly sowing.";
       closeInlinePayPalCheckout();
@@ -2771,12 +2784,6 @@ function continueWithPayPal() {
       return;
     }
     elements.nameError.textContent = "";
-    if (!priceCents || amountCents % priceCents !== 0) {
-      elements.amountError.textContent = "Weekly sowing requires a whole number of seeds.";
-      closeInlinePayPalCheckout();
-      elements.amountInput.focus();
-      return;
-    }
   }
 
   ui.emailError.textContent = "";

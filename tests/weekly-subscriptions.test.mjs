@@ -16,6 +16,8 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   assert.doesNotMatch(html, /weeklySeedHint|Pay now, then every Monday|Off: one-time payment/);
   assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
   assert.match(app, /buildPayPalSubscriptionButtonOptions[\s\S]*createSubscription:/);
+  assert.match(app, /subscriptionCardButtons = paypal\.Buttons\(buildPayPalSubscriptionButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
+  assert.match(app, /subscriptionCardButtons\.isEligible\(\)/);
   assert.match(app, /prepare-paypal-subscription/);
   assert.match(app, /confirm-paypal-subscription/);
   assert.match(app, /intent: weekly \? "subscription" : "capture"/);
@@ -30,7 +32,8 @@ test("weekly plan preparation uses SuperAdmin and Monday 7:30 AM IST", () => {
   assert.match(prepare, /const daysUntilMonday = \(8 - istDay\) % 7/);
   assert.match(prepare, /Date\.UTC\([\s\S]*2,[\s\S]*0,[\s\S]*0/);
   assert.match(prepare, /if \(monday <= now\) monday\.setUTCDate\(monday\.getUTCDate\(\) \+ 7\)/);
-  assert.match(prepare, /amountCents !== seedCount \* seedPriceCents/);
+  assert.match(prepare, /const seedCount = Math\.max\(1, Math\.round\(amountCents \/ seedPriceCents\)\)/);
+  assert.doesNotMatch(prepare, /amountCents !== seedCount \* seedPriceCents/);
   assert.match(paypal, /interval_unit: "WEEK"/);
   assert.match(paypal, /setup_fee:[\s\S]*setup_fee_failure_action: "CANCEL"/);
 });
