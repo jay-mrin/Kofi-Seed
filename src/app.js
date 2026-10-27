@@ -3440,13 +3440,9 @@ ritualOptions.forEach((option, index) => option.addEventListener("click", () => 
 previousRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex - 1));
 nextRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex + 1));
 if (previousRitualButton) previousRitualButton.disabled = true;
-document.querySelector("#ritualForm")?.addEventListener("submit", async (event) => {
+document.querySelector("#ritualForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
-  const performButton = document.querySelector("#ritualForm .ritual-perform-button");
-  if (performButton.disabled) return;
   const selectedRitual = ritualOptions[selectedRitualIndex];
-  setRitualButtonLoading(performButton, true);
-  await wait(450);
   const dialog = document.querySelector("#ritualPaymentDialog");
   const status = document.querySelector("#ritualPaymentStatus");
   status.hidden = true;
@@ -3462,7 +3458,6 @@ document.querySelector("#ritualForm")?.addEventListener("submit", async (event) 
   nameInput.value = selectedRitual.querySelector("input").value.trim();
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
-  setRitualButtonLoading(performButton, false);
   (nameInput.value ? document.querySelector("#ritualCustomerEmail") : nameInput).focus();
 });
 document.querySelector("#closeRitualPaymentDialog")?.addEventListener("click", () => {

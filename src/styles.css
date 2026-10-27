@@ -4451,7 +4451,6 @@ main {
   background: var(--support-pink-dark);
 }
 
-.ritual-perform-button.is-loading,
 .ritual-continue-button.is-loading {
   display: flex;
   align-items: center;
