@@ -3402,6 +3402,27 @@ const previousRitualButton = document.querySelector("#previousRitual");
 const nextRitualButton = document.querySelector("#nextRitual");
 let selectedRitualIndex = 0;
 
+function setRitualButtonLoading(button, loading) {
+  if (!button) return;
+  button.disabled = loading;
+  button.classList.toggle("is-loading", loading);
+  if (loading) {
+    const seed = document.createElement("span");
+    seed.className = "ritual-loading-seed";
+    seed.setAttribute("aria-hidden", "true");
+    seed.textContent = "🌱";
+    const label = document.createElement("span");
+    label.textContent = "Loading…";
+    button.replaceChildren(seed, label);
+    button.setAttribute("aria-busy", "true");
+    button.setAttribute("aria-label", "Loading ritual checkout");
+  } else {
+    button.textContent = "Perform Ritual";
+    button.removeAttribute("aria-busy");
+    button.removeAttribute("aria-label");
+  }
+}
+
 function selectRitual(index) {
   selectedRitualIndex = Math.max(0, Math.min(index, ritualOptions.length - 1));
   ritualOptions.forEach((option, optionIndex) => {
@@ -3419,23 +3440,29 @@ ritualOptions.forEach((option, index) => option.addEventListener("click", () => 
 previousRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex - 1));
 nextRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex + 1));
 if (previousRitualButton) previousRitualButton.disabled = true;
-document.querySelector("#ritualForm")?.addEventListener("submit", (event) => {
+document.querySelector("#ritualForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const performButton = document.querySelector("#ritualForm .ritual-perform-button");
+  if (performButton.disabled) return;
+  const selectedRitual = ritualOptions[selectedRitualIndex];
+  setRitualButtonLoading(performButton, true);
+  await wait(450);
   const dialog = document.querySelector("#ritualPaymentDialog");
   const status = document.querySelector("#ritualPaymentStatus");
   status.hidden = true;
   status.classList.remove("is-error");
   const continueButton = document.querySelector("#ritualContinueButton");
   continueButton.hidden = false;
-  continueButton.disabled = false;
+  setRitualButtonLoading(continueButton, false);
   document.querySelector("#closeRitualPaymentDialog").disabled = false;
   const paypalButtons = document.querySelector("#ritualPaypalButtons");
   paypalButtons.hidden = true;
   paypalButtons.innerHTML = "";
   const nameInput = document.querySelector("#ritualCustomerName");
-  nameInput.value = ritualOptions[selectedRitualIndex].querySelector("input").value.trim();
+  nameInput.value = selectedRitual.querySelector("input").value.trim();
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
+  setRitualButtonLoading(performButton, false);
   (nameInput.value ? document.querySelector("#ritualCustomerEmail") : nameInput).focus();
 });
 document.querySelector("#closeRitualPaymentDialog")?.addEventListener("click", () => {
@@ -3457,7 +3484,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
   const selectedRitual = ritualOptions[selectedRitualIndex];
   const ritualTier = selectedRitual.querySelector(".ritual-option-price").textContent.slice(1);
   const name = nameInput.value;
-  button.disabled = true;
+  setRitualButtonLoading(button, true);
   closeButton.disabled = true;
   status.hidden = false;
   status.textContent = "Opening secure checkout…";
@@ -3517,6 +3544,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
       container.hidden = false;
       await buttons.render(container);
       await waitForRenderedPayPalButton(container, "The ritual PayPal button");
+      setRitualButtonLoading(button, false);
       button.hidden = true;
       status.hidden = true;
       closeButton.disabled = false;
@@ -3535,7 +3563,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
     window.sessionStorage.removeItem("sow-your-seed-dodo-donor-token");
     window.sessionStorage.removeItem("sow-your-seed-dodo-product");
     console.warn("Ritual checkout could not start.", error);
-    button.disabled = false;
+    setRitualButtonLoading(button, false);
     closeButton.disabled = false;
     document.querySelector("#ritualPaymentDialog").close();
     openRitualPaymentFailure();

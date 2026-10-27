@@ -46,6 +46,16 @@ test("ritual cancellation opens its own retry popup and can reopen the ritual de
   assert.match(dodo, /pendingProductKey\) === "ritual"[\s\S]*openRitualPaymentFailure\?\.\(\)/);
 });
 
+test("both ritual buttons show a revolving seed while checkout opens", () => {
+  const app = read("src/app.js");
+  const styles = read("src/styles.css");
+
+  assert.match(app, /function setRitualButtonLoading\(button, loading\)[\s\S]*ritual-loading-seed[\s\S]*Loading…/);
+  assert.match(app, /setRitualButtonLoading\(performButton, true\)[\s\S]*await wait\(450\)[\s\S]*dialog\.showModal\(\)/);
+  assert.match(app, /setRitualButtonLoading\(button, true\)[\s\S]*create-dodo-checkout/);
+  assert.match(styles, /@keyframes ritual-seed-revolve[\s\S]*rotate\(360deg\)/);
+});
+
 test("ritual checkout is created server-side and verified before recording the mapped item", () => {
   const create = read("supabase/functions/create-dodo-checkout/index.ts");
   const dodo = read("supabase/functions/_shared/dodo.ts");

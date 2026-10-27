@@ -4451,6 +4451,28 @@ main {
   background: var(--support-pink-dark);
 }
 
+.ritual-perform-button.is-loading,
+.ritual-continue-button.is-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: progress;
+}
+
+.ritual-loading-seed {
+  display: inline-block;
+  animation: ritual-seed-revolve 750ms linear infinite;
+}
+
+@keyframes ritual-seed-revolve {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ritual-loading-seed { animation: none; }
+}
+
 .support-ritual-card button:focus-visible {
   outline: 3px solid var(--support-ink);
   outline-offset: 3px;
