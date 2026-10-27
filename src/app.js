@@ -791,6 +791,14 @@ async function initializeApp() {
   } finally {
     finishInitialLoading();
 
+    if (new URLSearchParams(window.location.search).get("preview_ritual") === "1") {
+      elements.receiptKicker.textContent = "Ritual complete";
+      elements.receiptTitle.textContent = "Your Ritual is Done";
+      elements.receiptSummary.textContent = "“With God all things are possible.” — Matthew 19:26";
+      elements.receiptSummary.hidden = false;
+      openReceipt({ preview: true });
+    }
+
     if (window.location.hash === "#admin") {
       openAdminLogin();
     }
@@ -2831,7 +2839,8 @@ function closeInlinePayPalCheckout() {
   setPaymentStatus("");
 }
 
-function openReceipt() {
+function openReceipt({ preview = false } = {}) {
+  document.querySelector("#receiptPreviewLabel").hidden = !preview;
   document.body.classList.add("receipt-open");
 
   if (typeof elements.receiptDialog.showModal === "function") {
