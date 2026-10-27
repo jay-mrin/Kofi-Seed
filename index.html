@@ -270,7 +270,7 @@
                   <input id="alternateCardCheckoutVisible" type="checkbox" />
                   <span>
                     <strong>Show Debit or Credit Card button</strong>
-                    Show the separate alternate card button in the selected checkout form.
+                    Show a separate debit or credit card option in the Dodo seed checkout.
                   </span>
                 </label>
               </div>
@@ -310,12 +310,12 @@
                 </div>
                 <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="dodoCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
                 <label class="dodo-field dodo-message-field"><span class="visually-hidden">Your message</span><textarea id="dodoCustomerMessage" maxlength="180" placeholder="Your message"></textarea></label>
-                <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options">
-                  <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Processing your seed" hidden>
+                <div class="paypal-checkout-loader dodo-checkout-loader" id="dodoCheckoutLoader" role="status" aria-live="polite" aria-label="Processing your seed" hidden>
                     <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
                     <span id="dodoCheckoutLoaderText">Processing Your Seed.....</span>
-                  </div>
-                  <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
+                </div>
+                <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
+                <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options">
                   <div class="payment-choice card-choice" id="dodoCardButton" hidden>
                     <span>Alternate debit or credit card</span>
                     <small class="preferred-payment-label">Preferred</small>
@@ -335,6 +335,7 @@
                   </div>
                   <p class="dodo-payment-guidance">Complete The Payment To Get Your Seed</p>
                 </section>
+                <button class="dodo-pay-button dodo-direct-button" id="dodoDirectButton" type="button" hidden>Continue to Dodo</button>
               </div>
             </dialog>
           </form>
@@ -452,6 +453,7 @@
                 <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="ritualCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
                 <label class="dodo-field dodo-message-field"><span class="visually-hidden">Who is this ritual for?</span><textarea id="ritualFor" maxlength="180" placeholder="Who is this ritual for?" required></textarea></label>
                 <button class="dodo-pay-button ritual-continue-button" id="ritualContinueButton" type="button">Perform Ritual</button>
+                <div id="ritualPaypalButtons" class="ritual-paypal-buttons" hidden></div>
                 <p class="payment-status" id="ritualPaymentStatus" role="status" aria-live="polite" hidden></p>
               </div>
             </dialog>

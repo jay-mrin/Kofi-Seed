@@ -1741,7 +1741,11 @@ function renderSettings() {
     elements.supportCard.hidden = !inSuperAdminPortal && !settings.paypalCheckoutVisible;
   }
   if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
-  if (elements.cardButton) elements.cardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.paypalCheckoutVisible;
+  const dodoPaymentPanel = document.querySelector("#dodoPaymentPanel");
+  const dodoDirectButton = document.querySelector("#dodoDirectButton");
+  if (dodoPaymentPanel) dodoPaymentPanel.hidden = !settings.alternateCardCheckoutVisible;
+  if (dodoDirectButton) dodoDirectButton.hidden = Boolean(settings.alternateCardCheckoutVisible);
+  if (elements.cardButton) elements.cardButton.hidden = true;
   if (elements.paypalCardButton) elements.paypalCardButton.hidden = true;
   if (elements.retryPaymentButton) elements.retryPaymentButton.href = settings.dodoCheckoutVisible ? "#seedCheckoutCard" : "#support";
   if (elements.seedCommentsPanel) {
@@ -2238,7 +2242,7 @@ function setPayPalCheckoutLoading(isLoading) {
   if (isLoading) {
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = elements.weeklySeedToggle.checked || !state.settings.alternateCardCheckoutVisible;
+    ui.cardButton.hidden = true;
   }
 }
 
@@ -2248,7 +2252,7 @@ function updatePayPalVisibility() {
 
   ui.paypalButton.hidden = !showPayPal;
   ui.paypalCardButton.hidden = true;
-  ui.cardButton.hidden = elements.weeklySeedToggle.checked || !state.settings.alternateCardCheckoutVisible;
+  ui.cardButton.hidden = true;
 
   return showPayPal;
 }
@@ -2587,10 +2591,8 @@ async function renderFreshPayPalButtons() {
   if (!isBackendConfigured() || !backendReady) {
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
-    setPaymentStatus(!weekly && state.settings.alternateCardCheckoutVisible
-      ? "PayPal is unavailable. Continue with the alternate debit or credit card instead."
-      : "PayPal is currently unavailable.");
+    ui.cardButton.hidden = true;
+    setPaymentStatus("PayPal is currently unavailable.");
     setPayPalCheckoutLoading(false);
     return;
   }
@@ -2671,7 +2673,7 @@ async function renderFreshPayPalButtons() {
 
     ui.paypalButton.hidden = false;
     ui.paypalCardButton.hidden = !paypalCardReady;
-    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
+    ui.cardButton.hidden = true;
     setPaymentStatus(paypalCardEligible && !paypalCardReady
       ? "PayPal debit or credit card is temporarily unavailable. You can continue with PayPal."
       : paypalCardReady
@@ -2682,10 +2684,8 @@ async function renderFreshPayPalButtons() {
     if (namespace) resetPayPalSdk(namespace);
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = weekly || !state.settings.alternateCardCheckoutVisible;
-    setPaymentStatus(error?.message || (!weekly && state.settings.alternateCardCheckoutVisible
-      ? "PayPal could not load. Continue with the alternate debit or credit card instead."
-      : "PayPal could not load. Please try again."), true);
+    ui.cardButton.hidden = true;
+    setPaymentStatus(error?.message || "PayPal could not load. Please try again.", true);
   } finally {
     setPayPalCheckoutLoading(false);
   }
@@ -2812,9 +2812,7 @@ function continueWithPayPal() {
     return;
   }
   setPayPalCheckoutLoading(false);
-  setPaymentStatus(pendingDonation?.frequency !== "weekly" && state.settings.alternateCardCheckoutVisible
-    ? "PayPal is unavailable. Continue with the alternate debit or credit card instead."
-    : "PayPal is currently unavailable.");
+  setPaymentStatus("PayPal is currently unavailable.");
 }
 
 function closeInlinePayPalCheckout() {
@@ -2894,7 +2892,7 @@ async function finishDodoPayment(payload) {
 }
 
 function openAlternateCheckout(link) {
-  if (!state.settings.alternateCardCheckoutVisible) return;
+  if (!state.settings.dodoCheckoutVisible || !state.settings.alternateCardCheckoutVisible || link !== elements.dodoAlternateCardCheckoutLink) return;
   const ui = getCheckoutUi();
   const rawCheckoutUrl = link?.href;
   let checkoutUrl = rawCheckoutUrl;
@@ -3368,6 +3366,13 @@ document.querySelector("#ritualForm")?.addEventListener("submit", (event) => {
   const status = document.querySelector("#ritualPaymentStatus");
   status.hidden = true;
   status.classList.remove("is-error");
+  const continueButton = document.querySelector("#ritualContinueButton");
+  continueButton.hidden = false;
+  continueButton.disabled = false;
+  document.querySelector("#closeRitualPaymentDialog").disabled = false;
+  const paypalButtons = document.querySelector("#ritualPaypalButtons");
+  paypalButtons.hidden = true;
+  paypalButtons.innerHTML = "";
   const nameInput = document.querySelector("#ritualCustomerName");
   nameInput.value = ritualOptions[selectedRitualIndex].querySelector("input").value.trim();
   if (typeof dialog.showModal === "function") dialog.showModal();
@@ -3398,6 +3403,66 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
   status.hidden = false;
   status.textContent = "Opening secure checkout…";
   try {
+    if (state.settings.paypalCheckoutVisible) {
+      if (!isBackendConfigured() || !backendReady) throw new Error("PayPal checkout is currently unavailable.");
+      await loadBackendData({ mode: "critical", throwOnError: true });
+      if (!isPayPalConfigured()) throw new Error("SuperAdmin PayPal checkout is currently unavailable.");
+      const paypal = await loadPayPalSdk(false);
+      const container = document.querySelector("#ritualPaypalButtons");
+      const details = {
+        ritualTier,
+        name,
+        email: emailInput.value.trim(),
+        message: ritualForInput.value,
+      };
+      const buttons = paypal.Buttons({
+        fundingSource: paypal.FUNDING.PAYPAL,
+        style: { layout: "horizontal", shape: "pill", label: "paypal", tagline: false, height: 44 },
+        createOrder: async () => {
+          status.textContent = "Opening secure PayPal checkout…";
+          const order = await callEdge("create-paypal-order", {
+            body: { ...details, productType: "ritual", paymentRoute: "superadmin" },
+          });
+          return order.id;
+        },
+        onApprove: async (data) => {
+          try {
+            status.textContent = "Confirming your ritual payment…";
+            const payload = await callEdge("capture-paypal-order", { body: { orderId: data.orderID } });
+            document.querySelector("#ritualPaymentDialog").close();
+            await finishVerifiedDonation(payload);
+          } catch (error) {
+            status.textContent = error?.message || "Ritual payment could not be confirmed. Please try again.";
+            status.classList.add("is-error");
+          }
+        },
+        onCancel: () => {
+          status.textContent = "Ritual payment was cancelled. You can try again.";
+          status.classList.add("is-error");
+          container.hidden = true;
+          container.innerHTML = "";
+          button.hidden = false;
+          button.disabled = false;
+        },
+        onError: (error) => {
+          console.warn("Ritual PayPal checkout failed.", error);
+          status.textContent = "Ritual checkout could not start. Please try again.";
+          status.classList.add("is-error");
+          container.hidden = true;
+          container.innerHTML = "";
+          button.hidden = false;
+          button.disabled = false;
+        },
+      });
+      if (!buttons.isEligible()) throw new Error("PayPal checkout is unavailable for this ritual.");
+      container.hidden = false;
+      await buttons.render(container);
+      await waitForRenderedPayPalButton(container, "The ritual PayPal button");
+      button.hidden = true;
+      status.hidden = true;
+      closeButton.disabled = false;
+      return;
+    }
     if (!window.SowYourSeedCheckout?.callEdge) throw new Error("Checkout is still loading. Please try again.");
     const donorAccessToken = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
     window.sessionStorage.setItem("sow-your-seed-dodo-donor-token", donorAccessToken);
@@ -3448,7 +3513,7 @@ elements.shareSupportButton?.addEventListener("click", async () => {
 [elements.alternateCardCheckoutLink, elements.dodoAlternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();
-    if (!state.settings.alternateCardCheckoutVisible) return;
+    if (!state.settings.dodoCheckoutVisible || !state.settings.alternateCardCheckoutVisible || link !== elements.dodoAlternateCardCheckoutLink) return;
     if (link === elements.dodoAlternateCardCheckoutLink &&
         !document.querySelector("#dodoCustomerEmail")?.reportValidity()) return;
     const cardButton = link.closest(".card-choice");

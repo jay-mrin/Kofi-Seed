@@ -4444,6 +4444,11 @@ main {
   font: 800 16px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.ritual-paypal-buttons,
+.dodo-direct-button {
+  margin-top: 18px;
+}
+
 .support-story-card,
 .support-about-card {
   padding: 26px;
@@ -5071,6 +5076,7 @@ main {
 }
 
 .seed-payment-dialog-card {
+  position: relative;
   padding: clamp(20px, 5vw, 30px);
 }
 

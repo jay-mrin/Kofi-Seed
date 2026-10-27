@@ -19,6 +19,7 @@ import {
   getSupabaseAdmin,
   hashText,
 } from "../_shared/supabase.ts";
+import { getRitual } from "../_shared/rituals.ts";
 
 const MIN_AMOUNT_CENTS = 700;
 
@@ -249,6 +250,7 @@ Deno.serve(async (request) => {
         ? rawPayment.row
           : {};
       const isBookOrder = rawPayment.product?.type === "book";
+      const isRitualOrder = rawPayment.product?.type === "ritual";
       const itemName = rawPayment.digitalOrder?.itemName ||
         rawPayment.product?.itemName || DIGITAL_ORDER_ITEM_NAME;
       const contactEmail = String(
@@ -272,7 +274,7 @@ Deno.serve(async (request) => {
         blessingMessage: existing.fortune_message,
         itemName,
       });
-      const seedComment = paymentRoute === "superadmin" || isBookOrder
+      const seedComment = paymentRoute === "superadmin" || isBookOrder || isRitualOrder
         ? null
         : await ensureSeedComment(supabase, {
           donationId: existing.id,
@@ -304,7 +306,7 @@ Deno.serve(async (request) => {
         seedComment: seedComment ? mapSeedComment(seedComment) : null,
         donorAccessToken: null,
         paymentRoute,
-        productType: isBookOrder ? "book" : "seed",
+        productType: isRitualOrder ? "ritual" : isBookOrder ? "book" : "seed",
         duplicate: true,
       });
     }
@@ -343,10 +345,17 @@ Deno.serve(async (request) => {
       }
       : null;
     const isBookOrder = Boolean(book);
-    const itemName = book?.itemName || DIGITAL_ORDER_ITEM_NAME;
+    const ritual = paymentAttempt.product_type === "ritual"
+      ? getRitual(paymentAttempt.product_id)
+      : null;
+    const isRitualOrder = Boolean(ritual);
+    if (paymentAttempt.product_type === "ritual" && !ritual) {
+      return errorResponse("Ritual checkout details are invalid.", 422);
+    }
+    const itemName = ritual?.itemName || book?.itemName || DIGITAL_ORDER_ITEM_NAME;
 
     let fortune: { id: number; message: string } | null = null;
-    if (!isBookOrder) {
+    if (!isBookOrder && !isRitualOrder) {
       const { data: fortunes, error: fortuneError } = await supabase
         .from("fortunes")
         .select("id, message")
@@ -444,6 +453,9 @@ Deno.serve(async (request) => {
         order,
       );
     }
+    if (ritual && capturedAmountCents !== ritual.priceCents) {
+      return errorResponse("Ritual payment amount is invalid.", 422, order);
+    }
     if (isBookOrder && capturedAmountCents % MIN_AMOUNT_CENTS !== 0) {
       return errorResponse(
         "Book payments must be in multiples of $7.",
@@ -485,9 +497,9 @@ Deno.serve(async (request) => {
       .insert({
         display_name: displayName,
         amount: capturedAmount,
-        seed_count: seedCountFromAmount(capturedAmount),
+        seed_count: isRitualOrder ? 1 : seedCountFromAmount(capturedAmount),
         frequency,
-        supporter_message: supporterMessage || null,
+        supporter_message: isRitualOrder ? null : supporterMessage || null,
         payment_method: "paypal",
         paypal_order_id: order.id,
         paypal_capture_id: capture.id,
@@ -505,7 +517,9 @@ Deno.serve(async (request) => {
           routing: {
             route: paymentRoute,
           },
-          product: book
+          product: ritual
+            ? { type: "ritual", ritualTier: paymentAttempt.product_id, itemName }
+            : book
             ? { type: "book", id: book.id, title: book.title, itemName }
             : { type: "seed", itemName },
           order,
@@ -546,7 +560,7 @@ Deno.serve(async (request) => {
       blessingMessage: fortune?.message || (book ? `Deliver ${book.title} by email.` : null),
       itemName,
     });
-    const seedComment = paymentRoute === "superadmin" || isBookOrder
+    const seedComment = paymentRoute === "superadmin" || isBookOrder || isRitualOrder
       ? null
       : await ensureSeedComment(supabase, {
         donationId: donation.id,
@@ -585,7 +599,7 @@ Deno.serve(async (request) => {
       seedComment: seedComment ? mapSeedComment(seedComment) : null,
       donorAccessToken: rawDonorToken,
       paymentRoute,
-      productType: isBookOrder ? "book" : "seed",
+      productType: isRitualOrder ? "ritual" : isBookOrder ? "book" : "seed",
       product: book ? { id: book.id, title: book.title, itemName } : null,
     });
   } catch (error) {

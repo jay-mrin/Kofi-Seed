@@ -7,6 +7,7 @@
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
   const checkoutButton = document.querySelector("#dodoCheckoutButton");
   const dodoPayButton = document.querySelector("#dodoPayButton");
+  const directButton = document.querySelector("#dodoDirectButton");
   const paymentDialog = document.querySelector("#dodoPaymentDialog");
   const closePaymentDialogButton = document.querySelector("#closeDodoPaymentDialog");
   const paymentPanel = document.querySelector("#dodoPaymentPanel");
@@ -46,6 +47,7 @@
     submitting = isLoading;
     checkoutButton.disabled = isLoading;
     dodoPayButton.disabled = isLoading;
+    directButton.disabled = isLoading;
     closePaymentDialogButton.disabled = isLoading;
     paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
@@ -197,6 +199,7 @@
   });
 
   dodoPayButton.addEventListener("click", () => void startDodoCheckout());
+  directButton.addEventListener("click", () => void startDodoCheckout());
   closePaymentDialogButton.addEventListener("click", closePaymentDialog);
   paymentDialog.addEventListener("cancel", (event) => {
     event.preventDefault();

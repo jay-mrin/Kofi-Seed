@@ -22,6 +22,18 @@ test("ritual prices, Dodo products, and calendar item names stay paired", () => 
   assert.equal(new Set(expected.map((entry) => entry[2])).size, 4);
 });
 
+test("the selected provider handles ritual payment with a catalog priced PayPal order", () => {
+  const app = read("src/app.js");
+  const create = read("supabase/functions/create-paypal-order/index.ts");
+  const capture = read("supabase/functions/capture-paypal-order/index.ts");
+
+  assert.match(app, /if \(state\.settings\.paypalCheckoutVisible\) \{[\s\S]*productType: "ritual"[\s\S]*capture-paypal-order/);
+  assert.match(app, /create-dodo-checkout/);
+  assert.match(create, /const amountCents = ritual \? ritual\.priceCents : parseMoneyToCents\(body\.amount\)/);
+  assert.match(capture, /capturedAmountCents !== ritual\.priceCents/);
+  assert.match(capture, /productType: isRitualOrder \? "ritual"/);
+});
+
 test("ritual checkout is created server-side and verified before recording the mapped item", () => {
   const create = read("supabase/functions/create-dodo-checkout/index.ts");
   const dodo = read("supabase/functions/_shared/dodo.ts");

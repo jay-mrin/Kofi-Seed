@@ -5,6 +5,7 @@ import {
   readJson,
 } from "../_shared/http.ts";
 import { getRandomOrderRequest } from "../_shared/order-requests.ts";
+import { getRitual } from "../_shared/rituals.ts";
 import {
   centsToMoney,
   createPayPalOrder,
@@ -20,6 +21,7 @@ type CreateOrderBody = {
   email?: string;
   paymentRoute?: string;
   productType?: string;
+  ritualTier?: string;
 };
 
 function isValidEmail(value: string) {
@@ -34,17 +36,23 @@ Deno.serve(async (request) => {
 
   try {
     const body = await readJson<CreateOrderBody>(request);
-    const amountCents = parseMoneyToCents(body.amount);
+    const requestedProductType = String(body.productType || "seed").trim();
+    const ritualTier = String(body.ritualTier || "").trim();
+    const ritual = requestedProductType === "ritual" ? getRitual(ritualTier) : null;
+    const amountCents = ritual ? ritual.priceCents : parseMoneyToCents(body.amount);
     const displayName = String(body.name || "Customer").trim().slice(0, 80) ||
       "Customer";
     const supporterMessage = getRandomOrderRequest();
     const contactEmail = String(body.email || "").trim().slice(0, 160);
-    const requestedProductType = String(body.productType || "seed").trim();
-    if (requestedProductType !== "seed" && requestedProductType !== "personalized_seed_writing") {
+    if (requestedProductType !== "seed" && requestedProductType !== "personalized_seed_writing" && !ritual) {
       return errorResponse("This product is no longer available.", 422);
     }
     const personalizedRequest = String(body.message || "").trim().slice(0, 180) ||
-      supporterMessage;
+      (ritual ? "" : supporterMessage);
+
+    if (ritual && (!String(body.name || "").trim() || !personalizedRequest)) {
+      return errorResponse("Ritual name and recipient are required.", 422);
+    }
 
     if (amountCents < MIN_AMOUNT_CENTS) {
       return errorResponse("Amount must be at least $7.", 422);
@@ -67,6 +75,7 @@ Deno.serve(async (request) => {
     const order = await createPayPalOrder({
       amountCents,
       paymentRoute,
+      itemName: ritual?.itemName,
     });
 
     const supabase = getSupabaseAdmin();
@@ -87,14 +96,16 @@ Deno.serve(async (request) => {
         customer_request: personalizedRequest,
         supporter_message: supporterMessage,
         frequency: "once",
-        product_type: "personalized_seed_writing",
-        product_id: null,
+        product_type: ritual ? "ritual" : "personalized_seed_writing",
+        product_id: ritual ? ritualTier : null,
         paypal_order_id: order.id,
         payment_route: paymentRoute,
         status: "started",
         raw_payment: {
           order,
-          product: { type: "seed", itemName: "Personalised Digital Writing - Custom Order Made Writing" },
+          product: ritual
+            ? { type: "ritual", ritualTier, itemName: ritual.itemName }
+            : { type: "seed", itemName: "Personalised Digital Writing - Custom Order Made Writing" },
         },
       });
     if (attemptError) throw attemptError;
