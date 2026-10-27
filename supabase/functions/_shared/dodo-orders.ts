@@ -1,6 +1,7 @@
 import { getDodoCurrency, getDodoPayment, getDodoProductId } from "./dodo.ts";
 import { getRandomOrderRequest } from "./order-requests.ts";
 import { getSupabaseAdmin, hashText } from "./supabase.ts";
+import { getRitual } from "./rituals.ts";
 
 const ITEM_NAME = "Personalised Digital Writing - Custom Order Made Writing";
 
@@ -59,6 +60,7 @@ async function ensureDigitalOrder(
   attempt: Record<string, any>,
   payment: Record<string, any>,
   fortuneMessage: string | null,
+  itemName: string,
 ) {
   const fields = "id, order_number, donation_id, payment_provider, provider_order_id, provider_transaction_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at";
   const { data: existing, error: existingError } = await supabase
@@ -77,7 +79,7 @@ async function ensureDigitalOrder(
     payer_email: payment.customer?.email || attempt.contact_email,
     amount: Number(attempt.amount),
     currency: attempt.currency,
-    item_name: ITEM_NAME,
+    item_name: itemName,
     personalized_request: attempt.customer_request || attempt.supporter_message || null,
     blessing_message: fortuneMessage,
     fulfillment_status: "paid_awaiting_personalized_writing",
@@ -127,7 +129,7 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   const supabase = getSupabaseAdmin();
   const { data: attempt, error: attemptError } = await supabase
     .from("payment_attempts")
-    .select("id, display_name, contact_email, amount, currency, customer_request, supporter_message, payment_route, payment_provider, dodo_checkout_session_id, dodo_payment_id, donor_token_hash, status, raw_payment, expires_at")
+    .select("id, display_name, contact_email, amount, currency, customer_request, supporter_message, product_type, product_id, payment_route, payment_provider, dodo_checkout_session_id, dodo_payment_id, donor_token_hash, status, raw_payment, expires_at")
     .eq("dodo_checkout_session_id", sessionId)
     .eq("payment_provider", "dodo")
     .maybeSingle();
@@ -138,14 +140,23 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   const currency = String(payment.currency || "").toUpperCase();
   const cart = Array.isArray(payment.product_cart) ? payment.product_cart : [];
   const metadata = payment.metadata && typeof payment.metadata === "object" ? payment.metadata : {};
-  const hasExpectedProduct = cart.some((item: Record<string, any>) =>
-    item?.product_id === getDodoProductId() && Number(item?.quantity) === 1
+  const ritualTier = String(attempt.raw_payment?.ritualTier || "");
+  const ritual = attempt.product_type === "ritual" ? getRitual(ritualTier) : null;
+  if (attempt.product_type === "ritual" && !ritual) throw new Error("Unknown ritual checkout attempt.");
+  const expectedProductId = ritual?.productId || getDodoProductId();
+  const hasExpectedProduct = cart.length === 1 && cart.some((item: Record<string, any>) =>
+    item?.product_id === expectedProductId && Number(item?.quantity) === 1
   );
 
   if (
     !sessionId || payment.payment_id !== normalizedPaymentId ||
     String(metadata.checkout_attempt_id || "") !== attempt.id ||
     Number(metadata.expected_amount_cents) !== expectedCents ||
+    (ritual && (
+      String(metadata.product_type || "") !== "ritual" ||
+      String(metadata.ritual_tier || "") !== ritualTier ||
+      attempt.product_id !== ritual.productId
+    )) ||
     currency !== String(attempt.currency).toUpperCase() ||
     currency !== getDodoCurrency() ||
     Number(payment.total_amount) < expectedCents ||
@@ -165,18 +176,22 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   let fortuneMessage = existing?.fortune_message || null;
 
   if (!donation) {
-    const { data: fortunes, error: fortuneError } = await supabase
-      .from("fortunes").select("id, message").eq("active", true).limit(200);
-    if (fortuneError || !fortunes?.length) {
-      throw fortuneError || new Error("No active fortune messages found.");
+    let fortune: Record<string, any> | null = null;
+    if (!ritual) {
+      const { data: fortunes, error: fortuneError } = await supabase
+        .from("fortunes").select("id, message").eq("active", true).limit(200);
+      if (fortuneError || !fortunes?.length) {
+        throw fortuneError || new Error("No active fortune messages found.");
+      }
+      fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+      fortuneMessage = fortune.message;
     }
-    const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
-    fortuneMessage = fortune.message;
-    const seedCount = Math.max(1, Number(metadata.seed_count) || Math.round(expectedCents / 700));
+    const seedCount = ritual ? 1 : Math.max(1, Number(metadata.seed_count) || Math.round(expectedCents / 700));
+    const itemName = ritual?.itemName || ITEM_NAME;
     const rawPayment = {
       provider: "Dodo Payments",
       routing: { route: "standard" },
-      product: { type: "seed", itemName: ITEM_NAME },
+      product: { type: ritual ? "ritual" : "seed", itemName, ...(ritual ? { ritualTier } : {}) },
       payment,
       digitalOrder: {
         customerName: attempt.display_name,
@@ -188,7 +203,7 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
         amount: Number(attempt.amount),
         chargedAmount: moneyFromCents(Number(payment.total_amount)),
         currency,
-        itemName: ITEM_NAME,
+        itemName,
         personalizedRequest: attempt.customer_request,
         fulfillmentStatus: "paid_awaiting_personalized_writing",
         createdAt: payment.created_at || new Date().toISOString(),
@@ -199,15 +214,15 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
       amount: Number(attempt.amount),
       seed_count: seedCount,
       frequency: "once",
-      supporter_message: attempt.supporter_message || getRandomOrderRequest(),
+      supporter_message: ritual ? null : attempt.supporter_message || getRandomOrderRequest(),
       payment_method: "dodo",
       paypal_status: "COMPLETED",
       dodo_checkout_session_id: sessionId,
       dodo_payment_id: normalizedPaymentId,
       payment_route: "standard",
       visibility_scope: "public",
-      fortune_id: fortune.id,
-      fortune_message: fortune.message,
+      fortune_id: fortune?.id || null,
+      fortune_message: fortune?.message || null,
       raw_payment: rawPayment,
     }).select("id, display_name, amount, seed_count, frequency, supporter_message, fortune_message, payment_route, raw_payment, created_at").single();
 
@@ -241,8 +256,8 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
       .update({ donor_token_id: donorToken.id }).eq("id", donation.id);
     if (donationLinkError) throw donationLinkError;
   }
-  const digitalOrder = await ensureDigitalOrder(supabase, donation, attempt, payment, fortuneMessage);
-  const seedComment = await ensureSeedComment(supabase, donation, attempt);
+  const digitalOrder = await ensureDigitalOrder(supabase, donation, attempt, payment, fortuneMessage, ritual?.itemName || ITEM_NAME);
+  const seedComment = ritual ? null : await ensureSeedComment(supabase, donation, attempt);
   const previousRaw = attempt.raw_payment && typeof attempt.raw_payment === "object" ? attempt.raw_payment : {};
   const { error: confirmError } = await supabase.from("payment_attempts").update({
     status: "confirmed",
@@ -265,7 +280,7 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
     seedComment: mapSeedComment(seedComment),
     donorAccessToken,
     paymentRoute: "standard",
-    productType: "seed",
+    productType: ritual ? "ritual" : "seed",
     duplicate: Boolean(existing),
   };
 }

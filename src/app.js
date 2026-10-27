@@ -268,6 +268,7 @@ const elements = {
   recentDonationList: document.querySelector("#recentDonationList"),
   refreshAdminButton: document.querySelector("#refreshAdminButton"),
   receiptDialog: document.querySelector("#receiptDialog"),
+  receiptKicker: document.querySelector("#receiptKicker"),
   receiptSummary: document.querySelector("#receiptSummary"),
   receiptTitle: document.querySelector("#receiptTitle"),
   retryPaymentButton: document.querySelector("#retryPaymentButton"),
@@ -1942,6 +1943,7 @@ function renderCalendarDetails(context) {
           const frequency = donation.frequency === "weekly" ? "Weekly" : donation.frequency === "monthly" ? "Monthly" : "One time";
           const createdAt = donation.createdAt || new Date().toISOString();
           const order = getDigitalOrder(donation);
+          const isRitualOrder = donation.rawPayment?.product?.type === "ritual";
           const isBookOrder = String(order?.itemName || "").startsWith("Digital Book -");
           const orderNumber = getDigitalOrderValue(
             donation,
@@ -1982,8 +1984,9 @@ function renderCalendarDetails(context) {
                 <span><strong>Transaction ID</strong>${escapeHtml(captureId)}</span>
                 <span><strong>Contact email</strong>${escapeHtml(contactEmail || "Not provided")}</span>
                 <span><strong>Item</strong>${escapeHtml(itemLabel)}</span>
-                <span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>
-                ${context.isAdminPortal ? `<span><strong>Reedemed</strong>${redeemedBookTitle ? escapeHtml(redeemedBookTitle) : "&#160;"}</span>` : ""}
+                ${isRitualOrder ? `<span><strong>Ritual for</strong>${escapeHtml(request)}</span>` : ""}
+                ${isRitualOrder ? "" : `<span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>`}
+                ${context.isAdminPortal && !isRitualOrder ? `<span><strong>Reedemed</strong>${redeemedBookTitle ? escapeHtml(redeemedBookTitle) : "&#160;"}</span>` : ""}
               </div>
               ${context.isAdminPortal ? "" : `<p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>`}
               ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
@@ -2542,6 +2545,7 @@ function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
         setAmount(getInitialDonationAmount());
         updateCheckoutLabel();
         elements.receiptTitle.textContent = "Weekly sowing started";
+        elements.receiptKicker.textContent = "Subscription started";
         elements.receiptSummary.textContent = `Your PayPal subscription ${data.subscriptionID} is ${result.subscription.status}. PayPal charges the selected amount now and schedules weekly billing for Mondays at 7:30 AM India time. You can cancel through PayPal.`;
         elements.receiptSummary.hidden = false;
         openReceipt();
@@ -2689,6 +2693,7 @@ async function renderFreshPayPalButtons() {
 
 async function finishVerifiedDonation(payload) {
   const donation = payload.donation;
+  const isRitual = payload.productType === "ritual";
   const fortuneMessage = payload.fortune || donation?.fortune_message || getRandomFortuneMessage();
   const paymentRoute = donation?.paymentRoute || payload.paymentRoute || pendingDonation?.paymentRoute || "superadmin";
 
@@ -2705,6 +2710,7 @@ async function finishVerifiedDonation(payload) {
       message: donation.supporter_message || pendingDonation?.message || "",
       fortuneMessage: donation.fortune_message || fortuneMessage,
       digitalOrder: payload.digitalOrder || null,
+      rawPayment: donation.raw_payment || null,
       paymentRoute,
       createdAt: donation.created_at || new Date().toISOString(),
     });
@@ -2736,8 +2742,11 @@ async function finishVerifiedDonation(payload) {
   }
 
   renderApp();
-  elements.receiptTitle.textContent = "Your fortune for today";
-  elements.receiptSummary.textContent = fortuneMessage;
+  elements.receiptKicker.textContent = isRitual ? "Ritual complete" : "Fortune received";
+  elements.receiptTitle.textContent = isRitual ? "Your Ritual is Done" : "Your fortune for today";
+  elements.receiptSummary.textContent = isRitual
+    ? "“With God all things are possible.” — Matthew 19:26"
+    : fortuneMessage;
   elements.receiptSummary.hidden = false;
   const ui = getCheckoutUi();
   ui.form.reset();
@@ -3355,13 +3364,57 @@ nextRitualButton?.addEventListener("click", () => selectRitual(selectedRitualInd
 if (previousRitualButton) previousRitualButton.disabled = true;
 document.querySelector("#ritualForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
-  const status = document.querySelector("#ritualStatus");
+  const dialog = document.querySelector("#ritualPaymentDialog");
+  const status = document.querySelector("#ritualPaymentStatus");
+  status.hidden = true;
+  status.classList.remove("is-error");
+  const nameInput = document.querySelector("#ritualCustomerName");
+  nameInput.value = ritualOptions[selectedRitualIndex].querySelector("input").value.trim();
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+  (nameInput.value ? document.querySelector("#ritualCustomerEmail") : nameInput).focus();
+});
+document.querySelector("#closeRitualPaymentDialog")?.addEventListener("click", () => {
+  document.querySelector("#ritualPaymentDialog").close();
+});
+document.querySelector("#ritualPaymentDialog")?.addEventListener("cancel", (event) => {
+  if (document.querySelector("#ritualContinueButton").disabled) event.preventDefault();
+});
+document.querySelector("#ritualContinueButton")?.addEventListener("click", async () => {
+  const nameInput = document.querySelector("#ritualCustomerName");
+  const emailInput = document.querySelector("#ritualCustomerEmail");
+  const ritualForInput = document.querySelector("#ritualFor");
+  nameInput.value = nameInput.value.trim();
+  ritualForInput.value = ritualForInput.value.trim();
+  if (![nameInput, emailInput, ritualForInput].every((input) => input.reportValidity())) return;
+  const button = document.querySelector("#ritualContinueButton");
+  const closeButton = document.querySelector("#closeRitualPaymentDialog");
+  const status = document.querySelector("#ritualPaymentStatus");
   const selectedRitual = ritualOptions[selectedRitualIndex];
-  const name = selectedRitual.querySelector(".ritual-option-name").textContent;
-  const ritualName = selectedRitual.querySelector("input").value.trim();
-  const price = selectedRitual.querySelector(".ritual-option-price").textContent;
-  status.textContent = `${name} (${price})${ritualName ? ` for ${ritualName}` : ""} is a preview for now. More is coming soon.`;
+  const ritualTier = selectedRitual.querySelector(".ritual-option-price").textContent.slice(1);
+  const name = nameInput.value;
+  button.disabled = true;
+  closeButton.disabled = true;
   status.hidden = false;
+  status.textContent = "Opening secure checkout…";
+  try {
+    if (!window.SowYourSeedCheckout?.callEdge) throw new Error("Checkout is still loading. Please try again.");
+    const donorAccessToken = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
+    window.sessionStorage.setItem("sow-your-seed-dodo-donor-token", donorAccessToken);
+    const payload = await window.SowYourSeedCheckout.callEdge("create-dodo-checkout", {
+      body: { ritualTier, name, email: emailInput.value.trim(), message: ritualForInput.value, donorAccessToken },
+    });
+    if (!payload.checkoutUrl) throw new Error("Dodo did not return a secure checkout link.");
+    window.sessionStorage.setItem("sow-your-seed-dodo-product", "ritual");
+    window.location.assign(payload.checkoutUrl);
+  } catch (error) {
+    window.sessionStorage.removeItem("sow-your-seed-dodo-donor-token");
+    window.sessionStorage.removeItem("sow-your-seed-dodo-product");
+    status.textContent = error?.message || "Ritual checkout could not start. Please try again.";
+    status.classList.add("is-error");
+    button.disabled = false;
+    closeButton.disabled = false;
+  }
 });
 elements.weeklySeedToggle.addEventListener("change", () => {
   elements.amountError.textContent = "";

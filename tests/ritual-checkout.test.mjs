@@ -1,0 +1,55 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (file) => readFileSync(path.join(root, file), "utf8");
+
+test("ritual prices, Dodo products, and calendar item names stay paired", () => {
+  const catalog = read("supabase/functions/_shared/rituals.ts");
+  const expected = [
+    ["199", "19900", "pdt_0NqfgfmW3N3YEOYOdQeqZ", "The Stories We Left Behind"],
+    ["299", "29900", "pdt_0NqfgsCjN9s7aPwZUT3Zp", "Of Little Things & Passing Days"],
+    ["399", "39900", "pdt_0Nqfh88mzTwN3HdozCrZ3", "Whisper of Grace"],
+    ["499", "49900", "pdt_0NqfhFlg3qTBuktD9n3K2", "Christ Garden Full Collection"],
+  ];
+  for (const [tier, cents, productId, itemName] of expected) {
+    assert.ok(catalog.includes(`"${tier}": {\n    priceCents: ${cents},\n    productId: "${productId}",\n    itemName: "${itemName}"`));
+    assert.match(read("index.html"), new RegExp(`ritual-option-price">\\$${tier}<`));
+  }
+  assert.equal(new Set(expected.map((entry) => entry[2])).size, 4);
+});
+
+test("ritual checkout is created server-side and verified before recording the mapped item", () => {
+  const create = read("supabase/functions/create-dodo-checkout/index.ts");
+  const dodo = read("supabase/functions/_shared/dodo.ts");
+  const orders = read("supabase/functions/_shared/dodo-orders.ts");
+  const app = read("src/app.js");
+  assert.match(create, /getRitual\(ritualTier\)/);
+  assert.match(create, /product_id: ritual\?\.productId \|\| null/);
+  assert.match(dodo, /product_id: input\.productId \|\| getDodoProductId\(\)/);
+  assert.match(orders, /attempt\.product_id !== ritual\.productId/);
+  assert.match(orders, /item_name: itemName/);
+  assert.match(app, /isRitualOrder \? "" : `<span><strong>Status/);
+  assert.match(app, /context\.isAdminPortal && !isRitualOrder/);
+});
+
+test("ritual details and the recipient reach the order calendar; confirmation uses the ritual receipt", () => {
+  const html = read("index.html");
+  const app = read("src/app.js");
+  const create = read("supabase/functions/create-dodo-checkout/index.ts");
+  const orders = read("supabase/functions/_shared/dodo-orders.ts");
+  assert.match(html, /id="ritualPaymentTitle">Complete Ritual Detail/);
+  assert.match(html, /id="ritualCustomerName"[^>]*required/);
+  assert.match(html, /id="ritualCustomerEmail"[^>]*required/);
+  assert.match(html, /id="ritualFor"[^>]*required/);
+  assert.match(html, /id="ritualContinueButton"[^>]*>Perform Ritual/);
+  assert.match(app, /message: ritualForInput\.value/);
+  assert.match(create, /if \(ritual && !message\)/);
+  assert.match(orders, /personalized_request: attempt\.customer_request/);
+  assert.match(app, /<strong>Ritual for<\/strong>\$\{escapeHtml\(request\)\}/);
+  assert.match(app, /"Your Ritual is Done"/);
+  assert.match(app, /Matthew 19:26/);
+});

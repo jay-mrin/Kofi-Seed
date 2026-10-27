@@ -109,7 +109,9 @@ async function loadPublicContent(
         donation.raw_payment && typeof donation.raw_payment === "object"
           ? donation.raw_payment
           : {};
-      return rawPayment.mode !== "test" && rawPayment.product?.type !== "book";
+      return rawPayment.mode !== "test" &&
+        rawPayment.product?.type !== "book" &&
+        rawPayment.product?.type !== "ritual";
     });
   const goalAmountCents = 70000;
   const confirmedAmountCents = Math.max(Number(goalTotalResult.data) || 0, 0) % goalAmountCents;

@@ -4436,6 +4436,14 @@ main {
   font-size: 14px;
 }
 
+.ritual-continue-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  border-radius: 999px;
+  font: 800 16px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 .support-story-card,
 .support-about-card {
   padding: 26px;

@@ -68,7 +68,9 @@ async function dodoRequest(path: string, init: RequestInit = {}) {
 export function createDodoCheckoutSession(input: {
   attemptId: string;
   amountCents: number;
-  seedCount: number;
+  seedCount?: number;
+  ritualTier?: string;
+  productId?: string;
   email: string;
   name: string;
 }) {
@@ -76,9 +78,9 @@ export function createDodoCheckoutSession(input: {
     method: "POST",
     body: JSON.stringify({
       product_cart: [{
-        product_id: getDodoProductId(),
+        product_id: input.productId || getDodoProductId(),
         quantity: 1,
-        amount: input.amountCents,
+        ...(input.ritualTier ? {} : { amount: input.amountCents }),
       }],
       customer: {
         email: input.email,
@@ -98,8 +100,8 @@ export function createDodoCheckoutSession(input: {
       metadata: {
         checkout_attempt_id: input.attemptId,
         checkout_owner: "admin",
-        product_type: "personalized_seed_writing",
-        seed_count: input.seedCount,
+        product_type: input.ritualTier ? "ritual" : "personalized_seed_writing",
+        ...(input.ritualTier ? { ritual_tier: input.ritualTier } : { seed_count: input.seedCount }),
         expected_amount_cents: input.amountCents,
       },
     }),

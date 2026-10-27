@@ -19,6 +19,7 @@
   let seedCount = 1;
   let submitting = false;
   const donorTokenKey = "sow-your-seed-dodo-donor-token";
+  const pendingProductKey = "sow-your-seed-dodo-product";
 
   const getUnitPrice = () => Number(totalOutput.dataset.unitPrice) || 7;
   const updateTotal = () => {
@@ -64,6 +65,14 @@
     setLoading(false);
     closePaymentDialog();
     setStatus("");
+    if (window.sessionStorage.getItem(pendingProductKey) === "ritual") {
+      window.sessionStorage.removeItem(pendingProductKey);
+      const ritualStatus = document.querySelector("#ritualStatus");
+      ritualStatus.textContent = "Ritual payment was not completed. Please try again.";
+      ritualStatus.hidden = false;
+      document.querySelector(".support-ritual-card")?.scrollIntoView({ block: "center" });
+      return;
+    }
     window.SowYourSeedCheckout?.openPaymentFailure?.("dodo");
   };
 
@@ -120,6 +129,7 @@
       const payload = await confirmReturnedPayment(paymentId);
       await window.SowYourSeedCheckout.finishDodoPayment(payload);
       window.sessionStorage.removeItem(donorTokenKey);
+      window.sessionStorage.removeItem(pendingProductKey);
       form.reset();
       seedCount = 1;
       updateTotal();

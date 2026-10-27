@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=177" />
+    <link rel="stylesheet" href="src/styles.css?v=178" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -442,6 +442,19 @@
               <button class="ritual-perform-button" type="submit">Perform Ritual</button>
               <p id="ritualStatus" role="status" aria-live="polite" hidden></p>
             </form>
+            <dialog class="seed-payment-dialog" id="ritualPaymentDialog" aria-labelledby="ritualPaymentTitle">
+              <div class="seed-payment-dialog-card">
+                <div class="seed-payment-dialog-heading">
+                  <h2 id="ritualPaymentTitle">Complete Ritual Detail</h2>
+                  <button class="seed-payment-dialog-close" id="closeRitualPaymentDialog" type="button" aria-label="Close ritual checkout">×</button>
+                </div>
+                <label class="dodo-field"><span class="visually-hidden">Your name</span><input id="ritualCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Name" required /></label>
+                <label class="dodo-field"><span class="visually-hidden">Email for your order</span><input id="ritualCustomerEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email" required /></label>
+                <label class="dodo-field dodo-message-field"><span class="visually-hidden">Who is this ritual for?</span><textarea id="ritualFor" maxlength="180" placeholder="Who is this ritual for?" required></textarea></label>
+                <button class="dodo-pay-button ritual-continue-button" id="ritualContinueButton" type="button">Perform Ritual</button>
+                <p class="payment-status" id="ritualPaymentStatus" role="status" aria-live="polite" hidden></p>
+              </div>
+            </dialog>
           </section>
           </div>
           <section class="creator-shell support-creator-shell">
@@ -805,7 +818,7 @@
             <path class="seed-sprout" d="M25.5 46.7c6.8-2.2 11.4-6.9 13.9-13.8" />
           </svg>
         </div>
-        <p class="section-kicker">Fortune received</p>
+        <p class="section-kicker" id="receiptKicker">Fortune received</p>
         <h2 id="receiptTitle">Your fortune for today</h2>
         <p id="receiptSummary">A blessing will appear here after your custom order is complete.</p>
         <div class="receipt-actions">
@@ -843,8 +856,8 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=138" defer></script>
-    <script src="src/home-dodo-checkout.js?v=14" defer></script>
+    <script src="src/app.js?v=140" defer></script>
+    <script src="src/home-dodo-checkout.js?v=15" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>
