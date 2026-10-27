@@ -794,6 +794,7 @@ async function initializeApp() {
     const previewParams = new URLSearchParams(window.location.search);
     const previewRitual = previewParams.get("preview_ritual") === "1";
     const previewSeed = previewParams.get("preview_seed") === "1";
+    const previewSeedFailure = previewParams.get("preview_seed_failure") === "1";
     if (previewRitual || previewSeed) {
       elements.receiptKicker.textContent = previewRitual ? "Ritual complete" : "YOUR SEED WAS SOWN WITH LOVE, CARE, AND FAITH";
       elements.receiptTitle.textContent = previewRitual ? "Your Ritual is Done" : "Your fortune for today";
@@ -802,6 +803,8 @@ async function initializeApp() {
         : getRandomFortuneMessage();
       elements.receiptSummary.hidden = false;
       openReceipt({ preview: true });
+    } else if (previewSeedFailure) {
+      openPaymentFailure(state.settings.dodoCheckoutVisible ? "dodo" : "paypal", { preview: true });
     }
 
     if (window.location.hash === "#admin") {
@@ -2860,19 +2863,20 @@ function closeReceipt() {
   elements.receiptDialog.close();
 }
 
-function openPaymentFailure(source = alternateCheckoutSource) {
+function openPaymentFailure(source = alternateCheckoutSource, { preview = false } = {}) {
   if (source === "dodo" || source === "paypal") {
     alternateCheckoutSource = source;
   }
   if (document.body.classList.contains("app-loading")) {
     void (async () => {
       while (document.body.classList.contains("app-loading")) await wait(50);
-      openPaymentFailure(source);
+      openPaymentFailure(source, { preview });
     })();
     return;
   }
   if (!elements.paymentFailureDialog || elements.paymentFailureDialog.open) return;
 
+  document.querySelector("#paymentFailurePreviewLabel").hidden = !preview;
   setActiveView("homeView", true);
   document.body.classList.add("payment-failure-open");
   if (typeof elements.paymentFailureDialog.showModal === "function") {

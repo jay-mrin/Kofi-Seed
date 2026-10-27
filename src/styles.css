@@ -2518,6 +2518,16 @@ legend::after {
   letter-spacing: 0.5px;
 }
 
+.payment-failure-card .payment-failure-preview-label {
+  width: fit-content;
+  margin: -4px auto 18px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #f5e4ca;
+  background: rgba(231, 184, 195, 0.15);
+  font: 700 12px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 .payment-failure-card p {
   margin-inline: auto;
   font-family: Georgia, "Times New Roman", serif;

@@ -141,7 +141,8 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   assert.match(app, /INSTRUMENT_DECLINED[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
   assert.match(app, /onCancel:[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
   assert.match(app, /onError:[\s\S]*PayPal checkout failed[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
-  assert.match(app, /function openPaymentFailure\(source = alternateCheckoutSource\)[\s\S]*alternateCheckoutSource = source/);
+  assert.match(app, /function openPaymentFailure\(source = alternateCheckoutSource, \{ preview = false \} = \{\}\)[\s\S]*alternateCheckoutSource = source/);
+  assert.match(app, /preview_seed_failure[\s\S]*openPaymentFailure\(state\.settings\.dodoCheckoutVisible \? "dodo" : "paypal", \{ preview: true \}\)/);
   assert.match(app, /retryPaymentButton\?\.addEventListener[\s\S]*closePaymentFailure\(true\)/);
   assert.doesNotMatch(app, /function closeAlternateCheckout\([^)]*\) \{[\s\S]*?requestAnimationFrame\(openPaymentFailure\)/);
   assert.match(app, /closeAlternateCheckoutButton\?\.addEventListener\("click", closeAlternateCheckout\)/);
