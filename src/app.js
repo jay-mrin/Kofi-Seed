@@ -795,7 +795,7 @@ async function initializeApp() {
     const previewRitual = previewParams.get("preview_ritual") === "1";
     const previewSeed = previewParams.get("preview_seed") === "1";
     if (previewRitual || previewSeed) {
-      elements.receiptKicker.textContent = previewRitual ? "Ritual complete" : "Fortune received";
+      elements.receiptKicker.textContent = previewRitual ? "Ritual complete" : "YOUR SEED WAS SOWN WITH LOVE, CARE, AND FAITH";
       elements.receiptTitle.textContent = previewRitual ? "Your Ritual is Done" : "Your fortune for today";
       elements.receiptSummary.textContent = previewRitual
         ? "“With God all things are possible.” — Matthew 19:26"
@@ -2755,7 +2755,7 @@ async function finishVerifiedDonation(payload) {
   }
 
   renderApp();
-  elements.receiptKicker.textContent = isRitual ? "Ritual complete" : "Fortune received";
+  elements.receiptKicker.textContent = isRitual ? "Ritual complete" : "YOUR SEED WAS SOWN WITH LOVE, CARE, AND FAITH";
   elements.receiptTitle.textContent = isRitual ? "Your Ritual is Done" : "Your fortune for today";
   elements.receiptSummary.textContent = isRitual
     ? "“With God all things are possible.” — Matthew 19:26"
