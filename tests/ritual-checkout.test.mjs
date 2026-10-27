@@ -52,7 +52,7 @@ test("ritual checkout is created server-side and verified before recording the m
   const orders = read("supabase/functions/_shared/dodo-orders.ts");
   const app = read("src/app.js");
   assert.match(create, /getRitual\(ritualTier\)/);
-  assert.match(create, /product_id: ritual\?\.productId \|\| null/);
+  assert.match(create, /product_id: productId/);
   assert.match(dodo, /product_id: input\.productId \|\| getDodoProductId\(\)/);
   assert.match(orders, /attempt\.product_id !== ritual\.productId/);
   assert.match(orders, /item_name: itemName/);

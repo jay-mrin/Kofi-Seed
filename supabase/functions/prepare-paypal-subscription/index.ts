@@ -22,7 +22,7 @@ type PrepareBody = {
   paymentRoute?: string;
 };
 
-const MIN_AMOUNT_CENTS = 700;
+const MIN_AMOUNT_CENTS = 1100;
 const IST_OFFSET_MINUTES = 330;
 
 function isValidEmail(value: string) {
@@ -131,10 +131,6 @@ Deno.serve(async (request) => {
 
     if (!name) return errorResponse("Name is required for weekly sowing.", 422);
     if (!isValidEmail(email)) return errorResponse("A valid email is required.", 422);
-    if (amountCents < MIN_AMOUNT_CENTS) {
-      return errorResponse("Enter at least $7 for weekly sowing.", 422);
-    }
-
     const supabase = getSupabaseAdmin();
     const { data: settingsRow, error: settingsError } = await supabase
       .from("site_settings")
@@ -145,7 +141,10 @@ Deno.serve(async (request) => {
     const settings = settingsRow?.settings && typeof settingsRow.settings === "object"
       ? settingsRow.settings as Record<string, unknown>
       : {};
-    const seedPriceCents = Math.round(Math.max(Number(settings.seedPrice) || 7, 1) * 100);
+    const seedPriceCents = Math.round(Math.max(Number(settings.seedPrice) || 11, MIN_AMOUNT_CENTS / 100) * 100);
+    if (amountCents < seedPriceCents) {
+      return errorResponse(`Enter at least $${seedPriceCents / 100} for weekly sowing.`, 422);
+    }
     const seedCount = Math.max(1, Math.round(amountCents / seedPriceCents));
 
     const paymentRoute = "superadmin";

@@ -27,8 +27,8 @@ type CaptureBody = {
   orderId?: string;
 };
 
-function seedCountFromAmount(amount: number) {
-  return Math.max(1, Math.round(amount / 7));
+function seedCountFromAmount(amount: number, seedPriceCents = 700) {
+  return Math.max(1, Math.round(amount * 100 / seedPriceCents));
 }
 
 function captureFromOrder(order: Record<string, any>) {
@@ -349,6 +349,7 @@ Deno.serve(async (request) => {
       ? getRitual(paymentAttempt.product_id)
       : null;
     const isRitualOrder = Boolean(ritual);
+    const seedPriceCents = Math.max(Number(attemptRawPayment.seedPriceCents) || 700, 700);
     if (paymentAttempt.product_type === "ritual" && !ritual) {
       return errorResponse("Ritual checkout details are invalid.", 422);
     }
@@ -497,7 +498,7 @@ Deno.serve(async (request) => {
       .insert({
         display_name: displayName,
         amount: capturedAmount,
-        seed_count: isRitualOrder ? 1 : seedCountFromAmount(capturedAmount),
+        seed_count: isRitualOrder ? 1 : seedCountFromAmount(capturedAmount, seedPriceCents),
         frequency,
         supporter_message: isRitualOrder ? null : supporterMessage || null,
         payment_method: "paypal",
@@ -567,7 +568,7 @@ Deno.serve(async (request) => {
         displayName,
         body: supporterMessage,
         amount: capturedAmount,
-        seedCount: seedCountFromAmount(capturedAmount),
+        seedCount: seedCountFromAmount(capturedAmount, seedPriceCents),
         createdAt: donation.created_at,
       });
 

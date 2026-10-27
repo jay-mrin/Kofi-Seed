@@ -28,7 +28,7 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-const MIN_AMOUNT_CENTS = 700;
+const MIN_AMOUNT_CENTS = 1100;
 
 Deno.serve(async (request) => {
   const options = handleOptions(request);
@@ -44,6 +44,17 @@ Deno.serve(async (request) => {
       "Customer";
     const supporterMessage = getRandomOrderRequest();
     const contactEmail = String(body.email || "").trim().slice(0, 160);
+    const supabase = getSupabaseAdmin();
+    let seedPriceCents = MIN_AMOUNT_CENTS;
+    if (!ritual) {
+      const { data: settingsRow, error: settingsError } = await supabase
+        .from("site_settings").select("settings").eq("id", true).maybeSingle();
+      if (settingsError) throw settingsError;
+      seedPriceCents = Math.max(
+        Math.round((Number(settingsRow?.settings?.seedPrice) || 11) * 100),
+        MIN_AMOUNT_CENTS,
+      );
+    }
     if (requestedProductType !== "seed" && requestedProductType !== "personalized_seed_writing" && !ritual) {
       return errorResponse("This product is no longer available.", 422);
     }
@@ -54,8 +65,8 @@ Deno.serve(async (request) => {
       return errorResponse("Ritual name and recipient are required.", 422);
     }
 
-    if (amountCents < MIN_AMOUNT_CENTS) {
-      return errorResponse("Amount must be at least $7.", 422);
+    if (amountCents < (ritual ? MIN_AMOUNT_CENTS : seedPriceCents)) {
+      return errorResponse(`Amount must be at least $${seedPriceCents / 100}.`, 422);
     }
     if (!isValidEmail(contactEmail)) {
       return errorResponse(
@@ -78,7 +89,6 @@ Deno.serve(async (request) => {
       itemName: ritual?.itemName,
     });
 
-    const supabase = getSupabaseAdmin();
     const now = new Date().toISOString();
     const { error: cleanupError } = await supabase
       .from("payment_attempts")
@@ -103,6 +113,7 @@ Deno.serve(async (request) => {
         status: "started",
         raw_payment: {
           order,
+          ...(ritual ? {} : { seedPriceCents }),
           product: ritual
             ? { type: "ritual", ritualTier, itemName: ritual.itemName }
             : { type: "seed", itemName: "Personalised Digital Writing - Custom Order Made Writing" },

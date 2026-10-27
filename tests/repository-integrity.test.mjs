@@ -106,7 +106,7 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
-test("support goal uses cumulative confirmed seed payments and resets every $700", () => {
+test("support goal uses cumulative confirmed seed payments and resets every $1,100", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
@@ -117,7 +117,8 @@ test("support goal uses cumulative confirmed seed payments and resets every $700
   assert.match(html, /id="supportGoal"[\s\S]*id="supportGoalFill"[\s\S]*id="supportGoalPercent"/);
   assert.match(app, /function normalizeGoalProgress\(goalProgress\)[\s\S]*confirmedAmountCents[\s\S]*goalAmountCents/);
   assert.match(bootstrap, /supabase\.rpc\("get_confirmed_seed_total_cents"\)/);
-  assert.match(bootstrap, /const goalAmountCents = 70000/);
+  assert.match(bootstrap, /const goalAmountCents = 110000/);
+  assert.match(bootstrap, /const confirmedSeedCount = Math\.floor\(confirmedAmountCents \/ 1100\)/);
   assert.match(bootstrap, /goalTotalResult\.data[\s\S]*% goalAmountCents/);
   assert.match(migration, /d\.paypal_status = 'COMPLETED'/);
   assert.match(migration, /d\.payment_method in \('paypal', 'dodo'\)/);

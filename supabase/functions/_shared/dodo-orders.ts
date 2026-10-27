@@ -143,15 +143,23 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
   const ritualTier = String(attempt.raw_payment?.ritualTier || "");
   const ritual = attempt.product_type === "ritual" ? getRitual(ritualTier) : null;
   if (attempt.product_type === "ritual" && !ritual) throw new Error("Unknown ritual checkout attempt.");
-  const expectedProductId = ritual?.productId || getDodoProductId();
+  const expectedProductId = ritual?.productId || attempt.product_id || getDodoProductId();
+  // Older seed attempts did not pin their product id. Their signed Dodo metadata,
+  // checkout session, amount, and currency still bind the payment to the attempt.
+  const legacySeedAttempt = !ritual && !attempt.product_id;
   const hasExpectedProduct = cart.length === 1 && cart.some((item: Record<string, any>) =>
-    item?.product_id === expectedProductId && Number(item?.quantity) === 1
+    (item?.product_id === expectedProductId || (legacySeedAttempt && /^pdt_[A-Za-z0-9]+$/.test(String(item?.product_id || "")))) &&
+    Number(item?.quantity) === 1
   );
 
   if (
     !sessionId || payment.payment_id !== normalizedPaymentId ||
     String(metadata.checkout_attempt_id || "") !== attempt.id ||
     Number(metadata.expected_amount_cents) !== expectedCents ||
+    (!ritual && (
+      String(metadata.product_type || "") !== "personalized_seed_writing" ||
+      Number(metadata.seed_count) !== Number(attempt.raw_payment?.seedCount)
+    )) ||
     (ritual && (
       String(metadata.product_type || "") !== "ritual" ||
       String(metadata.ritual_tier || "") !== ritualTier ||
@@ -186,7 +194,7 @@ export async function finalizeDodoPayment(paymentId: string, presentedDonorToken
       fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
       fortuneMessage = fortune.message;
     }
-    const seedCount = ritual ? 1 : Math.max(1, Number(metadata.seed_count) || Math.round(expectedCents / 700));
+    const seedCount = ritual ? 1 : Math.max(1, Number(metadata.seed_count) || Math.round(expectedCents / 1100));
     const itemName = ritual?.itemName || ITEM_NAME;
     const rawPayment = {
       provider: "Dodo Payments",

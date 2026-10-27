@@ -113,9 +113,9 @@ async function loadPublicContent(
         rawPayment.product?.type !== "book" &&
         rawPayment.product?.type !== "ritual";
     });
-  const goalAmountCents = 70000;
+  const goalAmountCents = 110000;
   const confirmedAmountCents = Math.max(Number(goalTotalResult.data) || 0, 0) % goalAmountCents;
-  const confirmedSeedCount = Math.floor(confirmedAmountCents / 700);
+  const confirmedSeedCount = Math.floor(confirmedAmountCents / 1100);
   const donations = confirmedSeedDonations
     .filter((donation) => donation.visibility_scope === "public")
     .slice(0, 50);
@@ -144,7 +144,7 @@ async function loadPublicContent(
       goalSeedCount: 100,
       confirmedAmountCents,
       goalAmountCents,
-      percentage: confirmedAmountCents / 700,
+      percentage: confirmedAmountCents / 1100,
     },
     donations: donations.map((donation) => ({
       id: donation.id,

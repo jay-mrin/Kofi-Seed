@@ -20,6 +20,9 @@ test("Dodo checkout is server-created and scoped to Admin", () => {
   assert.match(dodo, /single_page: true/);
   assert.match(dodo, /allow_phone_number_collection: false/);
   assert.match(dodo, /checkout_attempt_id: input\.attemptId/);
+  assert.match(dodo, /pdt_0Nq0zMUDbiKtD9EKOLkMD/);
+  assert.match(create, /product_id: productId/);
+  assert.match(create, /unitPrice = Math\.max\(Number\(settingsRow\?\.settings\?\.seedPrice\) \|\| 11, 11\)/);
 });
 
 test("Sow Your Seed opens a details and payment-options dialog", () => {

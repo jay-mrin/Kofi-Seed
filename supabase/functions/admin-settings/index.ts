@@ -62,8 +62,8 @@ function applySiteSettings(
 
   if (Object.hasOwn(submitted, "seedPrice")) {
     next.seedPrice = Math.max(
-      Number.parseInt(String(submitted.seedPrice), 10) || 7,
-      7,
+      Number.parseInt(String(submitted.seedPrice), 10) || 11,
+      11,
     );
   }
   if (Object.hasOwn(submitted, "blessingWallEnabled")) {

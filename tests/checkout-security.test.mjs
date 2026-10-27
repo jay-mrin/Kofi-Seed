@@ -26,6 +26,15 @@ test("PayPal creation accepts only the SuperAdmin SDK route and persists checkou
   assert.match(source, /body\.paymentRoute !== paymentRoute/);
   assert.match(source, /\.from\("payment_attempts"\)\s*\.insert/);
   assert.match(source, /customer_request: personalizedRequest/);
+  assert.match(source, /const MIN_AMOUNT_CENTS = 1100/);
+  assert.match(source, /seedPriceCents = Math\.max\(/);
+  assert.match(source, /raw_payment: \{[\s\S]*seedPriceCents/);
+});
+
+test("new PayPal seed counts use their pinned $11 price without changing older orders", () => {
+  const capture = read("supabase/functions/capture-paypal-order/index.ts");
+  assert.match(capture, /seedPriceCents = Math\.max\(Number\(attemptRawPayment\.seedPriceCents\) \|\| 700, 700\)/);
+  assert.match(capture, /seed_count: isRitualOrder \? 1 : seedCountFromAmount\(capturedAmount, seedPriceCents\)/);
 });
 
 test("book captures remain private from the seed feed", () => {

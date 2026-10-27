@@ -28,9 +28,7 @@ function getApiBaseUrl() {
 }
 
 export function getDodoProductId() {
-  const productId = String(Deno.env.get("DODO_PAYMENTS_PRODUCT_ID") || "").trim();
-  if (!productId) throw new Error("Missing DODO_PAYMENTS_PRODUCT_ID.");
-  return productId;
+  return "pdt_0Nq0zMUDbiKtD9EKOLkMD";
 }
 
 export function getDodoCurrency() {

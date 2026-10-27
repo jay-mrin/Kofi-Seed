@@ -1,5 +1,5 @@
 import { errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
-import { createDodoCheckoutSession, getDodoCurrency } from "../_shared/dodo.ts";
+import { createDodoCheckoutSession, getDodoCurrency, getDodoProductId } from "../_shared/dodo.ts";
 import { getRandomOrderRequest } from "../_shared/order-requests.ts";
 import { getRitual } from "../_shared/rituals.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
@@ -49,12 +49,13 @@ Deno.serve(async (request) => {
       const { data: settingsRow, error: settingsError } = await supabase
         .from("site_settings").select("settings").eq("id", true).maybeSingle();
       if (settingsError) throw settingsError;
-      const unitPrice = Number(settingsRow?.settings?.seedPrice) || 7;
+      const unitPrice = Math.max(Number(settingsRow?.settings?.seedPrice) || 11, 11);
       amountCents = Math.round(unitPrice * seedCount * 100);
     }
-    if (amountCents < 700) return errorResponse("Amount must be at least $7.", 422);
+    if (amountCents < 1100) return errorResponse("Amount must be at least $11.", 422);
 
     attemptId = crypto.randomUUID();
+    const productId = ritual?.productId || getDodoProductId();
     const customerRequest = ritual ? message : message || getRandomOrderRequest();
     const { error: insertError } = await supabase.from("payment_attempts").insert({
       id: attemptId,
@@ -66,7 +67,7 @@ Deno.serve(async (request) => {
       supporter_message: ritual ? null : customerRequest,
       frequency: "once",
       product_type: ritual ? "ritual" : "personalized_seed_writing",
-      product_id: ritual?.productId || null,
+      product_id: productId,
       payment_route: "standard",
       payment_provider: "dodo",
       donor_token_hash: await hashText(donorAccessToken),
@@ -77,7 +78,7 @@ Deno.serve(async (request) => {
 
     const session = await createDodoCheckoutSession({
       attemptId, amountCents, email, name,
-      ...(ritual ? { ritualTier, productId: ritual.productId } : { seedCount }),
+      ...(ritual ? { ritualTier, productId } : { seedCount, productId }),
     });
     if (!session.session_id || !session.checkout_url) throw new Error("Dodo did not return a checkout URL.");
     const { error: updateError } = await supabase.from("payment_attempts").update({
