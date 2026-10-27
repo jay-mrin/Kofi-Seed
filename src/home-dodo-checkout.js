@@ -154,7 +154,8 @@
   });
 
   const startDodoCheckout = async () => {
-    if (submitting || !emailInput.reportValidity()) return;
+    nameInput.value = nameInput.value.trim();
+    if (submitting || !nameInput.reportValidity() || !emailInput.reportValidity()) return;
 
     setStatus("");
     setLoading(true);
@@ -184,6 +185,8 @@
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (submitting || paymentDialog.open) return;
+    nameInput.value = nameInput.value.trim();
+    if (!nameInput.reportValidity()) return;
 
     setStatus("");
     if (typeof paymentDialog.showModal === "function") {

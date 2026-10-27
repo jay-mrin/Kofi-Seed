@@ -30,11 +30,11 @@ Deno.serve(async (request) => {
     const ritualTier = String(body.ritualTier || "").trim();
     const ritual = ritualTier ? getRitual(ritualTier) : null;
     const email = String(body.email || "").trim().slice(0, 160);
-    const name = String(body.name || "Customer").trim().slice(0, 80) || "Customer";
+    const name = String(body.name || "").trim().slice(0, 80);
     const message = String(body.message || "").trim().slice(0, 180);
     const donorAccessToken = String(body.donorAccessToken || "").trim();
     if (ritualTier && !ritual) return errorResponse("Choose a valid ritual.", 422);
-    if (ritual && !String(body.name || "").trim()) return errorResponse("Enter your name.", 422);
+    if (!name) return errorResponse("Enter your name.", 422);
     if (ritual && !message) return errorResponse("Enter who this ritual is for.", 422);
     if (!ritual && (!Number.isSafeInteger(seedCount) || seedCount < 1 || seedCount > 999)) {
       return errorResponse("Choose between 1 and 999 seeds.", 422);

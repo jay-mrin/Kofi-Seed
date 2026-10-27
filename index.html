@@ -299,7 +299,7 @@
                 <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
               </div>
               <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$11.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
-              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Name" /></label>
+              <label class="dodo-field dodo-name-field"><span class="visually-hidden">Display name</span><input id="dodoCustomerName" type="text" autocomplete="name" maxlength="48" placeholder="Name" required /></label>
             </div>
             <button class="dodo-proceed-button" id="dodoCheckoutButton" type="submit" aria-haspopup="dialog" aria-expanded="false" aria-controls="dodoPaymentDialog">Sow Your Spiritual Seed Now</button>
             <dialog class="seed-payment-dialog" id="dodoPaymentDialog" aria-labelledby="dodoPaymentTitle">
@@ -363,7 +363,7 @@
                 </label>
                 <label class="field minimal-text-field paypal-name-field">
                   <span class="visually-hidden">Display name</span>
-                  <input id="nameInput" type="text" placeholder="Name" maxlength="48" autocomplete="name" aria-describedby="nameError" />
+                  <input id="nameInput" type="text" placeholder="Name" maxlength="48" autocomplete="name" aria-describedby="nameError" required />
                   <small id="nameError" class="error-message"></small>
                 </label>
               </div>

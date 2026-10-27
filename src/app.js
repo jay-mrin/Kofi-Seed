@@ -2233,6 +2233,13 @@ function validateForm() {
   let isValid = true;
 
   elements.amountError.textContent = "";
+  elements.nameInput.value = elements.nameInput.value.trim();
+  elements.nameError.textContent = "";
+  if (!elements.nameInput.value) {
+    elements.nameError.textContent = "Add your name.";
+    elements.nameInput.focus();
+    isValid = false;
+  }
   if (amount < MIN_DONATION_AMOUNT) {
     elements.amountError.textContent = `Enter at least $${MIN_DONATION_AMOUNT}.`;
     isValid = false;
@@ -2805,15 +2812,13 @@ function continueWithPayPal() {
     return;
   }
 
-  if (elements.weeklySeedToggle.checked) {
-    if (!elements.nameInput.value.trim()) {
-      elements.nameError.textContent = "Add your name for weekly sowing.";
-      closeInlinePayPalCheckout();
-      elements.nameInput.focus();
-      return;
-    }
-    elements.nameError.textContent = "";
+  if (!elements.nameInput.value.trim()) {
+    elements.nameError.textContent = "Add your name.";
+    closeInlinePayPalCheckout();
+    elements.nameInput.focus();
+    return;
   }
+  elements.nameError.textContent = "";
 
   ui.emailError.textContent = "";
   pendingDonation = {
@@ -3599,6 +3604,9 @@ elements.shareSupportButton?.addEventListener("click", async () => {
     if (!state.settings.dodoCheckoutVisible || !state.settings.alternateCardCheckoutVisible || link !== elements.dodoAlternateCardCheckoutLink) return;
     if (link === elements.dodoAlternateCardCheckoutLink &&
         !document.querySelector("#dodoCustomerEmail")?.reportValidity()) return;
+    const dodoNameInput = document.querySelector("#dodoCustomerName");
+    dodoNameInput.value = dodoNameInput.value.trim();
+    if (!dodoNameInput.reportValidity()) return;
     const cardButton = link.closest(".card-choice");
     if (cardButton?.classList.contains("is-disabled")) return;
 

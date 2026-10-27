@@ -40,8 +40,7 @@ Deno.serve(async (request) => {
     const ritualTier = String(body.ritualTier || "").trim();
     const ritual = requestedProductType === "ritual" ? getRitual(ritualTier) : null;
     const amountCents = ritual ? ritual.priceCents : parseMoneyToCents(body.amount);
-    const displayName = String(body.name || "Customer").trim().slice(0, 80) ||
-      "Customer";
+    const displayName = String(body.name || "").trim().slice(0, 80);
     const supporterMessage = getRandomOrderRequest();
     const contactEmail = String(body.email || "").trim().slice(0, 160);
     const supabase = getSupabaseAdmin();
@@ -61,9 +60,8 @@ Deno.serve(async (request) => {
     const personalizedRequest = String(body.message || "").trim().slice(0, 180) ||
       (ritual ? "" : supporterMessage);
 
-    if (ritual && (!String(body.name || "").trim() || !personalizedRequest)) {
-      return errorResponse("Ritual name and recipient are required.", 422);
-    }
+    if (!displayName) return errorResponse("Enter your name.", 422);
+    if (ritual && !personalizedRequest) return errorResponse("Enter who this ritual is for.", 422);
 
     if (amountCents < (ritual ? MIN_AMOUNT_CENTS : seedPriceCents)) {
       return errorResponse(`Amount must be at least $${seedPriceCents / 100}.`, 422);
