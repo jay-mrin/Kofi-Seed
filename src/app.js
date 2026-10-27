@@ -791,10 +791,15 @@ async function initializeApp() {
   } finally {
     finishInitialLoading();
 
-    if (new URLSearchParams(window.location.search).get("preview_ritual") === "1") {
-      elements.receiptKicker.textContent = "Ritual complete";
-      elements.receiptTitle.textContent = "Your Ritual is Done";
-      elements.receiptSummary.textContent = "“With God all things are possible.” — Matthew 19:26";
+    const previewParams = new URLSearchParams(window.location.search);
+    const previewRitual = previewParams.get("preview_ritual") === "1";
+    const previewSeed = previewParams.get("preview_seed") === "1";
+    if (previewRitual || previewSeed) {
+      elements.receiptKicker.textContent = previewRitual ? "Ritual complete" : "Fortune received";
+      elements.receiptTitle.textContent = previewRitual ? "Your Ritual is Done" : "Your fortune for today";
+      elements.receiptSummary.textContent = previewRitual
+        ? "“With God all things are possible.” — Matthew 19:26"
+        : getRandomFortuneMessage();
       elements.receiptSummary.hidden = false;
       openReceipt({ preview: true });
     }
