@@ -235,7 +235,7 @@ test("PayPal and PayPal card use the SDK while the alternate card is scoped to D
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
   assert.match(app, /if \(elements\.cardButton\) elements\.cardButton\.hidden = true/);
-  assert.match(app, /if \(dodoPaymentPanel\) dodoPaymentPanel\.hidden = !settings\.alternateCardCheckoutVisible/);
+  assert.match(app, /if \(dodoPaymentPanel && !document\.querySelector\("#dodoPaymentDialog"\)\?\.open\) dodoPaymentPanel\.hidden = true/);
   assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);

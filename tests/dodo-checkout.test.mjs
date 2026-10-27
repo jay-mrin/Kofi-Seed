@@ -31,11 +31,12 @@ test("Sow Your Seed opens a details and payment-options dialog", () => {
   const app = read("src/app.js");
 
   assert.match(html, /id="dodoCheckoutButton"[^>]*aria-controls="dodoPaymentDialog"[^>]*>Sow Your Spiritual Seed Now<\/button>/);
-  assert.match(html, /id="dodoPaymentDialog"[\s\S]*id="dodoCustomerEmail"[\s\S]*id="dodoCustomerMessage"[\s\S]*id="dodoPaymentPanel"[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"/);
+  assert.match(html, /id="dodoPaymentDialog"[\s\S]*id="dodoCustomerEmail"[\s\S]*id="dodoCustomerMessage"[\s\S]*id="dodoDirectButton"[\s\S]*id="dodoPaymentPanel"[^>]*hidden[\s\S]*id="dodoCardButton"[\s\S]*id="dodoPayButton"/);
   assert.match(checkout, /checkoutButton\.textContent = "Sow Your Spiritual Seed Now"/);
   assert.match(checkout, /form\.addEventListener\("submit"[\s\S]*paymentDialog\.showModal\(\)/);
   assert.match(checkout, /const startDodoCheckout = async \(\) => \{[\s\S]*create-dodo-checkout/);
   assert.match(checkout, /dodoPayButton\.addEventListener\("click", \(\) => void startDodoCheckout\(\)\)/);
+  assert.match(checkout, /directButton\.addEventListener\("click", \(\) => \{[\s\S]*paymentPanel\.hidden = false/);
   assert.match(checkout, /paymentDialog\.addEventListener\("cancel"[\s\S]*closePaymentDialog\(\)/);
   assert.match(app, /elements\.dodoCardButton\.hidden = !settings\.alternateCardCheckoutVisible/);
   assert.match(app, /document\.querySelector\("#dodoCheckoutButton"\)/);
@@ -68,7 +69,9 @@ test("the first Dodo card option stays disabled after one opening", () => {
   const app = read("src/app.js");
   const closeCheckout = app.match(/function closeAlternateCheckout\(\) \{[\s\S]*?\n\}/)?.[0] || "";
 
-  assert.match(html, /id="dodoPayButton"[^>]*>Sow Your Seed Now ➡️<\/button>/);
+  assert.match(html, /id="dodoDirectButton"[^>]*>Sow Your Seed Now<\/button>/);
+  assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*>Debit and Credit #1<\/a>/);
+  assert.match(html, /id="dodoPayButton"[^>]*>Debit and Credit #2<\/button>/);
   assert.match(html, /class="dodo-payment-guidance">Complete The Payment To Get Your Seed<\/p>/);
   assert.match(read("src/styles.css"), /\.dodo-payment-guidance \{[\s\S]*color: #1f1f1f;[\s\S]*font-weight: 800;/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);

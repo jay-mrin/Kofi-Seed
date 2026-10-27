@@ -3432,6 +3432,7 @@ legend::after {
 
 .dodo-pay-button:hover { background: var(--button-gold-hover); }
 .dodo-pay-button:disabled { cursor: wait; }
+.dodo-pay-button[hidden] { display: none; }
 
 .dodo-payment-guidance {
   margin: 16px 0 2px;

@@ -315,27 +315,25 @@
                     <span id="dodoCheckoutLoaderText">Processing Your Seed.....</span>
                 </div>
                 <p class="payment-status" id="dodoPaymentStatus" role="status" aria-live="polite" hidden></p>
-                <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options">
+                <button class="dodo-pay-button dodo-direct-button" id="dodoDirectButton" type="button" aria-controls="dodoPaymentPanel" aria-expanded="false">Sow Your Seed Now</button>
+                <section class="dodo-payment-panel" id="dodoPaymentPanel" aria-label="Seed payment options" hidden>
                   <div class="payment-choice card-choice" id="dodoCardButton" hidden>
-                    <span>Alternate debit or credit card</span>
                     <small class="preferred-payment-label">Preferred</small>
                     <a
                       class="alternate-card-link"
                       id="dodoAlternateCardCheckoutLink"
                       href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                      aria-label="Open debit or credit card checkout popup"
+                      aria-label="Debit and Credit #1, custom card checkout"
                       aria-haspopup="dialog"
                       aria-controls="alternateCheckoutDialog"
-                    >Debit or Credit Card</a>
+                    >Debit and Credit #1</a>
                     <p class="alternate-card-retry" aria-live="polite">Try Again</p>
                   </div>
                   <div class="payment-choice dodo-choice">
-                    <span>Dodo</span>
-                    <button class="dodo-pay-button" id="dodoPayButton" type="button">Sow Your Seed Now ➡️</button>
+                    <button class="dodo-pay-button" id="dodoPayButton" type="button" aria-label="Debit and Credit #2, Dodo payment">Debit and Credit #2</button>
                   </div>
                   <p class="dodo-payment-guidance">Complete The Payment To Get Your Seed</p>
                 </section>
-                <button class="dodo-pay-button dodo-direct-button" id="dodoDirectButton" type="button" hidden>Get Your Seed</button>
               </div>
             </dialog>
           </form>

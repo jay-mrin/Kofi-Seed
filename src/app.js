@@ -1762,9 +1762,7 @@ function renderSettings() {
   }
   if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
   const dodoPaymentPanel = document.querySelector("#dodoPaymentPanel");
-  const dodoDirectButton = document.querySelector("#dodoDirectButton");
-  if (dodoPaymentPanel) dodoPaymentPanel.hidden = !settings.alternateCardCheckoutVisible;
-  if (dodoDirectButton) dodoDirectButton.hidden = Boolean(settings.alternateCardCheckoutVisible);
+  if (dodoPaymentPanel && !document.querySelector("#dodoPaymentDialog")?.open) dodoPaymentPanel.hidden = true;
   if (elements.cardButton) elements.cardButton.hidden = true;
   if (elements.paypalCardButton) elements.paypalCardButton.hidden = true;
   if (elements.retryPaymentButton) elements.retryPaymentButton.href = settings.dodoCheckoutVisible ? "#seedCheckoutCard" : "#support";

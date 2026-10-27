@@ -61,6 +61,9 @@
       paymentDialog.removeAttribute("open");
     }
     checkoutButton.setAttribute("aria-expanded", "false");
+    paymentPanel.hidden = true;
+    directButton.hidden = false;
+    directButton.setAttribute("aria-expanded", "false");
   };
 
   const returnToDodoFormWithFailure = () => {
@@ -199,7 +202,17 @@
   });
 
   dodoPayButton.addEventListener("click", () => void startDodoCheckout());
-  directButton.addEventListener("click", () => void startDodoCheckout());
+  directButton.addEventListener("click", () => {
+    if (submitting || !emailInput.reportValidity()) return;
+    if (document.querySelector("#dodoCardButton").hidden) {
+      void startDodoCheckout();
+      return;
+    }
+    directButton.hidden = true;
+    directButton.setAttribute("aria-expanded", "true");
+    paymentPanel.hidden = false;
+    document.querySelector("#dodoAlternateCardCheckoutLink").focus();
+  });
   closePaymentDialogButton.addEventListener("click", closePaymentDialog);
   paymentDialog.addEventListener("cancel", (event) => {
     event.preventDefault();
@@ -208,7 +221,12 @@
   paymentDialog.addEventListener("click", (event) => {
     if (event.target === paymentDialog && !submitting) closePaymentDialog();
   });
-  paymentDialog.addEventListener("close", () => checkoutButton.setAttribute("aria-expanded", "false"));
+  paymentDialog.addEventListener("close", () => {
+    checkoutButton.setAttribute("aria-expanded", "false");
+    paymentPanel.hidden = true;
+    directButton.hidden = false;
+    directButton.setAttribute("aria-expanded", "false");
+  });
 
   new MutationObserver(updateTotal).observe(totalOutput, {
     attributes: true,
