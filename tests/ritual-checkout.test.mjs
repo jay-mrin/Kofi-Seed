@@ -34,6 +34,18 @@ test("the selected provider handles ritual payment with a catalog priced PayPal 
   assert.match(capture, /productType: isRitualOrder \? "ritual"/);
 });
 
+test("ritual cancellation opens its own retry popup and can reopen the ritual details", () => {
+  const html = read("index.html");
+  const app = read("src/app.js");
+  const dodo = read("src/home-dodo-checkout.js");
+
+  assert.match(html, /id="ritualFailureDialog"[\s\S]*id="retryRitualButton"/);
+  assert.match(app, /preview_ritual_failure[\s\S]*openRitualPaymentFailure\(\{ preview: true \}\)/);
+  assert.match(app, /onCancel: \(\) => \{[\s\S]*openRitualPaymentFailure\(\)/);
+  assert.match(app, /function closeRitualPaymentFailure\(retry = false\)[\s\S]*ritualForm"\)\?\.requestSubmit\(\)/);
+  assert.match(dodo, /pendingProductKey\) === "ritual"[\s\S]*openRitualPaymentFailure\?\.\(\)/);
+});
+
 test("ritual checkout is created server-side and verified before recording the mapped item", () => {
   const create = read("supabase/functions/create-dodo-checkout/index.ts");
   const dodo = read("supabase/functions/_shared/dodo.ts");

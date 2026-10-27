@@ -852,6 +852,23 @@
       </div>
     </dialog>
 
+    <dialog class="payment-failure-dialog" id="ritualFailureDialog" aria-labelledby="ritualFailureTitle">
+      <div class="payment-failure-card">
+        <button class="icon-button payment-failure-close" id="closeRitualFailureButton" type="button" aria-label="Close ritual payment message">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+        <div class="payment-failure-icon" aria-hidden="true">🕯️</div>
+        <h2 id="ritualFailureTitle">Your Ritual Was Not Completed...</h2>
+        <p class="payment-failure-preview-label" id="ritualFailurePreviewLabel" hidden>Preview only · No payment attempted</p>
+        <p class="payment-failure-intro">The prayer and intention you brought here still matter.</p>
+        <p class="payment-failure-emphasis">When you are ready, you can begin again.</p>
+        <p class="payment-failure-copy">Return to your chosen ritual and complete it with faith and hope.</p>
+        <a class="payment-failure-retry" id="retryRitualButton" href="#ritualForm">TRY RITUAL AGAIN</a>
+      </div>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <footer class="support-verse-footer" aria-label="A Bible proverb about love">

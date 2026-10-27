@@ -69,10 +69,7 @@
     setStatus("");
     if (window.sessionStorage.getItem(pendingProductKey) === "ritual") {
       window.sessionStorage.removeItem(pendingProductKey);
-      const ritualStatus = document.querySelector("#ritualStatus");
-      ritualStatus.textContent = "Ritual payment was not completed. Please try again.";
-      ritualStatus.hidden = false;
-      document.querySelector(".support-ritual-card")?.scrollIntoView({ block: "center" });
+      window.SowYourSeedCheckout?.openRitualPaymentFailure?.();
       return;
     }
     window.SowYourSeedCheckout?.openPaymentFailure?.("dodo");

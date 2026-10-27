@@ -248,6 +248,7 @@ const elements = {
   inlinePaypalCheckout: document.querySelector("#inlinePaypalCheckout"),
   paymentEmailInput: document.querySelector("#paymentEmailInput"),
   paymentFailureDialog: document.querySelector("#paymentFailureDialog"),
+  ritualFailureDialog: document.querySelector("#ritualFailureDialog"),
   paymentStatus: document.querySelector("#paymentStatus"),
   alternateCardCheckoutLink: document.querySelector("#alternateCardCheckoutLink"),
   dodoAlternateCardCheckoutLink: document.querySelector("#dodoAlternateCardCheckoutLink"),
@@ -795,6 +796,7 @@ async function initializeApp() {
     const previewRitual = previewParams.get("preview_ritual") === "1";
     const previewSeed = previewParams.get("preview_seed") === "1";
     const previewSeedFailure = previewParams.get("preview_seed_failure") === "1";
+    const previewRitualFailure = previewParams.get("preview_ritual_failure") === "1";
     if (previewRitual || previewSeed) {
       elements.receiptKicker.textContent = previewRitual ? "Ritual complete" : "YOUR SEED WAS SOWN WITH LOVE, CARE, AND FAITH";
       elements.receiptTitle.textContent = previewRitual ? "Your Ritual is Done" : "Your fortune for today";
@@ -805,6 +807,8 @@ async function initializeApp() {
       openReceipt({ preview: true });
     } else if (previewSeedFailure) {
       openPaymentFailure(state.settings.dodoCheckoutVisible ? "dodo" : "paypal", { preview: true });
+    } else if (previewRitualFailure) {
+      openRitualPaymentFailure({ preview: true });
     }
 
     if (window.location.hash === "#admin") {
@@ -2901,6 +2905,43 @@ function closePaymentFailure(returnToSupport = false) {
   }
 }
 
+function openRitualPaymentFailure({ preview = false } = {}) {
+  if (document.body.classList.contains("app-loading")) {
+    void (async () => {
+      while (document.body.classList.contains("app-loading")) await wait(50);
+      openRitualPaymentFailure({ preview });
+    })();
+    return;
+  }
+  if (!elements.ritualFailureDialog || elements.ritualFailureDialog.open) return;
+
+  document.querySelector("#ritualFailurePreviewLabel").hidden = !preview;
+  setActiveView("homeView", true);
+  document.body.classList.add("payment-failure-open");
+  if (typeof elements.ritualFailureDialog.showModal === "function") {
+    elements.ritualFailureDialog.showModal();
+  } else {
+    elements.ritualFailureDialog.setAttribute("open", "");
+  }
+}
+
+function closeRitualPaymentFailure(retry = false) {
+  if (!elements.ritualFailureDialog) return;
+  document.body.classList.remove("payment-failure-open");
+  if (elements.ritualFailureDialog.open && typeof elements.ritualFailureDialog.close === "function") {
+    elements.ritualFailureDialog.close();
+  } else {
+    elements.ritualFailureDialog.removeAttribute("open");
+  }
+  if (retry) {
+    window.requestAnimationFrame(() => {
+      setActiveView("homeView", true);
+      document.querySelector(".support-ritual-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.querySelector("#ritualForm")?.requestSubmit();
+    });
+  }
+}
+
 async function finishDodoPayment(payload) {
   while (document.body.classList.contains("app-loading")) {
     await wait(50);
@@ -3455,21 +3496,21 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
           }
         },
         onCancel: () => {
-          status.textContent = "Ritual payment was cancelled. You can try again.";
-          status.classList.add("is-error");
           container.hidden = true;
           container.innerHTML = "";
           button.hidden = false;
           button.disabled = false;
+          document.querySelector("#ritualPaymentDialog").close();
+          openRitualPaymentFailure();
         },
         onError: (error) => {
           console.warn("Ritual PayPal checkout failed.", error);
-          status.textContent = "Ritual checkout could not start. Please try again.";
-          status.classList.add("is-error");
           container.hidden = true;
           container.innerHTML = "";
           button.hidden = false;
           button.disabled = false;
+          document.querySelector("#ritualPaymentDialog").close();
+          openRitualPaymentFailure();
         },
       });
       if (!buttons.isEligible()) throw new Error("PayPal checkout is unavailable for this ritual.");
@@ -3493,10 +3534,11 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
   } catch (error) {
     window.sessionStorage.removeItem("sow-your-seed-dodo-donor-token");
     window.sessionStorage.removeItem("sow-your-seed-dodo-product");
-    status.textContent = error?.message || "Ritual checkout could not start. Please try again.";
-    status.classList.add("is-error");
+    console.warn("Ritual checkout could not start.", error);
     button.disabled = false;
     closeButton.disabled = false;
+    document.querySelector("#ritualPaymentDialog").close();
+    openRitualPaymentFailure();
   }
 });
 elements.weeklySeedToggle.addEventListener("change", () => {
@@ -3703,6 +3745,21 @@ elements.paymentFailureDialog?.addEventListener("click", (event) => {
 elements.paymentFailureDialog?.addEventListener("close", () => {
   document.body.classList.remove("payment-failure-open");
 });
+document.querySelector("#closeRitualFailureButton")?.addEventListener("click", () => closeRitualPaymentFailure());
+document.querySelector("#retryRitualButton")?.addEventListener("click", (event) => {
+  event.preventDefault();
+  closeRitualPaymentFailure(true);
+});
+elements.ritualFailureDialog?.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeRitualPaymentFailure();
+});
+elements.ritualFailureDialog?.addEventListener("click", (event) => {
+  if (event.target === elements.ritualFailureDialog) closeRitualPaymentFailure();
+});
+elements.ritualFailureDialog?.addEventListener("close", () => {
+  document.body.classList.remove("payment-failure-open");
+});
 elements.closeAlternateCheckoutButton?.addEventListener("click", closeAlternateCheckout);
 elements.alternateCheckoutDialog?.addEventListener("cancel", (event) => {
   event.preventDefault();
@@ -3731,6 +3788,7 @@ window.SowYourSeedCheckout = Object.freeze({
   callEdge,
   finishDodoPayment,
   openPaymentFailure,
+  openRitualPaymentFailure,
 });
 
 if (document.readyState === "loading") {
