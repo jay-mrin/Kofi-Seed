@@ -4040,7 +4040,8 @@ legend::after {
   --support-pink: #ff3cac;
   --support-pink-dark: #e92b96;
   --support-pink-soft: #ffe0f2;
-  --support-surface: #f8eff6;
+  --support-surface: #ffffff;
+  --support-card: #fff8fc;
   --support-ink: #20252c;
   --support-muted: #68646a;
   --support-field: #f2efef;
@@ -4109,7 +4110,7 @@ main {
   overflow: hidden;
   width: min(1120px, calc(100% - 32px));
   border-radius: 28px;
-  background: #fff;
+  background: var(--support-card);
   box-shadow: 0 10px 34px rgba(58, 38, 52, 0.045);
 }
 
@@ -4193,7 +4194,7 @@ main {
 .support-creator-shell .profile-bar {
   grid-template-columns: minmax(0, 1fr);
   padding: 24px 8px 14px;
-  background: #fff;
+  background: var(--support-card);
 }
 
 .support-creator-shell .profile-copy {
@@ -4267,12 +4268,172 @@ main {
 
 .support-story-card,
 .support-about-card,
+.support-ritual-card,
 .home-checkout-view .dodo-checkout-card,
 .home-checkout-view .donation-card.minimal-offering {
   border: 0;
   border-radius: 28px;
-  background: #fff;
+  background: var(--support-card);
   box-shadow: 0 10px 34px rgba(58, 38, 52, 0.045);
+}
+
+.support-ritual-card {
+  padding: clamp(24px, 4vw, 34px);
+}
+
+.support-ritual-card h2 {
+  margin: 0;
+  color: var(--support-ink);
+  font-size: clamp(22px, 2.6vw, 29px);
+  line-height: 1.22;
+}
+
+.ritual-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ritual-navigation {
+  display: flex;
+  gap: 8px;
+}
+
+.support-ritual-card .ritual-navigation button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #eadce5;
+  border-radius: 50%;
+  color: var(--support-ink);
+  background: #fff;
+  font: 700 28px/1 Inter, sans-serif;
+  cursor: pointer;
+}
+
+.support-ritual-card .ritual-navigation button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ritual-hint {
+  margin: 8px 0 20px;
+  color: var(--support-muted);
+  font-size: 14px;
+}
+
+.support-ritual-card form {
+  display: grid;
+  gap: 18px;
+}
+
+.ritual-options {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.support-ritual-card .ritual-option {
+  display: grid;
+  flex: 0 0 min(92%, 640px);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 22px;
+  color: var(--support-ink);
+  background: #f2efef;
+  scroll-snap-align: start;
+}
+
+.support-ritual-card .ritual-option.is-selected {
+  border-color: var(--support-pink);
+}
+
+.support-ritual-card .ritual-option-name {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border: 1px solid #e2dde0;
+  border-radius: 14px;
+  color: var(--support-ink);
+  background: #fff;
+  font: 800 19px/1.25 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ritual-option-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ritual-option-details input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #ded9dc;
+  border-radius: 12px;
+  color: var(--support-ink);
+  background: #fff;
+  font: 500 15px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ritual-option-details input:focus-visible {
+  outline: 3px solid rgba(255, 60, 172, 0.24);
+  outline-offset: 2px;
+}
+
+.ritual-option-price {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  padding: 2px 9px;
+  border-radius: 8px;
+  color: var(--support-ink);
+  background: #fff;
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.support-ritual-card .ritual-perform-button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--support-pink);
+  box-shadow: 0 12px 24px rgba(255, 60, 172, 0.21);
+  font: 900 16px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.support-ritual-card .ritual-perform-button:hover {
+  background: var(--support-pink-dark);
+}
+
+.support-ritual-card button:focus-visible {
+  outline: 3px solid var(--support-ink);
+  outline-offset: 3px;
+}
+
+.support-ritual-card #ritualStatus {
+  margin: 0;
+  color: var(--support-muted);
+  font-size: 14px;
 }
 
 .support-story-card,
@@ -4670,12 +4831,12 @@ main {
 
 .home-checkout-view .dodo-proceed-button,
 .home-checkout-view .minimal-offering .checkout-button {
-  min-height: 62px;
+  min-height: 48px;
   border-radius: 999px;
   color: #fff;
   background: var(--support-pink);
   box-shadow: 0 12px 24px rgba(255, 60, 172, 0.21);
-  font: 900 18px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 900 16px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .home-checkout-view .dodo-proceed-button:hover,
@@ -4791,6 +4952,7 @@ main {
 
   .support-story-card,
   .support-about-card,
+  .support-ritual-card,
   .home-checkout-view .dodo-checkout-card,
   .home-checkout-view .donation-card.minimal-offering {
     padding: 20px;

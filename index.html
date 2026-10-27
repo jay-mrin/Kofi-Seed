@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=166" />
+    <link rel="stylesheet" href="src/styles.css?v=177" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -423,6 +423,26 @@
               </dialog>
             </form>
           </section>
+          <section class="support-ritual-card" aria-labelledby="ritualTitle">
+            <div class="ritual-heading">
+              <h2 id="ritualTitle">Ritual</h2>
+              <div class="ritual-navigation" aria-label="Browse rituals">
+                <button id="previousRitual" type="button" aria-label="Previous ritual">‹</button>
+                <button id="nextRitual" type="button" aria-label="Next ritual">›</button>
+              </div>
+            </div>
+            <p class="ritual-hint">Swipe to explore, then tap to choose.</p>
+            <form id="ritualForm">
+              <div class="ritual-options" id="ritualOptions" aria-label="Choose a ritual">
+                <div class="ritual-option is-selected"><button class="ritual-option-name" type="button" aria-pressed="true">Divine Connection Ritual</button><div class="ritual-option-details"><input type="text" aria-label="Name for Divine Connection Ritual" autocomplete="name" maxlength="48" placeholder="Name" /><strong class="ritual-option-price">$199</strong></div></div>
+                <div class="ritual-option"><button class="ritual-option-name" type="button" aria-pressed="false">The Sacred Bond Ritual</button><div class="ritual-option-details"><input type="text" aria-label="Name for The Sacred Bond Ritual" autocomplete="name" maxlength="48" placeholder="Name" /><strong class="ritual-option-price">$299</strong></div></div>
+                <div class="ritual-option"><button class="ritual-option-name" type="button" aria-pressed="false">Soul Healing Ritual</button><div class="ritual-option-details"><input type="text" aria-label="Name for Soul Healing Ritual" autocomplete="name" maxlength="48" placeholder="Name" /><strong class="ritual-option-price">$399</strong></div></div>
+                <div class="ritual-option"><button class="ritual-option-name" type="button" aria-pressed="false">Eternal Bond Ritual</button><div class="ritual-option-details"><input type="text" aria-label="Name for Eternal Bond Ritual" autocomplete="name" maxlength="48" placeholder="Name" /><strong class="ritual-option-price">$499</strong></div></div>
+              </div>
+              <button class="ritual-perform-button" type="submit">Perform Ritual</button>
+              <p id="ritualStatus" role="status" aria-live="polite" hidden></p>
+            </form>
+          </section>
           </div>
           <section class="creator-shell support-creator-shell">
             <div class="cover-frame">
@@ -823,7 +843,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=133" defer></script>
+    <script src="src/app.js?v=138" defer></script>
     <script src="src/home-dodo-checkout.js?v=14" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

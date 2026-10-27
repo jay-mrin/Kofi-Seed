@@ -3331,6 +3331,38 @@ elements.showMoreButtons.forEach((button) => {
 });
 
 elements.supportForm.addEventListener("submit", submitDonation);
+const ritualOptions = [...document.querySelectorAll("#ritualOptions .ritual-option")];
+const previousRitualButton = document.querySelector("#previousRitual");
+const nextRitualButton = document.querySelector("#nextRitual");
+let selectedRitualIndex = 0;
+
+function selectRitual(index) {
+  selectedRitualIndex = Math.max(0, Math.min(index, ritualOptions.length - 1));
+  ritualOptions.forEach((option, optionIndex) => {
+    const selected = optionIndex === selectedRitualIndex;
+    option.classList.toggle("is-selected", selected);
+    option.querySelector(".ritual-option-name").setAttribute("aria-pressed", String(selected));
+  });
+  ritualOptions[selectedRitualIndex].scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  previousRitualButton.disabled = selectedRitualIndex === 0;
+  nextRitualButton.disabled = selectedRitualIndex === ritualOptions.length - 1;
+  document.querySelector("#ritualStatus").hidden = true;
+}
+
+ritualOptions.forEach((option, index) => option.addEventListener("click", () => selectRitual(index)));
+previousRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex - 1));
+nextRitualButton?.addEventListener("click", () => selectRitual(selectedRitualIndex + 1));
+if (previousRitualButton) previousRitualButton.disabled = true;
+document.querySelector("#ritualForm")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const status = document.querySelector("#ritualStatus");
+  const selectedRitual = ritualOptions[selectedRitualIndex];
+  const name = selectedRitual.querySelector(".ritual-option-name").textContent;
+  const ritualName = selectedRitual.querySelector("input").value.trim();
+  const price = selectedRitual.querySelector(".ritual-option-price").textContent;
+  status.textContent = `${name} (${price})${ritualName ? ` for ${ritualName}` : ""} is a preview for now. More is coming soon.`;
+  status.hidden = false;
+});
 elements.weeklySeedToggle.addEventListener("change", () => {
   elements.amountError.textContent = "";
   elements.nameError.textContent = "";
