@@ -5068,7 +5068,7 @@ main {
 
   .transaction-board {
     right: 12px;
-    width: min(63%, 360px);
+    width: min(47%, 300px);
     max-height: calc(100% - 20px);
     padding: 12px;
     border-radius: 18px;
@@ -5199,7 +5199,7 @@ main {
   }
 
   .transaction-board {
-    width: 65%;
+    width: 47%;
   }
 }
 
