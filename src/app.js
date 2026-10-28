@@ -7,7 +7,7 @@ const STORAGE_KEY = "sow-your-seed:v1";
 const ADMIN_SESSION_KEY = "sow-your-seed:admin-session";
 const DONOR_TOKEN_KEY = "sow-your-seed:donor-token";
 const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
-const ADMIN_PASSWORD = "sowseed";
+const DEMO_ADMIN_PASSWORD = "sowseed";
 const SEED_DOLLAR_VALUE = 11;
 const MIN_DONATION_AMOUNT = 11;
 const GOAL_SEED_COUNT = 100;
@@ -209,6 +209,12 @@ const elements = {
   adminLoginForm: document.querySelector("#adminLoginForm"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
   adminPanel: document.querySelector("#adminPanel"),
+  standardPortal: document.querySelector("#standardPortal"),
+  standardCalendarPrev: document.querySelector("#standardCalendarPrev"),
+  standardCalendarNext: document.querySelector("#standardCalendarNext"),
+  standardCalendarTitle: document.querySelector("#standardCalendarTitle"),
+  standardCalendarGrid: document.querySelector("#standardCalendarGrid"),
+  standardCalendarDetails: document.querySelector("#standardCalendarDetails"),
   adminPaymentAttemptList: document.querySelector("#adminPaymentAttemptList"),
   adminPaymentStarts24h: document.querySelector("#adminPaymentStarts24h"),
   adminPaymentStartsLabel: document.querySelector("#adminPaymentStartsLabel"),
@@ -312,6 +318,9 @@ let alternateCheckoutSource = "paypal";
 const initialAdminCalendarDate = getLatestDonationDateKey();
 let adminCalendarCursor = fromDateKey(initialAdminCalendarDate);
 let selectedAdminCalendarDate = initialAdminCalendarDate;
+let standardCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedStandardDate = toDateKey(new Date());
+let standardTransactions = [];
 const showSampleAdminOrder = new URLSearchParams(window.location.search).get("preview_order") === "1";
 if (showSampleAdminOrder) {
   selectedAdminCalendarDate = toDateKey(new Date());
@@ -3060,23 +3069,112 @@ function placePayPalCheckoutInPortal(inPortal) {
   elements.supportCard.hidden = !inPortal && !state.settings.paypalCheckoutVisible;
 }
 
+function renderStandardCalendar() {
+  if (!elements.standardCalendarGrid) return;
+  const year = standardCalendarCursor.getFullYear();
+  const month = standardCalendarCursor.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const byDate = new Map();
+  for (const transaction of standardTransactions) {
+    const date = String(transaction.createdAt || "").slice(0, 10);
+    if (!byDate.has(date)) byDate.set(date, []);
+    byDate.get(date).push(transaction);
+  }
+
+  elements.standardCalendarTitle.textContent = formatMonthTitle(standardCalendarCursor);
+  elements.standardCalendarGrid.replaceChildren();
+  for (let offset = 0; offset < firstDay.getDay(); offset += 1) {
+    const blank = document.createElement("span");
+    blank.className = "admin-calendar-day is-empty";
+    blank.setAttribute("role", "presentation");
+    elements.standardCalendarGrid.append(blank);
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(year, month, day);
+    const dateKey = toDateKey(date);
+    const records = byDate.get(dateKey) || [];
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `admin-calendar-day${records.length ? " has-donations" : ""}${dateKey === selectedStandardDate ? " is-selected" : ""}${dateKey === toDateKey(new Date()) ? " is-today" : ""}`;
+    button.setAttribute("role", "gridcell");
+    button.setAttribute("aria-selected", String(dateKey === selectedStandardDate));
+    button.setAttribute("aria-label", `${readableDate(date)}, ${records.length} successful transactions`);
+    button.dataset.standardCalendarDate = dateKey;
+    const dayNumber = document.createElement("span");
+    dayNumber.textContent = String(day);
+    button.append(dayNumber);
+    if (records.length) {
+      const count = document.createElement("small");
+      count.textContent = "●";
+      button.append(count);
+    }
+    elements.standardCalendarGrid.append(button);
+  }
+
+  const selected = byDate.get(selectedStandardDate) || [];
+  elements.standardCalendarDetails.replaceChildren();
+  const heading = document.createElement("h4");
+  heading.textContent = readableDate(fromDateKey(selectedStandardDate));
+  elements.standardCalendarDetails.append(heading);
+  if (!selected.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No successful transactions on this date.";
+    elements.standardCalendarDetails.append(empty);
+  } else {
+    for (const transaction of selected) {
+      const row = document.createElement("div");
+      row.className = "standard-transaction";
+      const name = document.createElement("span");
+      name.textContent = transaction.name || "Customer";
+      const amount = document.createElement("strong");
+      amount.textContent = money(Number(transaction.amount) || 0);
+      row.append(name, amount);
+      elements.standardCalendarDetails.append(row);
+    }
+  }
+}
+
+async function loadStandardTransactions() {
+  const month = getMonthKey(standardCalendarCursor);
+  elements.standardCalendarPrev.disabled = true;
+  elements.standardCalendarNext.disabled = true;
+  elements.standardCalendarDetails.textContent = "Loading successful transactions...";
+  try {
+    const payload = await callEdge(`standard-transactions?month=${month}`, { admin: true, method: "GET" });
+    if (month !== getMonthKey(standardCalendarCursor) || state.adminProfile?.role !== "standard") return;
+    standardTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
+    renderStandardCalendar();
+  } catch (error) {
+    elements.standardCalendarDetails.textContent = error.message || "Could not load transactions.";
+  } finally {
+    elements.standardCalendarPrev.disabled = false;
+    elements.standardCalendarNext.disabled = false;
+  }
+}
+
 function openAdminPanel() {
   const isSuperAdmin = state.adminProfile?.role === "super_admin";
+  const isStandard = state.adminProfile?.role === "standard";
 
   const titleEl = document.getElementById("adminTitle");
   if (titleEl) {
-    titleEl.textContent = isSuperAdmin ? "Super Admin Portal" : "Order controls";
+    titleEl.textContent = isStandard ? "Standard Portal" : isSuperAdmin ? "Super Admin Portal" : "Order controls";
   }
 
   const kickerEl = elements.adminPanel?.querySelector(".admin-panel-header .section-kicker");
   if (kickerEl) {
-    kickerEl.textContent = isSuperAdmin ? "Super Admin Portal" : "Admin portal";
+    kickerEl.textContent = isStandard ? "Standard portal" : isSuperAdmin ? "Super Admin Portal" : "Admin portal";
   }
 
   if (document.getElementById("adminSuperCheckoutSection")) {
     document.getElementById("adminSuperCheckoutSection").hidden = !isSuperAdmin;
   }
   elements.adminPanel.classList.toggle("is-super-admin", isSuperAdmin);
+  elements.adminPanel.classList.toggle("is-standard", isStandard);
+  elements.standardPortal.hidden = !isStandard;
+  elements.adminForm.hidden = isStandard;
+  elements.superAdminPayPalSection.hidden = !isSuperAdmin;
   if (elements.adminDonationHeading) {
     elements.adminDonationHeading.textContent = isSuperAdmin
       ? "SuperAdmin collection calendar"
@@ -3092,7 +3190,7 @@ function openAdminPanel() {
     const isSuperAdminSection = section.classList.contains("admin-super-checkout-section");
     const isCollectionCalendar = section.classList.contains("admin-donations");
     const isRoleScopedAnalytics = section.classList.contains("admin-analytics-section");
-    const shouldShow = isSuperAdmin
+    const shouldShow = isStandard ? false : isSuperAdmin
       ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics
       : !isSuperAdminSection;
     section.hidden = !shouldShow;
@@ -3105,11 +3203,15 @@ function openAdminPanel() {
     saveButton.style.display = isSuperAdmin ? "none" : "";
   }
 
-  renderAdminForm();
-  renderAdminCalendar();
-  renderAdminAnalytics();
+  if (!isStandard) {
+    renderAdminForm();
+    renderAdminCalendar();
+    renderAdminAnalytics();
+  }
   
-  if (isSuperAdmin) {
+  if (isStandard) {
+    elements.adminActionStatus.hidden = true;
+  } else if (isSuperAdmin) {
     setAdminStatus("SuperAdmin ready. Manage checkout display and private collections.", "info", { persist: true });
   } else {
     setAdminStatus("Admin ready. Manage orders, site settings, and analytics.", "info", { persist: true });
@@ -3625,6 +3727,26 @@ elements.nameInput?.addEventListener("input", () => {
 });
 
 elements.adminMenuButton.addEventListener("click", openAdminLogin);
+elements.standardCalendarPrev.addEventListener("click", () => {
+  standardCalendarCursor = new Date(standardCalendarCursor.getFullYear(), standardCalendarCursor.getMonth() - 1, 1);
+  selectedStandardDate = toDateKey(standardCalendarCursor);
+  standardTransactions = [];
+  renderStandardCalendar();
+  loadStandardTransactions();
+});
+elements.standardCalendarNext.addEventListener("click", () => {
+  standardCalendarCursor = new Date(standardCalendarCursor.getFullYear(), standardCalendarCursor.getMonth() + 1, 1);
+  selectedStandardDate = toDateKey(standardCalendarCursor);
+  standardTransactions = [];
+  renderStandardCalendar();
+  loadStandardTransactions();
+});
+elements.standardCalendarGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-standard-calendar-date]");
+  if (!button) return;
+  selectedStandardDate = button.dataset.standardCalendarDate;
+  renderStandardCalendar();
+});
 elements.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -3633,7 +3755,7 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
     const password = elements.adminPasswordInput.value;
 
     if (!email || !password) {
-      elements.adminPasswordError.textContent = "Enter your admin email and password.";
+      elements.adminPasswordError.textContent = "Enter your email and password.";
       return;
     }
 
@@ -3642,10 +3764,14 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
       await loadAdminProfile();
       closeAdminLogin();
       openAdminPanel();
-      await Promise.all([
-        loadAdminDonations({ announce: true }),
-        loadAdminAnalytics({ announce: true }),
-      ]);
+      if (state.adminProfile?.role === "standard") {
+        await loadStandardTransactions();
+      } else {
+        await Promise.all([
+          loadAdminDonations({ announce: true }),
+          loadAdminAnalytics({ announce: true }),
+        ]);
+      }
     } catch (error) {
       elements.adminPasswordError.textContent = error.message || "Could not sign in.";
       elements.adminPasswordInput.select();
@@ -3654,7 +3780,7 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (elements.adminPasswordInput.value !== ADMIN_PASSWORD) {
+  if (elements.adminPasswordInput.value !== DEMO_ADMIN_PASSWORD) {
     elements.adminPasswordError.textContent = "Incorrect password.";
     elements.adminPasswordInput.select();
     return;

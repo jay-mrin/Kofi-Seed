@@ -42,5 +42,8 @@ verify_jwt = true
 [functions.admin-analytics]
 verify_jwt = true
 
+[functions.standard-transactions]
+verify_jwt = true
+
 [functions.track-checkout-event]
 verify_jwt = false

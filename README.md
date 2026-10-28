@@ -14,7 +14,7 @@ Then open `http://127.0.0.1:5173`.
 
 When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, Dodo checkout, and PayPal checkout are loaded through Supabase Edge Functions.
 
-Both portals retain separate calendars and payment records. Historical Admin PayPal orders remain visible alongside new Admin Dodo orders; new PayPal orders belong to SuperAdmin. Each portal uses its own analytics reset timestamp.
+Admin and SuperAdmin retain separate calendars and payment records. The Standard portal has a read only calendar of successful transactions showing names and amounts. Historical Admin PayPal orders remain visible alongside new Admin Dodo orders; new PayPal orders belong to SuperAdmin. Admin and SuperAdmin each use their own analytics reset timestamp.
 
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
@@ -61,6 +61,10 @@ on conflict (user_id) do update set email = excluded.email, role = excluded.role
 
 insert into public.admin_profiles (user_id, email, role)
 values ('YOUR_SUPERADMIN_AUTH_USER_ID', 'superadmin@example.com', 'super_admin')
+on conflict (user_id) do update set email = excluded.email, role = excluded.role;
+
+insert into public.admin_profiles (user_id, email, role)
+values ('YOUR_STANDARD_AUTH_USER_ID', 'standard@example.com', 'standard')
 on conflict (user_id) do update set email = excluded.email, role = excluded.role;
 ```
 

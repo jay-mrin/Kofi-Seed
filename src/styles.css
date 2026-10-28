@@ -473,6 +473,57 @@ a {
   visibility: visible;
 }
 
+.standard-portal {
+  width: min(760px, 100%);
+  margin: 28px auto;
+  padding: clamp(18px, 3vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.standard-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.standard-calendar-header h3 {
+  margin: 0;
+  text-align: center;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+.standard-calendar-details {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.standard-calendar-details h4 {
+  margin: 0 0 12px;
+}
+
+.standard-calendar-details p {
+  color: var(--muted);
+}
+
+.standard-transaction {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.standard-transaction span {
+  overflow-wrap: anywhere;
+}
+
 .admin-panel-header,
 .admin-donation-heading,
 .admin-actions {

@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=178" />
+    <link rel="stylesheet" href="src/styles.css?v=179" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -46,8 +46,8 @@
     <dialog class="admin-login-dialog" id="adminLoginDialog" aria-labelledby="adminLoginTitle">
       <form class="admin-login-card" id="adminLoginForm">
         <div>
-          <p class="section-kicker">Admin login</p>
-          <h2 id="adminLoginTitle">Enter admin password</h2>
+          <p class="section-kicker">Portal login</p>
+          <h2 id="adminLoginTitle">Enter your account details</h2>
         </div>
         <label>
           <span>Email</span>
@@ -115,6 +115,19 @@
       </div>
 
       <div class="admin-status" id="adminActionStatus" role="status" aria-live="polite" hidden></div>
+
+      <section class="standard-portal" id="standardPortal" hidden aria-label="Standard portal successful transactions">
+        <div class="standard-calendar-header">
+          <button class="admin-calendar-nav" id="standardCalendarPrev" type="button" aria-label="Previous month">&#8249;</button>
+          <h3 id="standardCalendarTitle">Successful transactions</h3>
+          <button class="admin-calendar-nav" id="standardCalendarNext" type="button" aria-label="Next month">&#8250;</button>
+        </div>
+        <div class="admin-calendar-weekdays" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="admin-calendar-grid" id="standardCalendarGrid" role="grid" aria-label="Successful transactions by day"></div>
+        <div class="standard-calendar-details" id="standardCalendarDetails" aria-live="polite"></div>
+      </section>
 
       <section class="admin-section admin-super-checkout-section superadmin-paypal-section" id="superAdminPayPalSection" hidden>
         <details class="checkout-routing-details">
@@ -875,7 +888,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=140" defer></script>
+    <script src="src/app.js?v=141" defer></script>
     <script src="src/home-dodo-checkout.js?v=15" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

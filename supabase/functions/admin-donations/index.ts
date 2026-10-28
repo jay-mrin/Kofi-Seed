@@ -56,7 +56,8 @@ function applyDateRange(query: any, fromDate: string, toDate: string) {
   return nextQuery;
 }
 
-function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
+function applyAdminDonationScope(query: any, role: "admin" | "super_admin" | "standard") {
+  if (role === "standard") throw new Error("Standard accounts cannot access admin orders.");
   if (role === "super_admin") {
     return query
       .eq("payment_route", "superadmin")
