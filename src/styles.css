@@ -5096,7 +5096,7 @@ main {
   }
 
   .home-checkout-view {
-    padding: 4px 12px 40px;
+    padding: 0 12px 40px;
   }
 
   .support-page-grid,
@@ -5118,7 +5118,7 @@ main {
   }
 
   .home-checkout-view .dodo-checkout-card {
-    padding: 14px 20px 16px;
+    padding: 6px 20px 16px;
   }
 
   .home-checkout-view .dodo-checkout-card .checkout-card-heading {
