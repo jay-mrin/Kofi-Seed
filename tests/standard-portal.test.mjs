@@ -9,6 +9,10 @@ test("standard transactions are authenticated and expose only successful names, 
   assert.match(source, /request\.method !== "GET"/);
   assert.match(source, /\.select\("display_name, amount, created_at"\)/);
   assert.match(source, /\.eq\("paypal_status", "COMPLETED"\)/);
+  assert.match(source, /\.eq\("payment_route", "standard"\)/);
+  assert.match(source, /\.eq\("visibility_scope", "public"\)/);
+  assert.match(source, /\.in\("payment_method", \["paypal", "dodo"\]\)/);
+  assert.doesNotMatch(source, /\.in\("payment_route"|\.eq\("payment_route", "superadmin"\)/);
   assert.match(source, /return jsonResponse\(\{ transactions \}\)/);
   assert.doesNotMatch(source, /raw_payment|payer_email|supporter_message|digital_orders/);
 });
