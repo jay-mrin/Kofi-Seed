@@ -4448,22 +4448,16 @@ main {
   cursor: default;
 }
 
-.ritual-hint {
-  margin: 8px 0 20px;
-  color: var(--support-muted);
-  font-size: 14px;
-}
-
 .support-ritual-card form {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .ritual-options {
   display: flex;
   gap: 14px;
   overflow-x: auto;
-  padding: 2px 2px 12px;
+  padding: 2px 2px 8px;
   scroll-snap-type: x mandatory;
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
@@ -5102,7 +5096,12 @@ main {
   }
 
   .home-checkout-view {
-    padding: 8px 12px 50px;
+    padding: 4px 12px 40px;
+  }
+
+  .support-page-grid,
+  .support-checkout-column {
+    gap: 10px;
   }
 
   .support-story-column {
@@ -5116,6 +5115,45 @@ main {
   .home-checkout-view .donation-card.minimal-offering {
     padding: 20px;
     border-radius: 22px;
+  }
+
+  .home-checkout-view .dodo-checkout-card {
+    padding: 14px 20px 16px;
+  }
+
+  .home-checkout-view .dodo-checkout-card .checkout-card-heading {
+    margin-bottom: 12px;
+  }
+
+  .home-checkout-view .dodo-checkout-card .checkout-card-heading h2 {
+    margin: 0;
+  }
+
+  .support-ritual-card {
+    padding: 14px 20px 16px;
+  }
+
+  .support-ritual-card form {
+    gap: 10px;
+  }
+
+  .ritual-options {
+    padding-bottom: 4px;
+  }
+
+  .support-ritual-card .ritual-option {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .support-ritual-card .ritual-option-name {
+    min-height: 54px;
+    padding: 8px 12px;
+    font-size: 17px;
+  }
+
+  .ritual-option-details input {
+    min-height: 40px;
   }
 
   .home-checkout-view .dodo-checkout-summary,
