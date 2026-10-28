@@ -295,6 +295,7 @@ const elements = {
   supportForm: document.querySelector("#supportForm"),
   supportCard: document.querySelector("#support"),
   supportHomeColumn: document.querySelector(".support-checkout-column"),
+  supportRitualCard: document.querySelector(".support-ritual-card"),
   superAdminPayPalSection: document.querySelector("#superAdminPayPalSection"),
   superAdminCheckoutHost: document.querySelector("#superAdminCheckoutHost"),
   toast: document.querySelector("#toast"),
@@ -3131,10 +3132,15 @@ function closeAdminLogin() {
 }
 
 function placePayPalCheckoutInPortal(inPortal) {
-  const destination = inPortal ? elements.superAdminCheckoutHost : elements.supportHomeColumn;
-  if (!destination || !elements.supportCard) return;
-
-  if (elements.supportCard.parentElement !== destination) destination.appendChild(elements.supportCard);
+  if (!elements.supportCard) return;
+  if (inPortal) {
+    if (elements.superAdminCheckoutHost && elements.supportCard.parentElement !== elements.superAdminCheckoutHost) {
+      elements.superAdminCheckoutHost.appendChild(elements.supportCard);
+    }
+  } else if (elements.supportHomeColumn && elements.supportRitualCard
+    && elements.supportCard.nextElementSibling !== elements.supportRitualCard) {
+    elements.supportHomeColumn.insertBefore(elements.supportCard, elements.supportRitualCard);
+  }
   elements.supportCard.hidden = !inPortal && !state.settings.paypalCheckoutVisible;
 }
 

@@ -38,7 +38,7 @@ test("SuperAdmin Checkout keeps the PayPal form independent of the Home display 
 
   assert.match(html, /id="superAdminPayPalSection" hidden>[\s\S]*<strong>Checkout<\/strong>[\s\S]*id="superAdminCheckoutHost"/);
   assert.ok(html.indexOf('id="superAdminCheckoutHost"') < html.indexOf('id="adminForm"'));
-  assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*destination\.appendChild\(elements\.supportCard\)[\s\S]*elements\.supportCard\.hidden = !inPortal && !state\.settings\.paypalCheckoutVisible/);
+  assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*superAdminCheckoutHost\.appendChild\(elements\.supportCard\)[\s\S]*supportHomeColumn\.insertBefore\(elements\.supportCard, elements\.supportRitualCard\)[\s\S]*elements\.supportCard\.hidden = !inPortal && !state\.settings\.paypalCheckoutVisible/);
   assert.match(app, /placePayPalCheckoutInPortal\(isSuperAdmin\)/);
   assert.match(app, /function closeAdminPanel\(\) \{\s*placePayPalCheckoutInPortal\(false\)/);
   assert.match(app, /const inSuperAdminPortal = elements\.supportCard\.parentElement === elements\.superAdminCheckoutHost;[\s\S]*elements\.supportCard\.hidden = !inSuperAdminPortal && !settings\.paypalCheckoutVisible/);
