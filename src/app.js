@@ -861,10 +861,11 @@ async function loadTransactionBoard() {
         row.className = "transaction-board-item";
         const rank = document.createElement("span");
         rank.className = "transaction-board-rank";
-        rank.textContent = `#${++transactionBoardCount}`;
+        transactionBoardCount += 1;
+        rank.textContent = transactionBoardCount <= 3 ? `#${transactionBoardCount}` : "";
         const name = document.createElement("span");
         name.className = "transaction-board-name";
-        name.textContent = transaction.name || "Customer";
+        name.textContent = String(transaction.name || "Customer").trim().split(/\s+/u)[0] || "Customer";
         name.title = name.textContent;
         const seeds = document.createElement("strong");
         seeds.className = "transaction-board-seeds";

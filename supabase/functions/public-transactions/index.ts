@@ -30,7 +30,10 @@ Deno.serve(async (request) => {
     return jsonResponse({
       transactions: rows
         .filter((row) => row.raw_payment?.mode !== "test")
-        .map((row) => ({ name: row.display_name, seedCount: Number(row.seed_count) })),
+        .map((row) => ({
+          name: String(row.display_name || "Customer").trim().split(/\s+/u)[0] || "Customer",
+          seedCount: Number(row.seed_count),
+        })),
       nextOffset: rows.length === PAGE_SIZE ? offset + PAGE_SIZE : null,
     });
   } catch (error) {
