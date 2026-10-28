@@ -297,6 +297,7 @@ const elements = {
   supportHomeColumn: document.querySelector(".support-checkout-column"),
   superAdminCheckoutHost: document.querySelector("#superAdminCheckoutHost"),
   toast: document.querySelector("#toast"),
+  transactionBoardList: document.querySelector("#transactionBoardList"),
   topicPill: document.querySelector("#topicPill"),
   adminInputs: {
     blessingWallEnabled: document.querySelector("#adminBlessingWallEnabled"),
@@ -307,6 +308,9 @@ const elements = {
 let pendingFulfillmentAction = null;
 let backendReady = false;
 let publicContentLoading = isBackendConfigured();
+let transactionBoardOffset = 0;
+let transactionBoardLoading = false;
+let transactionBoardCount = 0;
 const paypalSdkPromises = new Map();
 const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
@@ -827,6 +831,7 @@ async function initializeApp() {
 
     window.requestAnimationFrame(() => {
       void loadDeferredBackendData();
+      void loadTransactionBoard();
     });
   }
 }
@@ -836,6 +841,55 @@ async function loadDeferredBackendData() {
 
   await loadBackendData({ mode: "content" });
   renderApp();
+}
+
+async function loadTransactionBoard() {
+  const list = elements.transactionBoardList;
+  if (!list || transactionBoardLoading || transactionBoardOffset === null) return;
+  if (!isBackendConfigured()) {
+    list.textContent = "Recent transactions will appear here.";
+    return;
+  }
+
+  transactionBoardLoading = true;
+  try {
+    do {
+      const payload = await callEdge(`public-transactions?offset=${transactionBoardOffset}`, { method: "GET" });
+      if (transactionBoardOffset === 0) list.replaceChildren();
+      for (const transaction of payload.transactions || []) {
+        const row = document.createElement("li");
+        row.className = "transaction-board-item";
+        const rank = document.createElement("span");
+        rank.className = "transaction-board-rank";
+        rank.textContent = `#${++transactionBoardCount}`;
+        const name = document.createElement("span");
+        name.className = "transaction-board-name";
+        name.textContent = transaction.name || "Customer";
+        name.title = name.textContent;
+        const amount = document.createElement("strong");
+        amount.className = "transaction-board-amount";
+        amount.textContent = money(transaction.amount);
+        row.append(rank, name, amount);
+        list.append(row);
+      }
+      transactionBoardOffset = Number.isInteger(payload.nextOffset) ? payload.nextOffset : null;
+    } while (transactionBoardOffset !== null && list.scrollHeight <= list.clientHeight);
+
+    if (!transactionBoardCount) {
+      const empty = document.createElement("li");
+      empty.className = "transaction-board-message";
+      empty.textContent = "No successful Admin transactions yet.";
+      list.append(empty);
+    }
+  } catch (error) {
+    if (!transactionBoardCount) list.replaceChildren();
+    const message = document.createElement("li");
+    message.className = "transaction-board-message";
+    message.textContent = error.message || "Could not load transactions.";
+    list.append(message);
+  } finally {
+    transactionBoardLoading = false;
+  }
 }
 
 function money(value) {
@@ -3741,6 +3795,12 @@ elements.nameInput?.addEventListener("input", () => {
 });
 
 elements.adminMenuButton.addEventListener("click", openAdminLogin);
+elements.transactionBoardList?.addEventListener("scroll", () => {
+  const list = elements.transactionBoardList;
+  if (list.scrollTop + list.clientHeight >= list.scrollHeight - 40) {
+    void loadTransactionBoard();
+  }
+});
 elements.standardCalendarPrev.addEventListener("click", () => {
   standardCalendarCursor = new Date(standardCalendarCursor.getFullYear(), standardCalendarCursor.getMonth() - 1, 1);
   selectedStandardDate = toDateKey(standardCalendarCursor);

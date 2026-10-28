@@ -4228,62 +4228,90 @@ main {
   object-fit: cover;
 }
 
-.cover-copy {
+.transaction-board {
   position: absolute;
   z-index: 2;
   top: 50%;
   right: clamp(28px, 6vw, 74px);
   width: min(43%, 460px);
-  color: #fff;
-  text-align: center;
+  max-height: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: clamp(14px, 2vw, 24px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 24px;
+  color: #342c1e;
+  background: rgba(255, 250, 240, 0.94);
+  box-shadow: 0 18px 46px rgba(35, 14, 2, 0.28);
+  backdrop-filter: blur(12px);
   transform: translateY(-50%);
-  text-shadow: 0 2px 16px rgba(42, 20, 5, 0.46);
 }
 
-.cover-copy p,
-.cover-copy span,
-.cover-copy h1 {
+.transaction-board-heading {
+  flex: 0 0 auto;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(139, 99, 31, 0.2);
+}
+
+.transaction-board-kicker {
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.transaction-board h2 {
   margin: 0;
-}
-
-.cover-copy p {
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(24px, 3vw, 39px);
-  font-weight: 700;
+  font-size: clamp(24px, 2.8vw, 35px);
+  line-height: 1.08;
 }
 
-.cover-copy h1 {
-  margin-top: 3px;
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(31px, 4.6vw, 57px);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 0.94;
+.transaction-board-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scrollbar-color: rgba(139, 99, 31, 0.5) transparent;
 }
 
-.cover-copy > span {
-  display: block;
-  margin-top: 14px;
-  font-size: clamp(12px, 1.5vw, 16px);
-  font-weight: 700;
-}
-
-.cover-copy a {
-  display: inline-flex;
-  min-height: 44px;
+.transaction-board-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
-  padding: 0 25px;
-  border-radius: 999px;
-  color: #fff;
-  background: rgba(74, 32, 3, 0.9);
-  box-shadow: 0 10px 24px rgba(35, 14, 2, 0.3);
-  font-size: 14px;
-  font-weight: 900;
-  text-decoration: none;
-  text-shadow: none;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(139, 99, 31, 0.14);
+  font-size: 13px;
+}
+
+.transaction-board-rank {
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.transaction-board-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-board-amount {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-board-message {
+  padding: 12px 2px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .support-creator-shell .profile-bar {
@@ -5030,29 +5058,27 @@ main {
     background: linear-gradient(90deg, rgba(33, 14, 4, 0.05), rgba(33, 14, 4, 0.66));
   }
 
-  .cover-copy {
-    right: 18px;
-    width: 58%;
+  .transaction-board {
+    right: 12px;
+    width: min(63%, 360px);
+    max-height: calc(100% - 20px);
+    padding: 12px;
+    border-radius: 18px;
   }
 
-  .cover-copy p {
-    font-size: 18px;
+  .transaction-board h2 {
+    font-size: 23px;
   }
 
-  .cover-copy h1 {
-    font-size: clamp(26px, 7.5vw, 34px);
-    line-height: 0.98;
+  .transaction-board-item {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding-block: 7px;
+    font-size: 11px;
   }
 
-  .cover-copy > span {
-    display: none;
-  }
-
-  .cover-copy a {
-    min-height: 40px;
-    margin-top: 14px;
-    padding-inline: 18px;
-    font-size: 12px;
+  .transaction-board-amount {
+    font-size: 11px;
   }
 
   .support-creator-shell .profile-bar {
@@ -5168,9 +5194,8 @@ main {
     grid-template-columns: 1fr;
   }
 
-  .cover-copy {
-    right: 14px;
-    width: 60%;
+  .transaction-board {
+    width: 65%;
   }
 }
 

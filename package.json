@@ -12,7 +12,7 @@
     "check": "npm run check:js && npm run lint && npm test",
     "supabase:functions:serve": "supabase functions serve --env-file .env",
     "supabase:db:push": "supabase db push",
-    "supabase:deploy": "supabase functions deploy public-bootstrap create-dodo-checkout confirm-dodo-payment dodo-webhook create-paypal-order capture-paypal-order prepare-paypal-subscription confirm-paypal-subscription paypal-webhook admin-profile admin-settings admin-donations admin-subscriptions admin-analytics standard-transactions track-checkout-event"
+    "supabase:deploy": "supabase functions deploy public-bootstrap public-transactions create-dodo-checkout confirm-dodo-payment dodo-webhook create-paypal-order capture-paypal-order prepare-paypal-subscription confirm-paypal-subscription paypal-webhook admin-profile admin-settings admin-donations admin-subscriptions admin-analytics standard-transactions track-checkout-event"
   },
   "devDependencies": {
     "eslint": "^9.39.5",
