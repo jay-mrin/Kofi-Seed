@@ -4242,14 +4242,27 @@ main {
   border: 0;
   border-radius: 24px;
   color: #fffdf7;
-  background: linear-gradient(135deg, rgba(65, 36, 18, 0.2), rgba(255, 255, 255, 0.1));
-  box-shadow: 0 18px 46px rgba(35, 14, 2, 0.25);
-  backdrop-filter: blur(18px) saturate(1.35);
-  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  background: transparent;
   transform: translateY(-50%);
 }
 
+.transaction-board::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, rgba(55, 34, 21, 0.3) 0%, rgba(255, 255, 255, 0.12) 52%, transparent 95%);
+  backdrop-filter: blur(10px) saturate(1.35);
+  -webkit-backdrop-filter: blur(10px) saturate(1.35);
+  mask-image: radial-gradient(ellipse at center, #000 45%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 45%, transparent 100%);
+  pointer-events: none;
+  content: "";
+}
+
 .transaction-board-list {
+  position: relative;
+  z-index: 1;
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -4261,7 +4274,7 @@ main {
 
 .transaction-board-item {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 10px 2px;
@@ -4270,7 +4283,15 @@ main {
   text-shadow: 0 1px 8px rgba(35, 14, 2, 0.5);
 }
 
+.transaction-board-person {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+}
+
 .transaction-board-rank {
+  flex: 0 0 auto;
+  margin-left: 0;
   color: rgba(255, 255, 255, 0.8);
   font-size: 11px;
   font-weight: 800;
@@ -5054,7 +5075,7 @@ main {
   }
 
   .transaction-board-item {
-    grid-template-columns: 22px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 6px;
     padding-block: 7px;
     font-size: 11px;

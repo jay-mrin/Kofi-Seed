@@ -23,9 +23,11 @@ test("public ranking board exposes only completed Admin-routed names and seed co
   assert.match(html, /class="transaction-board"[\s\S]*id="transactionBoardList"/);
   assert.doesNotMatch(html, /Admin payments only|Recent Transactions|Sow Your Seed for<br \/>Your Love &amp; Soulmate|Sow a seed <span/);
   assert.match(app, /public-transactions\?offset=\$\{transactionBoardOffset\}/);
-  assert.match(app, /transactionBoardCount <= 3 \? `#\$\{transactionBoardCount\}` : ""/);
+  assert.match(app, /person\.append\(name\);\s*if \(transactionBoardCount <= 3\) \{[\s\S]*rank\.textContent = `#\$\{transactionBoardCount\}`;\s*person\.append\(rank\);/);
+  assert.match(app, /row\.append\(person, seeds\)/);
   assert.match(app, /name\.textContent = String\(transaction\.name \|\| "Customer"\)\.trim\(\)\.split\(\/\\s\+\/u\)\[0\]/);
   assert.match(app, /seeds\.textContent = `\$\{seedCount\} 🌱`/);
   assert.match(styles, /\.transaction-board \{[\s\S]*?border: 0;/);
+  assert.match(styles, /\.transaction-board::before \{[\s\S]*?mask-image: radial-gradient\(ellipse at center, #000 45%, transparent 100%\)/);
   assert.match(styles, /\.transaction-board-item \{[\s\S]*?border-bottom: 0;/);
 });

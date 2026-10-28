@@ -859,20 +859,26 @@ async function loadTransactionBoard() {
       for (const transaction of payload.transactions || []) {
         const row = document.createElement("li");
         row.className = "transaction-board-item";
-        const rank = document.createElement("span");
-        rank.className = "transaction-board-rank";
         transactionBoardCount += 1;
-        rank.textContent = transactionBoardCount <= 3 ? `#${transactionBoardCount}` : "";
+        const person = document.createElement("span");
+        person.className = "transaction-board-person";
         const name = document.createElement("span");
         name.className = "transaction-board-name";
         name.textContent = String(transaction.name || "Customer").trim().split(/\s+/u)[0] || "Customer";
         name.title = name.textContent;
+        person.append(name);
+        if (transactionBoardCount <= 3) {
+          const rank = document.createElement("span");
+          rank.className = "transaction-board-rank";
+          rank.textContent = `#${transactionBoardCount}`;
+          person.append(rank);
+        }
         const seeds = document.createElement("strong");
         seeds.className = "transaction-board-seeds";
         const seedCount = Math.max(0, Number(transaction.seedCount) || 0);
         seeds.textContent = `${seedCount} 🌱`;
         seeds.setAttribute("aria-label", `${seedCount} seed${seedCount === 1 ? "" : "s"}`);
-        row.append(rank, name, seeds);
+        row.append(person, seeds);
         list.append(row);
       }
       transactionBoardOffset = Number.isInteger(payload.nextOffset) ? payload.nextOffset : null;
