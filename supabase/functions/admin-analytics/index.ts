@@ -1,4 +1,4 @@
-import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
 
 type PaymentRoute = "standard" | "superadmin";
@@ -39,7 +39,7 @@ async function getAnalyticsSince(supabase: any, paymentRoute: PaymentRoute) {
   };
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -151,4 +151,4 @@ Deno.serve(async (request) => {
     if (error instanceof Response) return error;
     return errorResponse("Could not load checkout analytics.", 500, String(error));
   }
-});
+}));

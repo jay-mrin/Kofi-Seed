@@ -1,4 +1,5 @@
 import {
+  withCors,
   errorResponse,
   handleOptions,
   jsonResponse,
@@ -30,7 +31,7 @@ function isValidEmail(value: string) {
 
 const MIN_AMOUNT_CENTS = 1100;
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -127,4 +128,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not create PayPal order.", 500, String(error));
   }
-});
+}));

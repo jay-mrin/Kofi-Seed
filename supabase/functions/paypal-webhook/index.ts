@@ -1,4 +1,4 @@
-import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { verifyPayPalWebhook } from "../_shared/paypal.ts";
 import {
   handleSubscriptionWebhook,
@@ -6,7 +6,7 @@ import {
 } from "../_shared/subscriptions.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -225,4 +225,4 @@ Deno.serve(async (request) => {
       500,
     );
   }
-});
+}));

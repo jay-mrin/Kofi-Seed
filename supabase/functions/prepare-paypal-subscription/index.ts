@@ -1,4 +1,5 @@
 import {
+  withCors,
   errorResponse,
   handleOptions,
   jsonResponse,
@@ -114,7 +115,7 @@ async function ensureWeeklyPlan(
   return created;
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -212,4 +213,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not prepare the weekly PayPal subscription.", 500, String(error));
   }
-});
+}));

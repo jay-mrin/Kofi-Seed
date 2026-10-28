@@ -1,7 +1,7 @@
-import { errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { finalizeDodoPayment } from "../_shared/dodo-orders.ts";
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
   if (request.method !== "POST") return errorResponse("Method not allowed.", 405);
@@ -19,4 +19,4 @@ Deno.serve(async (request) => {
       String(error),
     );
   }
-});
+}));

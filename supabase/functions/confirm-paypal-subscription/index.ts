@@ -1,4 +1,5 @@
 import {
+  withCors,
   errorResponse,
   handleOptions,
   jsonResponse,
@@ -21,7 +22,7 @@ function mapStatus(value: unknown) {
   return "pending";
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -116,4 +117,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not confirm the weekly PayPal subscription.", 500, String(error));
   }
-});
+}));

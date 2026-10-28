@@ -295,6 +295,7 @@ const elements = {
   supportForm: document.querySelector("#supportForm"),
   supportCard: document.querySelector("#support"),
   supportHomeColumn: document.querySelector(".support-checkout-column"),
+  superAdminPayPalSection: document.querySelector("#superAdminPayPalSection"),
   superAdminCheckoutHost: document.querySelector("#superAdminCheckoutHost"),
   toast: document.querySelector("#toast"),
   transactionBoardList: document.querySelector("#transactionBoardList"),

@@ -1,4 +1,4 @@
-import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { getPayPalClientId } from "../_shared/paypal.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 
@@ -166,7 +166,7 @@ async function loadPublicContent(
   };
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -212,4 +212,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not load public data.", 500, String(error));
   }
-});
+}));

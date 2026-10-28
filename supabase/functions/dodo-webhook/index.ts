@@ -1,9 +1,9 @@
-import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { verifyDodoWebhook } from "../_shared/dodo.ts";
 import { finalizeDodoPayment } from "../_shared/dodo-orders.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
   if (request.method !== "POST") return errorResponse("Method not allowed.", 405);
@@ -55,4 +55,4 @@ Deno.serve(async (request) => {
     console.error("Could not persist verified Dodo webhook.", error);
     return errorResponse("Verified Dodo webhook could not be persisted.", 500);
   }
-});
+}));

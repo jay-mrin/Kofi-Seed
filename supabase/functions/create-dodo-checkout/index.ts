@@ -1,4 +1,4 @@
-import { errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { createDodoCheckoutSession, getDodoCurrency, getDodoProductId } from "../_shared/dodo.ts";
 import { getRandomOrderRequest } from "../_shared/order-requests.ts";
 import { getRitual } from "../_shared/rituals.ts";
@@ -17,7 +17,7 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
   if (request.method !== "POST") return errorResponse("Method not allowed.", 405);
@@ -101,4 +101,4 @@ Deno.serve(async (request) => {
     }
     return errorResponse("Could not create Dodo checkout.", 500, String(error));
   }
-});
+}));

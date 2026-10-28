@@ -1,4 +1,5 @@
 import {
+  withCors,
   errorResponse,
   handleOptions,
   jsonResponse,
@@ -74,7 +75,7 @@ function applySiteSettings(
   return next;
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -168,4 +169,4 @@ Deno.serve(async (request) => {
     if (error instanceof Response) return error;
     return errorResponse("Could not save admin settings.", 500, String(error));
   }
-});
+}));

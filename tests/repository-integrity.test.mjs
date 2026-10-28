@@ -159,15 +159,18 @@ test("cancelled Dodo payments open the seed-not-sown dialog", () => {
   assert.doesNotMatch(checkout, /Dodo payment was cancelled\. You can try again when you are ready\./);
 });
 
-test("edge requests normalize the configured CORS origin and hide alternate cards by default", () => {
+test("edge requests allow known site origins and hide alternate cards by default", () => {
   const http = readRepositoryFile("supabase/functions/_shared/http.ts");
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
 
-  assert.match(http, /new URL\(configuredOrigin\)\.origin/);
+  assert.match(http, /"https:\/\/kofiseed\.vercel\.app"/);
+  assert.match(http, /"https:\/\/www\.seedgarden\.space"/);
+  assert.match(http, /allowedOrigins\.has\(origin\)/);
   assert.match(html, /id="dodoCardButton" hidden/);
   assert.match(html, /id="cardButton" hidden/);
   assert.match(app, /The payment service could not be reached\. Check your connection and try again\./);
+  assert.match(app, /superAdminPayPalSection: document\.querySelector\("#superAdminPayPalSection"\)/);
 });
 
 test("Google AdSense has been removed from active pages and settings", () => {

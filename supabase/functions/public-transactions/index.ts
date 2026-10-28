@@ -1,9 +1,9 @@
-import { errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
 const PAGE_SIZE = 40;
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
   if (request.method !== "GET") return errorResponse("Method not allowed.", 405);
@@ -39,4 +39,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not load recent transactions.", 500, String(error));
   }
-});
+}));

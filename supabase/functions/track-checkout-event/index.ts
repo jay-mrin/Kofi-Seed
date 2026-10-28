@@ -1,4 +1,4 @@
-import { errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
+import { withCors, errorResponse, handleOptions, jsonResponse, readJson } from "../_shared/http.ts";
 import { centsToMoney, parseMoneyToCents } from "../_shared/paypal.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 
@@ -20,7 +20,7 @@ function sanitizePath(value: unknown) {
   return path.slice(0, 180);
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
 
@@ -52,4 +52,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return errorResponse("Could not record checkout event.", 500, String(error));
   }
-});
+}));
