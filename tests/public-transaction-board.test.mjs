@@ -5,7 +5,7 @@ import { URL } from "node:url";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("public ranking board exposes only completed Admin-routed names and amounts", () => {
+test("public ranking board exposes only completed Admin-routed names and seed counts", () => {
   const endpoint = read("../supabase/functions/public-transactions/index.ts");
   const html = read("../index.html");
   const app = read("../src/app.js");
@@ -16,8 +16,10 @@ test("public ranking board exposes only completed Admin-routed names and amounts
   assert.match(endpoint, /\.eq\("visibility_scope", "public"\)/);
   assert.match(endpoint, /\.in\("payment_method", \["paypal", "dodo"\]\)/);
   assert.match(endpoint, /row\.raw_payment\?\.mode !== "test"/);
-  assert.match(endpoint, /\.map\(\(row\) => \(\{ name: row\.display_name, amount: Number\(row\.amount\) \}\)\)/);
+  assert.match(endpoint, /\.select\("id, display_name, seed_count, raw_payment"\)/);
+  assert.match(endpoint, /\.map\(\(row\) => \(\{ name: row\.display_name, seedCount: Number\(row\.seed_count\) \}\)\)/);
   assert.match(html, /class="transaction-board"[\s\S]*id="transactionBoardList"/);
-  assert.doesNotMatch(html, /Sow Your Seed for<br \/>Your Love &amp; Soulmate|Sow a seed <span/);
+  assert.doesNotMatch(html, /Admin payments only|Recent Transactions|Sow Your Seed for<br \/>Your Love &amp; Soulmate|Sow a seed <span/);
   assert.match(app, /public-transactions\?offset=\$\{transactionBoardOffset\}/);
+  assert.match(app, /seeds\.textContent = `\$\{seedCount\} 🌱`/);
 });

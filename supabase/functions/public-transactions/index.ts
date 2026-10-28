@@ -16,7 +16,7 @@ Deno.serve(async (request) => {
     const offset = Number(offsetText);
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase.from("donations")
-      .select("id, display_name, amount, raw_payment")
+      .select("id, display_name, seed_count, raw_payment")
       .eq("paypal_status", "COMPLETED")
       .eq("payment_route", "standard")
       .eq("visibility_scope", "public")
@@ -30,7 +30,7 @@ Deno.serve(async (request) => {
     return jsonResponse({
       transactions: rows
         .filter((row) => row.raw_payment?.mode !== "test")
-        .map((row) => ({ name: row.display_name, amount: Number(row.amount) })),
+        .map((row) => ({ name: row.display_name, seedCount: Number(row.seed_count) })),
       nextOffset: rows.length === PAGE_SIZE ? offset + PAGE_SIZE : null,
     });
   } catch (error) {

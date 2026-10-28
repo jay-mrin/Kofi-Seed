@@ -866,10 +866,12 @@ async function loadTransactionBoard() {
         name.className = "transaction-board-name";
         name.textContent = transaction.name || "Customer";
         name.title = name.textContent;
-        const amount = document.createElement("strong");
-        amount.className = "transaction-board-amount";
-        amount.textContent = money(transaction.amount);
-        row.append(rank, name, amount);
+        const seeds = document.createElement("strong");
+        seeds.className = "transaction-board-seeds";
+        const seedCount = Math.max(0, Number(transaction.seedCount) || 0);
+        seeds.textContent = `${seedCount} 🌱`;
+        seeds.setAttribute("aria-label", `${seedCount} seed${seedCount === 1 ? "" : "s"}`);
+        row.append(rank, name, seeds);
         list.append(row);
       }
       transactionBoardOffset = Number.isInteger(payload.nextOffset) ? payload.nextOffset : null;

@@ -4239,34 +4239,14 @@ main {
   flex-direction: column;
   min-height: 0;
   padding: clamp(14px, 2vw, 24px);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 24px;
-  color: #342c1e;
-  background: rgba(255, 250, 240, 0.94);
-  box-shadow: 0 18px 46px rgba(35, 14, 2, 0.28);
-  backdrop-filter: blur(12px);
+  color: #fffdf7;
+  background: linear-gradient(135deg, rgba(65, 36, 18, 0.2), rgba(255, 255, 255, 0.1));
+  box-shadow: 0 18px 46px rgba(35, 14, 2, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
   transform: translateY(-50%);
-}
-
-.transaction-board-heading {
-  flex: 0 0 auto;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(139, 99, 31, 0.2);
-}
-
-.transaction-board-kicker {
-  color: var(--red);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.transaction-board h2 {
-  margin: 0;
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(24px, 2.8vw, 35px);
-  line-height: 1.08;
 }
 
 .transaction-board-list {
@@ -4276,7 +4256,7 @@ main {
   overflow-y: auto;
   overscroll-behavior: contain;
   list-style: none;
-  scrollbar-color: rgba(139, 99, 31, 0.5) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.55) transparent;
 }
 
 .transaction-board-item {
@@ -4285,12 +4265,13 @@ main {
   align-items: center;
   gap: 10px;
   padding: 10px 2px;
-  border-bottom: 1px solid rgba(139, 99, 31, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.23);
   font-size: 13px;
+  text-shadow: 0 1px 8px rgba(35, 14, 2, 0.5);
 }
 
 .transaction-board-rank {
-  color: var(--red);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 11px;
   font-weight: 800;
 }
@@ -4303,15 +4284,21 @@ main {
   white-space: nowrap;
 }
 
-.transaction-board-amount {
+.transaction-board-seeds {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .transaction-board-message {
   padding: 12px 2px;
-  color: var(--muted);
+  color: #fffdf7;
   font-size: 12px;
+  text-shadow: 0 1px 8px rgba(35, 14, 2, 0.5);
 }
 
 .support-creator-shell .profile-bar {
@@ -5066,10 +5053,6 @@ main {
     border-radius: 18px;
   }
 
-  .transaction-board h2 {
-    font-size: 23px;
-  }
-
   .transaction-board-item {
     grid-template-columns: 22px minmax(0, 1fr) auto;
     gap: 6px;
@@ -5077,7 +5060,7 @@ main {
     font-size: 11px;
   }
 
-  .transaction-board-amount {
+  .transaction-board-seeds {
     font-size: 11px;
   }
 
