@@ -15,7 +15,9 @@ test("standard transactions are authenticated and expose only successful names, 
 
 test("standard sign in loads only the limited calendar", () => {
   const source = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
-  assert.match(source, /if \(state\.adminProfile\?\.role === "standard"\) \{\s*await loadStandardTransactions\(\);\s*\} else \{/);
-  assert.match(source, /elements\.adminForm\.hidden = isStandard/);
-  assert.match(source, /const shouldShow = isStandard \? false/);
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(source, /if \(state\.adminProfile\?\.role === "standard"\) \{\s*openStandardPanel\(\);\s*await loadStandardTransactions\(\);\s*\} else \{\s*openAdminPanel\(\)/);
+  assert.match(source, /async function refreshAdminPortalData\(\) \{\s*if \(state\.adminProfile\?\.role === "standard"\) \{\s*await loadStandardTransactions\(\);\s*return;/);
+  assert.ok(html.indexOf('id="standardPanel"') < html.indexOf('id="adminPanel"'));
+  assert.match(html, /id="standardPanel"[\s\S]*id="standardCalendarGrid"[\s\S]*<\/section>\s*<\/section>\s*<section class="admin-panel" id="adminPanel"/);
 });

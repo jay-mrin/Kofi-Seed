@@ -209,7 +209,8 @@ const elements = {
   adminLoginForm: document.querySelector("#adminLoginForm"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
   adminPanel: document.querySelector("#adminPanel"),
-  standardPortal: document.querySelector("#standardPortal"),
+  standardPanel: document.querySelector("#standardPanel"),
+  closeStandardButton: document.querySelector("#closeStandardButton"),
   standardCalendarPrev: document.querySelector("#standardCalendarPrev"),
   standardCalendarNext: document.querySelector("#standardCalendarNext"),
   standardCalendarTitle: document.querySelector("#standardCalendarTitle"),
@@ -1703,6 +1704,10 @@ async function decrementPageView() {
 }
 
 async function refreshAdminPortalData() {
+  if (state.adminProfile?.role === "standard") {
+    await loadStandardTransactions();
+    return;
+  }
   if (!isBackendConfigured() || !getAdminAccessToken()) {
     setAdminStatus("Sign in as admin before reloading portal data.", "error", { persist: true });
     return;
@@ -3155,25 +3160,22 @@ async function loadStandardTransactions() {
 
 function openAdminPanel() {
   const isSuperAdmin = state.adminProfile?.role === "super_admin";
-  const isStandard = state.adminProfile?.role === "standard";
+  if (state.adminProfile?.role === "standard") return openStandardPanel();
 
   const titleEl = document.getElementById("adminTitle");
   if (titleEl) {
-    titleEl.textContent = isStandard ? "Standard Portal" : isSuperAdmin ? "Super Admin Portal" : "Order controls";
+    titleEl.textContent = isSuperAdmin ? "Super Admin Portal" : "Order controls";
   }
 
   const kickerEl = elements.adminPanel?.querySelector(".admin-panel-header .section-kicker");
   if (kickerEl) {
-    kickerEl.textContent = isStandard ? "Standard portal" : isSuperAdmin ? "Super Admin Portal" : "Admin portal";
+    kickerEl.textContent = isSuperAdmin ? "Super Admin Portal" : "Admin portal";
   }
 
   if (document.getElementById("adminSuperCheckoutSection")) {
     document.getElementById("adminSuperCheckoutSection").hidden = !isSuperAdmin;
   }
   elements.adminPanel.classList.toggle("is-super-admin", isSuperAdmin);
-  elements.adminPanel.classList.toggle("is-standard", isStandard);
-  elements.standardPortal.hidden = !isStandard;
-  elements.adminForm.hidden = isStandard;
   elements.superAdminPayPalSection.hidden = !isSuperAdmin;
   if (elements.adminDonationHeading) {
     elements.adminDonationHeading.textContent = isSuperAdmin
@@ -3190,7 +3192,7 @@ function openAdminPanel() {
     const isSuperAdminSection = section.classList.contains("admin-super-checkout-section");
     const isCollectionCalendar = section.classList.contains("admin-donations");
     const isRoleScopedAnalytics = section.classList.contains("admin-analytics-section");
-    const shouldShow = isStandard ? false : isSuperAdmin
+    const shouldShow = isSuperAdmin
       ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics
       : !isSuperAdminSection;
     section.hidden = !shouldShow;
@@ -3203,15 +3205,11 @@ function openAdminPanel() {
     saveButton.style.display = isSuperAdmin ? "none" : "";
   }
 
-  if (!isStandard) {
-    renderAdminForm();
-    renderAdminCalendar();
-    renderAdminAnalytics();
-  }
+  renderAdminForm();
+  renderAdminCalendar();
+  renderAdminAnalytics();
   
-  if (isStandard) {
-    elements.adminActionStatus.hidden = true;
-  } else if (isSuperAdmin) {
+  if (isSuperAdmin) {
     setAdminStatus("SuperAdmin ready. Manage checkout display and private collections.", "info", { persist: true });
   } else {
     setAdminStatus("Admin ready. Manage orders, site settings, and analytics.", "info", { persist: true });
@@ -3220,10 +3218,23 @@ function openAdminPanel() {
   document.body.classList.add("admin-open");
   elements.adminBackdrop.hidden = false;
   elements.adminPanel.setAttribute("aria-hidden", "false");
+  elements.adminMenuButton.setAttribute("aria-controls", "adminPanel");
   elements.adminMenuButton.setAttribute("aria-expanded", "true");
   window.requestAnimationFrame(() => {
     elements.adminBackdrop.classList.add("is-open");
     elements.adminPanel.classList.add("is-open");
+  });
+}
+
+function openStandardPanel() {
+  document.body.classList.add("admin-open");
+  elements.adminBackdrop.hidden = false;
+  elements.standardPanel.setAttribute("aria-hidden", "false");
+  elements.adminMenuButton.setAttribute("aria-controls", "standardPanel");
+  elements.adminMenuButton.setAttribute("aria-expanded", "true");
+  window.requestAnimationFrame(() => {
+    elements.adminBackdrop.classList.add("is-open");
+    elements.standardPanel.classList.add("is-open");
   });
 }
 
@@ -3237,10 +3248,13 @@ function closeAdminPanel() {
   document.body.classList.remove("admin-open");
   elements.adminBackdrop.classList.remove("is-open");
   elements.adminPanel.classList.remove("is-open");
+  elements.standardPanel.classList.remove("is-open");
   elements.adminPanel.setAttribute("aria-hidden", "true");
+  elements.standardPanel.setAttribute("aria-hidden", "true");
+  elements.adminMenuButton.setAttribute("aria-controls", "adminLoginDialog");
   elements.adminMenuButton.setAttribute("aria-expanded", "false");
   window.setTimeout(() => {
-    if (!elements.adminPanel.classList.contains("is-open")) {
+    if (!elements.adminPanel.classList.contains("is-open") && !elements.standardPanel.classList.contains("is-open")) {
       elements.adminBackdrop.hidden = true;
     }
   }, 180);
@@ -3763,10 +3777,11 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
       await signInAdmin(email, password);
       await loadAdminProfile();
       closeAdminLogin();
-      openAdminPanel();
       if (state.adminProfile?.role === "standard") {
+        openStandardPanel();
         await loadStandardTransactions();
       } else {
+        openAdminPanel();
         await Promise.all([
           loadAdminDonations({ announce: true }),
           loadAdminAnalytics({ announce: true }),
@@ -3795,6 +3810,7 @@ elements.adminLoginDialog.addEventListener("close", () => {
   elements.adminPasswordError.textContent = "";
 });
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
+elements.closeStandardButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
 elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
   const paypalSelected = document.querySelector("#paypalCheckoutVisible")?.checked === true;

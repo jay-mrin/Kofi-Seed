@@ -443,7 +443,8 @@ a {
   }
 }
 
-.admin-panel {
+.admin-panel,
+.standard-panel {
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -466,7 +467,8 @@ a {
   visibility: hidden;
 }
 
-.admin-panel.is-open {
+.admin-panel.is-open,
+.standard-panel.is-open {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -475,12 +477,27 @@ a {
 
 .standard-portal {
   width: min(760px, 100%);
-  margin: 28px auto;
+  margin: 0 auto;
   padding: clamp(18px, 3vw, 32px);
   border: 1px solid var(--line);
   border-radius: var(--card-radius);
   background: var(--white);
   box-shadow: var(--shadow);
+}
+
+.standard-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(760px, 100%);
+  margin: 0 auto 22px;
+}
+
+.standard-panel-header h2 {
+  margin: 0;
+  color: #342c1e;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(30px, 5vw, 42px);
 }
 
 .standard-calendar-header {

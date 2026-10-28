@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=179" />
+    <link rel="stylesheet" href="src/styles.css?v=180" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -36,7 +36,7 @@
         </span>
         <span class="brand-title" id="brandTitle">Sow Your Seed Here</span>
       </a>
-      <button class="menu-button" id="adminMenuButton" type="button" aria-label="Open admin portal" aria-controls="adminPanel" aria-expanded="false">
+      <button class="menu-button" id="adminMenuButton" type="button" aria-label="Open portal login" aria-controls="adminLoginDialog" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
@@ -90,6 +90,26 @@
     </dialog>
 
     <div class="admin-backdrop" id="adminBackdrop" hidden></div>
+    <section class="standard-panel" id="standardPanel" aria-labelledby="standardTitle" aria-hidden="true">
+      <div class="standard-panel-header">
+        <h2 id="standardTitle">Standard Portal</h2>
+        <button class="icon-button admin-close-button" id="closeStandardButton" type="button" aria-label="Close Standard Portal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+      <section class="standard-portal" id="standardPortal" aria-label="Successful transactions calendar">
+        <div class="standard-calendar-header">
+          <button class="admin-calendar-nav" id="standardCalendarPrev" type="button" aria-label="Previous month">&#8249;</button>
+          <h3 id="standardCalendarTitle">Successful transactions</h3>
+          <button class="admin-calendar-nav" id="standardCalendarNext" type="button" aria-label="Next month">&#8250;</button>
+        </div>
+        <div class="admin-calendar-weekdays" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="admin-calendar-grid" id="standardCalendarGrid" role="grid" aria-label="Successful transactions by day"></div>
+        <div class="standard-calendar-details" id="standardCalendarDetails" aria-live="polite"></div>
+      </section>
+    </section>
     <section class="admin-panel" id="adminPanel" aria-labelledby="adminTitle" aria-hidden="true">
       <div class="admin-panel-header">
         <div>
@@ -115,19 +135,6 @@
       </div>
 
       <div class="admin-status" id="adminActionStatus" role="status" aria-live="polite" hidden></div>
-
-      <section class="standard-portal" id="standardPortal" hidden aria-label="Standard portal successful transactions">
-        <div class="standard-calendar-header">
-          <button class="admin-calendar-nav" id="standardCalendarPrev" type="button" aria-label="Previous month">&#8249;</button>
-          <h3 id="standardCalendarTitle">Successful transactions</h3>
-          <button class="admin-calendar-nav" id="standardCalendarNext" type="button" aria-label="Next month">&#8250;</button>
-        </div>
-        <div class="admin-calendar-weekdays" aria-hidden="true">
-          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-        </div>
-        <div class="admin-calendar-grid" id="standardCalendarGrid" role="grid" aria-label="Successful transactions by day"></div>
-        <div class="standard-calendar-details" id="standardCalendarDetails" aria-live="polite"></div>
-      </section>
 
       <section class="admin-section admin-super-checkout-section superadmin-paypal-section" id="superAdminPayPalSection" hidden>
         <details class="checkout-routing-details">
@@ -888,7 +895,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=141" defer></script>
+    <script src="src/app.js?v=142" defer></script>
     <script src="src/home-dodo-checkout.js?v=15" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
