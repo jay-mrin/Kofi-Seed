@@ -266,35 +266,28 @@
             <summary class="admin-super-checkout-heading">
               <span class="checkout-routing-summary-copy">
                 <strong>Checkout display</strong>
-                <small>Choose the one checkout form shown on Home</small>
+                <small>Choose which PayPal account handles Home checkout</small>
               </span>
               <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="checkout-routing-content">
               <div class="checkout-routing-override">
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="dodoCheckoutVisible" type="radio" name="checkoutProvider" value="dodo" checked />
+                  <input id="homeSuperAdminPayPal" type="radio" name="checkoutProvider" value="superadmin" />
                   <span>
-                    <strong>Dodo checkout</strong>
-                    Show the Dodo checkout form on Home.
+                    <strong>Superadmin[Paypal]</strong>
+                    Show the SuperAdmin PayPal checkout on Home. Orders go to the SuperAdmin calendar.
                   </span>
                 </label>
                 <label class="admin-toggle checkout-routing-toggle">
-                  <input id="paypalCheckoutVisible" type="radio" name="checkoutProvider" value="paypal" />
+                  <input id="homeAdminPayPal" type="radio" name="checkoutProvider" value="standard" checked />
                   <span>
-                    <strong>PayPal checkout</strong>
-                    Show the PayPal checkout form on Home.
-                  </span>
-                </label>
-                <label class="admin-toggle checkout-routing-toggle">
-                  <input id="alternateCardCheckoutVisible" type="checkbox" />
-                  <span>
-                    <strong>Show Debit or Credit Card button</strong>
-                    Show a separate debit or credit card option in the Dodo seed checkout.
+                    <strong>Admin[Paypal]</strong>
+                    Show the Admin PayPal checkout on Home. Orders go to the Admin calendar.
                   </span>
                 </label>
               </div>
-              <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save display settings</button>
+              <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save checkout choice</button>
             </div>
           </details>
         </section>

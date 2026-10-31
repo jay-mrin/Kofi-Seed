@@ -64,10 +64,14 @@ async function loadCriticalData(
       typeof settingsRow.settings === "object"
     ? settingsRow.settings
     : {};
+  const homepageRoute = settings.homepagePayPalRoute === "superadmin"
+    ? "superadmin"
+    : "standard";
   return {
     settings,
     payment: {
       adminPayPalClientId: getPayPalClientId("standard"),
+      homepagePayPalClientId: getPayPalClientId(homepageRoute),
       currency: Deno.env.get("PAYPAL_CURRENCY") || "USD",
     },
   };

@@ -19,6 +19,7 @@ const ACTIVE_SETTING_KEYS = [
   "blessingWallEnabled",
   "dodoCheckoutVisible",
   "paypalCheckoutVisible",
+  "homepagePayPalRoute",
   "alternateCardCheckoutVisible",
 ] as const;
 
@@ -47,11 +48,10 @@ function checkoutVisibility(
 }
 
 function selectedCheckout(settings: Record<string, unknown>) {
-  const dodoEnabled = checkoutVisibility(settings, "dodoCheckoutVisible");
-  const paypalEnabled = checkoutVisibility(settings, "paypalCheckoutVisible");
   return {
-    dodoCheckoutVisible: dodoEnabled || !paypalEnabled,
-    paypalCheckoutVisible: !dodoEnabled && paypalEnabled,
+    dodoCheckoutVisible: false,
+    paypalCheckoutVisible: true,
+    homepagePayPalRoute: settings.homepagePayPalRoute === "superadmin" ? "superadmin" : "standard",
   };
 }
 
@@ -126,13 +126,12 @@ Deno.serve(withCors(async (request) => {
     let settingsToSave = applySiteSettings(existingSettings, submittedSettings);
 
     if (adminProfile.role === "super_admin") {
+      const submittedRoute = submittedSettings.homepagePayPalRoute;
       const checkoutSelection = selectedCheckout({
-        dodoCheckoutVisible: Object.hasOwn(submittedSettings, "dodoCheckoutVisible")
-          ? isEnabled(submittedSettings.dodoCheckoutVisible)
-          : checkoutVisibility(currentSettings, "dodoCheckoutVisible"),
-        paypalCheckoutVisible: Object.hasOwn(submittedSettings, "paypalCheckoutVisible")
-          ? isEnabled(submittedSettings.paypalCheckoutVisible)
-          : checkoutVisibility(currentSettings, "paypalCheckoutVisible"),
+        ...currentSettings,
+        ...(submittedRoute === "standard" || submittedRoute === "superadmin"
+          ? { homepagePayPalRoute: submittedRoute }
+          : {}),
       });
       settingsToSave = {
         ...settingsToSave,

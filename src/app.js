@@ -151,6 +151,7 @@ const DEFAULT_SETTINGS = {
   blessingWallEnabled: true,
   dodoCheckoutVisible: false,
   paypalCheckoutVisible: true,
+  homepagePayPalRoute: "standard",
   alternateCardCheckoutVisible: false,
 };
 
@@ -318,6 +319,7 @@ const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
 let paymentConfig = {
   adminPayPalClientId: "",
+  homepagePayPalClientId: "",
   superAdminPayPalClientId: "",
   currency: PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
 };
@@ -395,13 +397,9 @@ function normalizeSettings(settings) {
 
   next.seedPrice = Math.max(Number.parseInt(next.seedPrice, 10) || defaults.seedPrice, MIN_DONATION_AMOUNT);
   next.blessingWallEnabled = next.blessingWallEnabled !== false && next.blessingWallEnabled !== "false";
-  const dodoVisibility = settings && Object.hasOwn(settings, "dodoCheckoutVisible")
-    ? settings.dodoCheckoutVisible
-    : settings?.mockCheckoutVisible;
-  const dodoEnabled = dodoVisibility !== false && dodoVisibility !== "false";
-  const paypalEnabled = next.paypalCheckoutVisible === true || next.paypalCheckoutVisible === "true";
-  next.dodoCheckoutVisible = dodoEnabled || !paypalEnabled;
-  next.paypalCheckoutVisible = !next.dodoCheckoutVisible && paypalEnabled;
+  next.dodoCheckoutVisible = false;
+  next.paypalCheckoutVisible = true;
+  next.homepagePayPalRoute = next.homepagePayPalRoute === "superadmin" ? "superadmin" : "standard";
   next.alternateCardCheckoutVisible = next.alternateCardCheckoutVisible !== false && next.alternateCardCheckoutVisible !== "false";
 
   Object.keys(defaults).forEach((key) => {
@@ -757,6 +755,7 @@ function applyBootstrap(payload) {
   if (payload.payment) {
     paymentConfig = {
       adminPayPalClientId: payload.payment.adminPayPalClientId || "",
+      homepagePayPalClientId: payload.payment.homepagePayPalClientId || "",
       superAdminPayPalClientId: paymentConfig.superAdminPayPalClientId,
       currency: payload.payment.currency || PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
     };
@@ -1944,18 +1943,16 @@ function renderAdminForm() {
 
   inputs.seedPrice.value = settings.seedPrice;
   inputs.blessingWallEnabled.checked = Boolean(settings.blessingWallEnabled);
-  const dodoCheckoutToggle = document.querySelector("#dodoCheckoutVisible");
-  if (dodoCheckoutToggle) dodoCheckoutToggle.checked = Boolean(settings.dodoCheckoutVisible);
-  const paypalCheckoutToggle = document.querySelector("#paypalCheckoutVisible");
-  if (paypalCheckoutToggle) paypalCheckoutToggle.checked = Boolean(settings.paypalCheckoutVisible);
-  const alternateCardToggle = document.querySelector("#alternateCardCheckoutVisible");
-  if (alternateCardToggle) alternateCardToggle.checked = Boolean(settings.alternateCardCheckoutVisible);
+  const homeSuperAdminPayPal = document.querySelector("#homeSuperAdminPayPal");
+  if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = settings.homepagePayPalRoute === "superadmin";
+  const homeAdminPayPal = document.querySelector("#homeAdminPayPal");
+  if (homeAdminPayPal) homeAdminPayPal.checked = settings.homepagePayPalRoute !== "superadmin";
 }
 
 function getCheckoutRoute() {
   return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
     ? "superadmin"
-    : "standard";
+    : state.settings.homepagePayPalRoute;
 }
 
 function renderAdminAnalytics() {
@@ -2284,9 +2281,10 @@ function getPaymentEmail() {
 }
 
 function getPayPalClientId() {
-  return getCheckoutRoute() === "superadmin"
+  return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
     ? paymentConfig.superAdminPayPalClientId
-    : paymentConfig.adminPayPalClientId;
+    : paymentConfig.homepagePayPalClientId ||
+      (getCheckoutRoute() === "standard" ? paymentConfig.adminPayPalClientId : "");
 }
 
 function isPayPalConfigured() {
@@ -3916,23 +3914,21 @@ elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.closeStandardButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
 elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
-  const paypalSelected = document.querySelector("#paypalCheckoutVisible")?.checked === true;
+  const homepagePayPalRoute = document.querySelector("#homeSuperAdminPayPal")?.checked === true
+    ? "superadmin"
+    : "standard";
   const nextSettings = normalizeSettings({
     ...state.settings,
-    dodoCheckoutVisible: !paypalSelected,
-    paypalCheckoutVisible: paypalSelected,
-    alternateCardCheckoutVisible: Boolean(
-      document.querySelector("#alternateCardCheckoutVisible")?.checked ?? state.settings.alternateCardCheckoutVisible,
-    ),
+    homepagePayPalRoute,
   });
 
   await runAdminAction(
     {
       button: elements.saveCheckoutDisplayButton,
       busyText: "Saving...",
-      loadingMessage: "Saving checkout display settings...",
-      successMessage: () => "Checkout display settings saved.",
-      errorMessage: "Could not save checkout display settings.",
+      loadingMessage: "Saving Home checkout choice...",
+      successMessage: () => "Home checkout choice saved.",
+      errorMessage: "Could not save the Home checkout choice.",
     },
     async () => {
       if (isBackendConfigured() && getAdminAccessToken()) {
@@ -3941,17 +3937,13 @@ elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
           body: { settings: nextSettings },
           method: "PUT",
         });
-        if (payload.settings?.dodoCheckoutVisible !== nextSettings.dodoCheckoutVisible ||
-            payload.settings?.paypalCheckoutVisible !== nextSettings.paypalCheckoutVisible ||
-            payload.settings?.alternateCardCheckoutVisible !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The server did not save all checkout switches. Update the admin-settings function.");
+        if (payload.settings?.homepagePayPalRoute !== nextSettings.homepagePayPalRoute) {
+          throw new Error("The server did not save the selected Home checkout. Update the admin-settings function.");
         }
         state.settings = normalizeSettings(payload.settings || nextSettings);
         await loadBackendData({ throwOnError: true });
-        if (state.settings.dodoCheckoutVisible !== nextSettings.dodoCheckoutVisible ||
-            state.settings.paypalCheckoutVisible !== nextSettings.paypalCheckoutVisible ||
-            state.settings.alternateCardCheckoutVisible !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The checkout switches did not persist after reloading settings.");
+        if (state.settings.homepagePayPalRoute !== nextSettings.homepagePayPalRoute) {
+          throw new Error("The selected Home checkout did not persist after reloading settings.");
         }
       } else {
         state.settings = nextSettings;
