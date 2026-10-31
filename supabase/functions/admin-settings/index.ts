@@ -72,9 +72,6 @@ function applySiteSettings(
     next.blessingWallEnabled = submitted.blessingWallEnabled !== false &&
       submitted.blessingWallEnabled !== "false";
   }
-  if (Object.hasOwn(submitted, "weeklySeedOptionVisible")) {
-    next.weeklySeedOptionVisible = isEnabled(submitted.weeklySeedOptionVisible);
-  }
 
   return next;
 }
@@ -144,6 +141,9 @@ Deno.serve(withCors(async (request) => {
         alternateCardCheckoutVisible: Object.hasOwn(submittedSettings, "alternateCardCheckoutVisible")
           ? isEnabled(submittedSettings.alternateCardCheckoutVisible)
           : checkoutVisibility(currentSettings, "alternateCardCheckoutVisible"),
+        weeklySeedOptionVisible: Object.hasOwn(submittedSettings, "weeklySeedOptionVisible")
+          ? isEnabled(submittedSettings.weeklySeedOptionVisible)
+          : isEnabled(currentSettings.weeklySeedOptionVisible),
       };
     } else {
       settingsToSave = {

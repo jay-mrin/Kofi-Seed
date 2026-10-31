@@ -79,14 +79,19 @@ test("the portal visibility switch controls recurring sowing in both checkouts",
   assert.equal(toggle.checked, false);
 });
 
-test("recurring seed visibility defaults off and can be saved from either Admin portal", () => {
+test("recurring seed visibility defaults off and only SuperAdmin can change it", () => {
   const app = read("src/app.js");
   const html = read("index.html");
   const settings = read("supabase/functions/admin-settings/index.ts");
   assert.match(app, /weeklySeedOptionVisible: false/);
   assert.match(html, /id="adminWeeklySeedOptionVisible" type="checkbox"/);
+  assert.match(html, /<section class="admin-section admin-super-checkout-section admin-recurring-settings-section" hidden>/);
   assert.match(settings, /"weeklySeedOptionVisible"/);
-  assert.match(settings, /Object\.hasOwn\(submitted, "weeklySeedOptionVisible"\)[\s\S]*next\.weeklySeedOptionVisible = isEnabled\(submitted\.weeklySeedOptionVisible\)/);
+  const sharedSettings = settings.match(/function applySiteSettings\([\s\S]*?\n\}/)?.[0];
+  assert.ok(sharedSettings);
+  assert.doesNotMatch(sharedSettings, /weeklySeedOptionVisible/);
+  assert.match(settings, /if \(adminProfile\.role === "super_admin"\) \{[\s\S]*weeklySeedOptionVisible: Object\.hasOwn\(submittedSettings, "weeklySeedOptionVisible"\)/);
+  assert.match(app, /adminWeeklySeedOptionVisible\?\.addEventListener\("change", async \(\) => \{\s*if \(state\.adminProfile\?\.role !== "super_admin"\)/);
   assert.match(app, /adminWeeklySeedOptionVisible\?\.addEventListener\("change"[\s\S]*body: \{ settings: \{ weeklySeedOptionVisible: enabled \} \}/);
 });
 

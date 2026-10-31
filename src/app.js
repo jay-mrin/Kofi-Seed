@@ -3410,9 +3410,8 @@ function openAdminPanel() {
     const isSuperAdminSection = section.classList.contains("admin-super-checkout-section");
     const isCollectionCalendar = section.classList.contains("admin-donations");
     const isRoleScopedAnalytics = section.classList.contains("admin-analytics-section");
-    const isRecurringSettings = section.classList.contains("admin-recurring-settings-section");
     const shouldShow = isSuperAdmin
-      ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics || isRecurringSettings
+      ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics
       : !isSuperAdminSection;
     section.hidden = !shouldShow;
     section.style.display = shouldShow ? "" : "none";
@@ -4043,6 +4042,10 @@ elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.closeStandardButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
 elements.adminWeeklySeedOptionVisible?.addEventListener("change", async () => {
+  if (state.adminProfile?.role !== "super_admin") {
+    renderAdminForm();
+    return;
+  }
   const enabled = elements.adminWeeklySeedOptionVisible.checked;
   await runAdminAction(
     {
