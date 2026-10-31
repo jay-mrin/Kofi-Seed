@@ -5,6 +5,7 @@ import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 type CheckoutEventBody = {
   amount?: number;
   eventName?: string;
+  paymentRoute?: string;
   path?: string;
   visitorKey?: string;
 };
@@ -33,7 +34,7 @@ Deno.serve(withCors(async (request) => {
     if (!ALLOWED_EVENTS.has(eventName)) return errorResponse("Checkout event is invalid.", 422);
     if (!visitorKey) return errorResponse("Visitor key is required.", 422);
     if (amountCents < MIN_AMOUNT_CENTS) return errorResponse("Amount must be at least $11.", 422);
-    const paymentRoute = "superadmin";
+    const paymentRoute = body.paymentRoute === "standard" ? "standard" : "superadmin";
 
     const supabase = getSupabaseAdmin();
 

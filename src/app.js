@@ -149,8 +149,8 @@ const DEFAULT_SETTINGS = {
   topicLabel: "Personalised writing",
   supportTitle: MINIMAL_SUPPORT_TITLE,
   blessingWallEnabled: true,
-  dodoCheckoutVisible: true,
-  paypalCheckoutVisible: false,
+  dodoCheckoutVisible: false,
+  paypalCheckoutVisible: true,
   alternateCardCheckoutVisible: false,
 };
 
@@ -317,6 +317,7 @@ const paypalSdkPromises = new Map();
 const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
 let paymentConfig = {
+  adminPayPalClientId: "",
   superAdminPayPalClientId: "",
   currency: PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
 };
@@ -680,6 +681,7 @@ async function trackCheckoutEvent(eventName, donation = pendingDonation) {
       body: {
         amount: donation.amount || getAmount(),
         eventName,
+        paymentRoute: donation.paymentRoute || getCheckoutRoute(),
         path: window.location.pathname || "/",
         visitorKey: getVisitorKey(),
       },
@@ -742,6 +744,7 @@ function applyBootstrap(payload) {
 
   if (payload.payment) {
     paymentConfig = {
+      adminPayPalClientId: payload.payment.adminPayPalClientId || "",
       superAdminPayPalClientId: payload.payment.superAdminPayPalClientId || "",
       currency: payload.payment.currency || PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
     };
@@ -1938,7 +1941,9 @@ function renderAdminForm() {
 }
 
 function getCheckoutRoute() {
-  return "superadmin";
+  return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
+    ? "superadmin"
+    : "standard";
 }
 
 function renderAdminAnalytics() {
@@ -2265,7 +2270,9 @@ function getPaymentEmail() {
 }
 
 function getPayPalClientId() {
-  return paymentConfig.superAdminPayPalClientId;
+  return getCheckoutRoute() === "superadmin"
+    ? paymentConfig.superAdminPayPalClientId
+    : paymentConfig.adminPayPalClientId;
 }
 
 function isPayPalConfigured() {
@@ -2413,7 +2420,8 @@ function waitForPayPalSdk(namespace, timeoutMs = 5000) {
 }
 
 function getPayPalSdkNamespace(weekly = elements.weeklySeedToggle.checked) {
-  return weekly ? "paypalSysSuperAdminWeekly" : "paypalSysSuperAdminOnce";
+  const route = getCheckoutRoute();
+  return `paypalSys${route === "superadmin" ? "SuperAdmin" : "Admin"}${weekly ? "Weekly" : "Once"}`;
 }
 
 function resetPayPalSdk(namespace) {
@@ -2439,12 +2447,15 @@ function resetAllPayPalSdks() {
 
 function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked) {
   const clientId = getPayPalClientId();
-  const sdkKey = `superadmin:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
+  const route = getCheckoutRoute();
+  const sdkKey = `${route}:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
   const namespace = getPayPalSdkNamespace(weekly);
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
-    return Promise.reject(new Error("Missing SuperAdmin PayPal client id."));
+    return Promise.reject(new Error(getCheckoutRoute() === "superadmin"
+      ? "Missing SuperAdmin PayPal client id."
+      : "Missing Admin PayPal Business client id."));
   }
 
   if (isValidPayPalSdk(window[namespace]) && activeSdkKey === sdkKey) {
@@ -2707,7 +2718,9 @@ async function renderFreshPayPalButtons() {
     namespace = getPayPalSdkNamespace(weekly);
 
     if (!isPayPalConfigured()) {
-      throw new Error("SuperAdmin PayPal checkout is currently unavailable.");
+      throw new Error(getCheckoutRoute() === "superadmin"
+        ? "SuperAdmin PayPal checkout is currently unavailable."
+        : "Admin PayPal Business checkout is currently unavailable.");
     }
 
     resetAllPayPalSdks();
@@ -3676,7 +3689,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
     if (state.settings.paypalCheckoutVisible) {
       if (!isBackendConfigured() || !backendReady) throw new Error("PayPal checkout is currently unavailable.");
       await loadBackendData({ mode: "critical", throwOnError: true });
-      if (!isPayPalConfigured()) throw new Error("SuperAdmin PayPal checkout is currently unavailable.");
+      if (!isPayPalConfigured()) throw new Error("PayPal checkout is currently unavailable.");
       const paypal = await loadPayPalSdk(false);
       const container = document.querySelector("#ritualPaypalButtons");
       const details = {
@@ -3691,7 +3704,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
         createOrder: async () => {
           status.textContent = "Opening secure PayPal checkout…";
           const order = await callEdge("create-paypal-order", {
-            body: { ...details, productType: "ritual", paymentRoute: "superadmin" },
+            body: { ...details, productType: "ritual", paymentRoute: getCheckoutRoute() },
           });
           return order.id;
         },

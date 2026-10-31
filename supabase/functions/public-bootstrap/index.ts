@@ -67,6 +67,7 @@ async function loadCriticalData(
   return {
     settings,
     payment: {
+      adminPayPalClientId: getPayPalClientId("standard"),
       superAdminPayPalClientId: getPayPalClientId("superadmin"),
       currency: Deno.env.get("PAYPAL_CURRENCY") || "USD",
       env: Deno.env.get("PAYPAL_ENV") || "sandbox",

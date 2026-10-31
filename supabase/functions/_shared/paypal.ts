@@ -42,8 +42,10 @@ export function createDigitalOrderNumber(date = new Date()) {
   return `SYS-${datePart}-${randomPart}`;
 }
 
-export function getPayPalBaseUrl() {
-  const env = (Deno.env.get("PAYPAL_ENV") || "sandbox").toLowerCase();
+export function getPayPalBaseUrl(paymentRoute?: string) {
+  const env = (paymentRoute === "standard"
+    ? Deno.env.get("ADMIN_PAYPAL_ENV") || Deno.env.get("PAYPAL_ENV")
+    : Deno.env.get("PAYPAL_ENV") || "sandbox").toLowerCase();
   return PAYPAL_API_BASE[env === "live" ? "live" : "sandbox"];
 }
 
@@ -103,7 +105,7 @@ function assertPayPalCredentials(paymentRoute?: string) {
 export async function getPayPalAccessToken(paymentRoute?: string) {
   const { clientId, clientSecret } = assertPayPalCredentials(paymentRoute);
   const credentials = btoa(`${clientId}:${clientSecret}`);
-  const response = await fetch(`${getPayPalBaseUrl()}/v1/oauth2/token`, {
+  const response = await fetch(`${getPayPalBaseUrl(paymentRoute)}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${credentials}`,
@@ -139,7 +141,7 @@ export async function createPayPalOrder(input: {
     },
   };
 
-  const response = await fetch(`${getPayPalBaseUrl()}/v2/checkout/orders`, {
+  const response = await fetch(`${getPayPalBaseUrl(input.paymentRoute)}/v2/checkout/orders`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -170,7 +172,7 @@ export async function capturePayPalOrder(
   // Use a fresh idempotency key so a prior declined capture is not replayed.
   const captureRequestId = `${orderId}-${crypto.randomUUID()}`;
   const response = await fetch(
-    `${getPayPalBaseUrl()}/v2/checkout/orders/${orderId}/capture`,
+    `${getPayPalBaseUrl(paymentRoute)}/v2/checkout/orders/${orderId}/capture`,
     {
       method: "POST",
       headers: {
@@ -193,7 +195,7 @@ export async function capturePayPalOrder(
 export async function getPayPalOrder(orderId: string, paymentRoute?: string) {
   const accessToken = await getPayPalAccessToken(paymentRoute);
   const response = await fetch(
-    `${getPayPalBaseUrl()}/v2/checkout/orders/${orderId}`,
+    `${getPayPalBaseUrl(paymentRoute)}/v2/checkout/orders/${orderId}`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -221,7 +223,7 @@ async function paypalJsonRequest(
   } = {},
 ) {
   const accessToken = await getPayPalAccessToken(input.paymentRoute);
-  const response = await fetch(`${getPayPalBaseUrl()}${path}`, {
+  const response = await fetch(`${getPayPalBaseUrl(input.paymentRoute)}${path}`, {
     method: input.method || "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -335,7 +337,7 @@ async function tryVerifyWebhook(
 
   const accessToken = await getPayPalAccessToken(paymentRoute);
   const response = await fetch(
-    `${getPayPalBaseUrl()}/v1/notifications/verify-webhook-signature`,
+    `${getPayPalBaseUrl(paymentRoute)}/v1/notifications/verify-webhook-signature`,
     {
       method: "POST",
       headers: {

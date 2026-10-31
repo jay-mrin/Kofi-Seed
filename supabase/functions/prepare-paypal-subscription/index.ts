@@ -148,10 +148,14 @@ Deno.serve(withCors(async (request) => {
     }
     const seedCount = Math.max(1, Math.round(amountCents / seedPriceCents));
 
-    const paymentRoute = "superadmin";
-    if (body.paymentRoute !== paymentRoute) {
+    const paymentRoute = body.paymentRoute === "superadmin"
+      ? "superadmin"
+      : body.paymentRoute === "standard"
+      ? "standard"
+      : "";
+    if (!paymentRoute) {
       return errorResponse(
-        "Please reopen the SuperAdmin PayPal checkout and choose Weekly again.",
+        "Please reopen the PayPal checkout and choose Weekly again.",
         409,
       );
     }

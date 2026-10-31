@@ -74,10 +74,14 @@ Deno.serve(withCors(async (request) => {
       );
     }
 
-    const paymentRoute = "superadmin";
-    if (body.paymentRoute !== paymentRoute) {
+    const paymentRoute = body.paymentRoute === "superadmin"
+      ? "superadmin"
+      : body.paymentRoute === "standard"
+      ? "standard"
+      : "";
+    if (!paymentRoute) {
       return errorResponse(
-        "Please reopen the SuperAdmin PayPal checkout and try again.",
+        "Please reopen the PayPal checkout and try again.",
         409,
       );
     }
