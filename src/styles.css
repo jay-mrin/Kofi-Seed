@@ -1335,6 +1335,17 @@ a {
   background: #fffaf0;
 }
 
+.admin-calendar-load-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-calendar-load-status.is-error {
+  color: var(--red-dark);
+}
+
 .admin-calendar-empty {
   display: grid;
   gap: 3px;

@@ -189,6 +189,8 @@
               <span>Fri</span>
               <span>Sat</span>
             </div>
+            <p class="admin-calendar-load-status" id="adminCalendarLoadStatus" role="status" hidden></p>
+            <button class="button button-secondary" id="retryAdminCalendarButton" type="button" hidden>Try loading orders again</button>
             <div class="admin-calendar-grid" id="adminCalendarGrid" role="grid" aria-label="Daily Admin PayPal order records"></div>
             <div class="admin-calendar-details" id="adminCalendarDetails" aria-live="polite"></div>
             <div class="admin-calendar-summary" id="adminCalendarSummary" aria-live="polite"></div>
@@ -214,6 +216,17 @@
             <div class="admin-actions">
               <button class="button button-primary" id="saveAdminButton" type="submit">Save site settings</button>
             </div>
+          </section>
+
+          <section class="admin-section admin-recurring-settings-section">
+            <h3>Recurring seed option</h3>
+            <label class="admin-toggle">
+              <input id="adminWeeklySeedOptionVisible" type="checkbox" />
+              <span>
+                <strong>Show Sow Seed Weekly</strong>
+                Show the weekly subscription choice at checkout. Off hides the choice. Changes save automatically.
+              </span>
+            </label>
           </section>
 
           <section class="admin-section admin-analytics-section">

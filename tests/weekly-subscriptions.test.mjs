@@ -14,7 +14,7 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   const webhook = read("supabase/functions/paypal-webhook/index.ts");
   assert.match(html, /id="messageInput"[\s\S]*<strong>Sow Seed Weekly<\/strong>[\s\S]*id="weeklySeedToggle"[\s\S]*id="paypalContinueButton"[^>]*>Continue To Seed<\/button>/);
   assert.doesNotMatch(html, /weeklySeedHint|Pay now, then every Monday|Off: one-time payment/);
-  assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: getCheckoutRoute\(\) === "superadmin" && elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
+  assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: state\.settings\.weeklySeedOptionVisible && elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
   assert.match(app, /buildPayPalSubscriptionButtonOptions[\s\S]*createSubscription:/);
   assert.match(app, /subscriptionCardButtons = paypal\.Buttons\(buildPayPalSubscriptionButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
   assert.match(app, /subscriptionCardButtons\.isEligible\(\)/);
@@ -24,7 +24,7 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   assert.match(webhook, /handleSubscriptionWebhook/);
 });
 
-test("Admin checkout hides recurring sowing and always starts one-time", () => {
+test("the portal visibility switch controls recurring sowing in both checkouts", () => {
   const app = read("src/app.js");
   const html = read("index.html");
   const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
@@ -54,14 +54,40 @@ test("Admin checkout hides recurring sowing and always starts one-time", () => {
 
   context.state.settings.homepagePayPalRoute = "superadmin";
   update();
+  assert.equal(option.hidden, true);
+  assert.equal(toggle.disabled, true);
+
+  context.state.settings.weeklySeedOptionVisible = true;
+  update();
   assert.equal(option.hidden, false);
   assert.equal(toggle.disabled, false);
 
   context.state.settings.homepagePayPalRoute = "standard";
+  update();
+  assert.equal(option.hidden, false);
+  assert.equal(toggle.disabled, false);
   context.elements.supportCard.parentElement = host;
   update();
   assert.equal(option.hidden, false);
   assert.equal(toggle.disabled, false);
+
+  toggle.checked = true;
+  context.state.settings.weeklySeedOptionVisible = false;
+  update();
+  assert.equal(option.hidden, true);
+  assert.equal(toggle.disabled, true);
+  assert.equal(toggle.checked, false);
+});
+
+test("recurring seed visibility defaults off and can be saved from either Admin portal", () => {
+  const app = read("src/app.js");
+  const html = read("index.html");
+  const settings = read("supabase/functions/admin-settings/index.ts");
+  assert.match(app, /weeklySeedOptionVisible: false/);
+  assert.match(html, /id="adminWeeklySeedOptionVisible" type="checkbox"/);
+  assert.match(settings, /"weeklySeedOptionVisible"/);
+  assert.match(settings, /Object\.hasOwn\(submitted, "weeklySeedOptionVisible"\)[\s\S]*next\.weeklySeedOptionVisible = isEnabled\(submitted\.weeklySeedOptionVisible\)/);
+  assert.match(app, /adminWeeklySeedOptionVisible\?\.addEventListener\("change"[\s\S]*body: \{ settings: \{ weeklySeedOptionVisible: enabled \} \}/);
 });
 
 test("weekly plan preparation supports both routes and Monday 7:30 AM IST", () => {

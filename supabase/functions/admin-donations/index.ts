@@ -40,6 +40,31 @@ function getUtcNextDayStart(value: string) {
   return date;
 }
 
+function getCalendarMonthRange(month: string, startOffset: number, endOffset: number) {
+  const [year, monthIndex] = month.split("-").map(Number);
+  if (monthIndex < 1 || monthIndex > 12 ||
+      ![startOffset, endOffset].every((offset) => Number.isInteger(offset) && Math.abs(offset) <= 840)) {
+    throw new Error("Invalid calendar month or timezone offset.");
+  }
+  return {
+    start: new Date(Date.UTC(year, monthIndex - 1, 1) + startOffset * 60_000).toISOString(),
+    end: new Date(Date.UTC(year, monthIndex, 1) + endOffset * 60_000).toISOString(),
+  };
+}
+
+async function loadCalendarDonations(query: any) {
+  const donationsById = new Map<string, Record<string, any>>();
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await query.range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    const page = (data || []) as Array<Record<string, any>>;
+    for (const donation of page) donationsById.set(String(donation.id), donation);
+    if (page.length < pageSize) break;
+  }
+  return Array.from(donationsById.values());
+}
+
 function applyDateRange(query: any, fromDate: string, toDate: string) {
   let nextQuery = query;
   if (fromDate) {
@@ -421,23 +446,27 @@ Deno.serve(withCors(async (request) => {
           "digital_orders(id, order_number, donation_id, payment_provider, provider_order_id, provider_transaction_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, redeemed_book_title, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at)",
         ].join(", "),
       )
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
     query = applyAdminDonationScope(query, adminProfile.role);
 
-    if (month && /^\d{4}-\d{2}$/.test(month)) {
-      const [year, monthIndex] = month.split("-").map(Number);
-      const start = new Date(Date.UTC(year, monthIndex - 1, 1));
-      const end = new Date(Date.UTC(year, monthIndex, 1));
-      query = query.gte("created_at", start.toISOString()).lt(
-        "created_at",
-        end.toISOString(),
-      );
+    if (month) {
+      if (!/^\d{4}-\d{2}$/.test(month)) return errorResponse("Invalid calendar month.", 422);
+      let range;
+      try {
+        range = getCalendarMonthRange(
+          month,
+          Number(url.searchParams.get("startOffset") || 0),
+          Number(url.searchParams.get("endOffset") || 0),
+        );
+      } catch {
+        return errorResponse("Invalid calendar month or timezone offset.", 422);
+      }
+      query = query.gte("created_at", range.start).lt("created_at", range.end);
     }
 
-    const { data, error } = await query.limit(500);
-    if (error) throw error;
-    const donations = (data || []) as Array<Record<string, any>>;
+    const donations = await loadCalendarDonations(query);
 
     return jsonResponse({
       donations: donations.map((donation) => ({

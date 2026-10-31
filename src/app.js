@@ -153,6 +153,7 @@ const DEFAULT_SETTINGS = {
   paypalCheckoutVisible: true,
   homepagePayPalRoute: "standard",
   alternateCardCheckoutVisible: false,
+  weeklySeedOptionVisible: false,
 };
 
 const seedFeed = [
@@ -198,6 +199,9 @@ const elements = {
   adminAnalyticsUpdated: document.querySelector("#adminAnalyticsUpdated"),
   adminBackdrop: document.querySelector("#adminBackdrop"),
   adminCalendarDetails: document.querySelector("#adminCalendarDetails"),
+  adminCalendarLoadStatus: document.querySelector("#adminCalendarLoadStatus"),
+  retryAdminCalendarButton: document.querySelector("#retryAdminCalendarButton"),
+  adminWeeklySeedOptionVisible: document.querySelector("#adminWeeklySeedOptionVisible"),
   adminCalendarGrid: document.querySelector("#adminCalendarGrid"),
   adminCalendarNext: document.querySelector("#adminCalendarNext"),
   adminCalendarPrev: document.querySelector("#adminCalendarPrev"),
@@ -328,6 +332,12 @@ let alternateCheckoutSource = "paypal";
 const initialAdminCalendarDate = getLatestDonationDateKey();
 let adminCalendarCursor = fromDateKey(initialAdminCalendarDate);
 let selectedAdminCalendarDate = initialAdminCalendarDate;
+let adminCalendarDonations = [];
+let adminCalendarLoadedMonth = "";
+let adminCalendarLoading = false;
+let adminCalendarError = "";
+let adminCalendarRequestId = 0;
+const adminFulfillmentDrafts = new Map();
 let standardCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let selectedStandardDate = toDateKey(new Date());
 let standardTransactions = [];
@@ -401,6 +411,7 @@ function normalizeSettings(settings) {
   next.paypalCheckoutVisible = true;
   next.homepagePayPalRoute = next.homepagePayPalRoute === "superadmin" ? "superadmin" : "standard";
   next.alternateCardCheckoutVisible = next.alternateCardCheckoutVisible !== false && next.alternateCardCheckoutVisible !== "false";
+  next.weeklySeedOptionVisible = next.weeklySeedOptionVisible === true || next.weeklySeedOptionVisible === "true";
 
   Object.keys(defaults).forEach((key) => {
     if (typeof defaults[key] !== "string") return;
@@ -622,6 +633,15 @@ function setAdminSession(session) {
 function clearAdminSession() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   state.adminProfile = null;
+  adminCalendarRequestId += 1;
+  adminCalendarDonations = [];
+  adminCalendarLoadedMonth = "";
+  adminCalendarLoading = false;
+  adminCalendarError = "";
+  adminFulfillmentDrafts.clear();
+  selectedAdminCalendarDate = toDateKey(new Date());
+  adminCalendarCursor = fromDateKey(selectedAdminCalendarDate);
+  renderAdminCalendar();
   if (paymentConfig.superAdminPayPalClientId) {
     resetPayPalSdk("paypalSysSuperAdminOnce");
     resetPayPalSdk("paypalSysSuperAdminWeekly");
@@ -1391,7 +1411,8 @@ function buildPdfDocument(pageContents) {
 }
 
 function getDonationById(donationId) {
-  return state.donations.find((donation) => String(donation.id) === String(donationId)) || null;
+  const donations = isBackendConfigured() ? adminCalendarDonations : state.donations;
+  return donations.find((donation) => String(donation.id) === String(donationId)) || null;
 }
 
 function getOrderProofFilename(donation) {
@@ -1429,7 +1450,8 @@ function downloadOrderProofPdf(donationId) {
 }
 
 function updateDonationDigitalOrder(donationId, order) {
-  state.donations = state.donations.map((donation) =>
+  const donations = isBackendConfigured() ? adminCalendarDonations : state.donations;
+  const updated = donations.map((donation) =>
     String(donation.id) === String(donationId)
       ? {
           ...donation,
@@ -1437,6 +1459,9 @@ function updateDonationDigitalOrder(donationId, order) {
         }
       : donation,
   );
+  if (isBackendConfigured()) adminCalendarDonations = updated;
+  else state.donations = updated;
+  adminFulfillmentDrafts.delete(String(donationId));
 }
 
 function cssAttributeValue(value) {
@@ -1574,6 +1599,8 @@ async function deleteDonationRecord(donationId, button) {
       });
 
       state.donations = state.donations.filter((item) => String(item.id) !== String(donationId));
+      adminCalendarDonations = adminCalendarDonations.filter((item) => String(item.id) !== String(donationId));
+      adminFulfillmentDrafts.delete(String(donationId));
       state.seedComments = state.seedComments.filter((item) => String(item.donationId || "") !== String(donationId));
       renderAdminCalendar();
       await loadBackendData({ throwOnError: true });
@@ -1635,41 +1662,58 @@ function getMonthKey(date) {
 }
 
 async function loadAdminDonations(options = {}) {
-  if (!isBackendConfigured() || !getAdminAccessToken()) return;
-
+  if (!isBackendConfigured()) {
+    renderAdminCalendar();
+    return;
+  }
+  const accessToken = getAdminAccessToken();
+  const role = state.adminProfile?.role;
+  if (!accessToken || !["admin", "super_admin"].includes(role)) return;
+  const requestId = ++adminCalendarRequestId;
+  const month = getMonthKey(adminCalendarCursor);
+  const cursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth(), 1);
+  const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  const params = new URLSearchParams({
+    month,
+    startOffset: String(cursor.getTimezoneOffset()),
+    endOffset: String(end.getTimezoneOffset()),
+  });
+  const isCurrentRequest = () => requestId === adminCalendarRequestId &&
+    accessToken === getAdminAccessToken() && role === state.adminProfile?.role &&
+    month === getMonthKey(adminCalendarCursor);
   const announce = Boolean(options.announce);
+  adminCalendarLoading = true;
+  adminCalendarError = "";
+  renderAdminCalendar();
   if (announce) {
-    setAdminBusy(true);
-    elements.adminCalendarPrev.disabled = true;
-    elements.adminCalendarNext.disabled = true;
-    setAdminStatus(`Loading order records for ${formatMonthTitle(adminCalendarCursor)}...`, "loading", { persist: true });
+    setAdminStatus(`Loading order records for ${formatMonthTitle(cursor)}...`, "loading", { persist: true });
   }
 
   try {
-    const payload = await callEdge(`admin-donations?month=${getMonthKey(adminCalendarCursor)}`, {
+    const payload = await callEdge(`admin-donations?${params.toString()}`, {
       admin: true,
       method: "GET",
     });
-    if (Array.isArray(payload.donations)) {
-      state.donations = payload.donations;
-      renderAdminCalendar();
-      if (state.adminProfile?.role !== "super_admin") {
-        renderRecentDonations();
-      }
-    }
+    if (!isCurrentRequest()) return;
+    if (!Array.isArray(payload.donations)) throw new Error("The server did not return an order list. Try loading orders again.");
+    adminCalendarDonations = payload.donations;
+    adminCalendarLoadedMonth = month;
 
     if (announce) {
-      setAdminStatus(`Order calendar loaded for ${formatMonthTitle(adminCalendarCursor)}.`, "success");
+      setAdminStatus(`Order calendar loaded for ${formatMonthTitle(cursor)}.`, "success");
     }
+    return payload;
   } catch (error) {
+    if (!isCurrentRequest()) return;
     const message = error.message || "Could not load admin order calendar.";
+    adminCalendarError = message;
     setAdminStatus(message, "error", { persist: true });
     showToast(message);
+    if (options.throwOnError) throw error;
   } finally {
-    if (announce) {
-      elements.adminCalendarPrev.disabled = false;
-      elements.adminCalendarNext.disabled = false;
-      setAdminBusy(false);
+    if (isCurrentRequest()) {
+      adminCalendarLoading = false;
+      renderAdminCalendar();
     }
   }
 }
@@ -1802,7 +1846,7 @@ async function refreshAdminPortalData() {
   try {
     await loadBackendData({ throwOnError: true });
     renderApp();
-    await Promise.all([loadAdminDonations(), loadAdminAnalytics()]);
+    await Promise.all([loadAdminDonations({ throwOnError: true }), loadAdminAnalytics()]);
     setAdminStatus(`${routeLabel} portal data reloaded.`, "success");
     showToast(`${routeLabel} portal data reloaded.`);
   } catch (error) {
@@ -1950,6 +1994,7 @@ function renderAdminForm() {
   if (homeAdminPayPal) homeAdminPayPal.checked = settings.homepagePayPalRoute !== "superadmin";
   const alternateCardCheckoutVisible = document.querySelector("#alternateCardCheckoutVisible");
   if (alternateCardCheckoutVisible) alternateCardCheckoutVisible.checked = Boolean(settings.alternateCardCheckoutVisible);
+  if (elements.adminWeeklySeedOptionVisible) elements.adminWeeklySeedOptionVisible.checked = settings.weeklySeedOptionVisible;
 }
 
 function getCheckoutRoute() {
@@ -1959,11 +2004,11 @@ function getCheckoutRoute() {
 }
 
 function updateWeeklySeedOption() {
-  const isSuperAdminCheckout = getCheckoutRoute() === "superadmin";
+  const showWeeklyOption = state.settings.weeklySeedOptionVisible;
   const option = elements.weeklySeedToggle.closest(".weekly-seed-option");
-  if (option) option.hidden = !isSuperAdminCheckout;
-  elements.weeklySeedToggle.disabled = !isSuperAdminCheckout;
-  if (!isSuperAdminCheckout) elements.weeklySeedToggle.checked = false;
+  if (option) option.hidden = !showWeeklyOption;
+  elements.weeklySeedToggle.disabled = !showWeeklyOption;
+  if (!showWeeklyOption) elements.weeklySeedToggle.checked = false;
 }
 
 function renderAdminAnalytics() {
@@ -2037,6 +2082,10 @@ function renderAdminAnalytics() {
 
 function renderCalendarDetails(context) {
   if (!context.details) return;
+  if (!context.loaded) {
+    context.details.innerHTML = `<div class="admin-calendar-empty"><strong>${readableDate(fromDateKey(context.selectedDate))}</strong><span>${context.error ? "Order records could not load. Use the retry button above." : "Loading order records…"}</span></div>`;
+    return;
+  }
 
   const donationsByDate = getDonationsByDate(context.donations);
   const donations = (donationsByDate[context.selectedDate] || [])
@@ -2091,7 +2140,7 @@ function renderCalendarDetails(context) {
           const request = getDigitalOrderValue(donation, "personalizedRequest", donation.message || "No request entered.");
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", "");
-          const note = getDigitalOrderValue(donation, "fulfillmentNote", "");
+          const note = adminFulfillmentDrafts.get(String(donation.id)) ?? getDigitalOrderValue(donation, "fulfillmentNote", "");
           const isFulfilled = status === "fulfilled";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
           const itemLabel = context.isAdminPortal && itemName === DIGITAL_ORDER_ITEM_NAME
@@ -2152,6 +2201,10 @@ function getCalendarMonthDonations(context) {
 
 function renderCalendarSummary(context) {
   if (!context.summary) return;
+  if (!context.loaded) {
+    context.summary.replaceChildren();
+    return;
+  }
 
   const donationsByDate = getDonationsByDate(context.donations);
   const dayDonations = donationsByDate[context.selectedDate] || [];
@@ -2175,6 +2228,13 @@ function renderCalendarSummary(context) {
 
 function renderCalendarGrid(context) {
   if (!context.grid || !context.title) return;
+  context.grid.setAttribute("aria-busy", String(Boolean(context.loading)));
+  if (context.loadStatus) {
+    context.loadStatus.hidden = !context.loading && !context.error;
+    context.loadStatus.textContent = context.error || (context.loaded ? "Refreshing order records…" : "Loading order records…");
+    context.loadStatus.classList.toggle("is-error", Boolean(context.error));
+  }
+  if (elements.retryAdminCalendarButton) elements.retryAdminCalendarButton.hidden = !context.error;
 
   const donationsByDate = getDonationsByDate(context.donations);
   const year = context.cursor.getFullYear();
@@ -2203,7 +2263,7 @@ function renderCalendarGrid(context) {
       .join(" ");
     const donationLabel = donations.length
       ? `${donations.length} order${donations.length === 1 ? "" : "s"}, ${money(total)}`
-      : "no orders";
+      : context.loaded ? "no orders" : "orders not loaded";
 
     cells.push(`
       <button
@@ -2229,6 +2289,8 @@ function renderCalendarGrid(context) {
 }
 
 function getPrimaryAdminCalendarContext() {
+  const loaded = !isBackendConfigured() || adminCalendarLoadedMonth === getMonthKey(adminCalendarCursor);
+  const donations = isBackendConfigured() ? (loaded ? adminCalendarDonations : []) : state.donations;
   return {
     allowDelete: true,
     isAdminPortal: state.adminProfile?.role === "admin",
@@ -2236,8 +2298,12 @@ function getPrimaryAdminCalendarContext() {
     dateAttribute: "data-admin-calendar-date",
     details: elements.adminCalendarDetails,
     donations: showSampleAdminOrder && state.adminProfile?.role === "admin"
-      ? [getSampleAdminOrder(), ...state.donations]
-      : state.donations,
+      ? [getSampleAdminOrder(), ...donations]
+      : donations,
+    loaded,
+    loading: adminCalendarLoading || (!loaded && !adminCalendarError),
+    error: adminCalendarError,
+    loadStatus: elements.adminCalendarLoadStatus,
     emptyRecordLabel: state.adminProfile?.role === "super_admin" ? "SuperAdmin PayPal orders" : "Admin orders",
     grid: elements.adminCalendarGrid,
     selectedDate: selectedAdminCalendarDate,
@@ -2248,6 +2314,15 @@ function getPrimaryAdminCalendarContext() {
 }
 
 function renderAdminCalendar() {
+  if (isBackendConfigured() && !["admin", "super_admin"].includes(state.adminProfile?.role)) {
+    elements.adminCalendarGrid.replaceChildren();
+    elements.adminCalendarDetails.replaceChildren();
+    elements.adminCalendarSummary.replaceChildren();
+    elements.adminCalendarGrid.setAttribute("aria-busy", "false");
+    if (elements.adminCalendarLoadStatus) elements.adminCalendarLoadStatus.hidden = true;
+    if (elements.retryAdminCalendarButton) elements.retryAdminCalendarButton.hidden = true;
+    return;
+  }
   renderCalendarGrid(getPrimaryAdminCalendarContext());
 }
 
@@ -2967,7 +3042,7 @@ function continueWithPayPal() {
   pendingDonation = {
     ...pendingDonation,
     email: getPaymentEmail(),
-    frequency: getCheckoutRoute() === "superadmin" && elements.weeklySeedToggle.checked ? "weekly" : "once",
+    frequency: state.settings.weeklySeedOptionVisible && elements.weeklySeedToggle.checked ? "weekly" : "once",
     message: ui.messageInput.value.trim(),
   };
   elements.paypalContinueButton.hidden = true;
@@ -3335,8 +3410,9 @@ function openAdminPanel() {
     const isSuperAdminSection = section.classList.contains("admin-super-checkout-section");
     const isCollectionCalendar = section.classList.contains("admin-donations");
     const isRoleScopedAnalytics = section.classList.contains("admin-analytics-section");
+    const isRecurringSettings = section.classList.contains("admin-recurring-settings-section");
     const shouldShow = isSuperAdmin
-      ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics
+      ? isSuperAdminSection || isCollectionCalendar || isRoleScopedAnalytics || isRecurringSettings
       : !isSuperAdminSection;
     section.hidden = !shouldShow;
     section.style.display = shouldShow ? "" : "none";
@@ -3548,7 +3624,6 @@ function renderApp() {
   renderGoalProgress();
   renderRecentDonations();
   renderSeedComments();
-  renderAdminCalendar();
   renderAdminAnalytics();
   updateCheckoutLabel();
 }
@@ -3571,14 +3646,12 @@ elements.increaseSeedButton?.addEventListener("click", () => {
 elements.adminCalendarPrev.addEventListener("click", () => {
   adminCalendarCursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth() - 1, 1);
   selectedAdminCalendarDate = toDateKey(adminCalendarCursor);
-  renderAdminCalendar();
   loadAdminDonations({ announce: true });
 });
 
 elements.adminCalendarNext.addEventListener("click", () => {
   adminCalendarCursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth() + 1, 1);
   selectedAdminCalendarDate = toDateKey(adminCalendarCursor);
-  renderAdminCalendar();
   loadAdminDonations({ announce: true });
 });
 
@@ -3611,6 +3684,13 @@ function handleAdminCalendarDetailClick(event) {
 }
 
 elements.adminCalendarDetails.addEventListener("click", handleAdminCalendarDetailClick);
+elements.adminCalendarDetails.addEventListener("input", (event) => {
+  const note = event.target.closest("[data-fulfillment-note]");
+  if (note) adminFulfillmentDrafts.set(note.dataset.fulfillmentNote, note.value);
+});
+elements.retryAdminCalendarButton?.addEventListener("click", () => {
+  void loadAdminDonations({ announce: true });
+});
 elements.fulfillmentCancelButton?.addEventListener("click", closeFulfillmentDialog);
 elements.fulfillmentForm?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -3962,6 +4042,34 @@ elements.adminLoginDialog.addEventListener("close", () => {
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.closeStandardButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
+elements.adminWeeklySeedOptionVisible?.addEventListener("change", async () => {
+  const enabled = elements.adminWeeklySeedOptionVisible.checked;
+  await runAdminAction(
+    {
+      button: elements.adminWeeklySeedOptionVisible,
+      loadingMessage: "Saving recurring seed visibility...",
+      successMessage: enabled ? "Sow Seed Weekly is visible at checkout." : "Sow Seed Weekly is hidden.",
+      errorMessage: "Could not save recurring seed visibility.",
+    },
+    async () => {
+      const nextSettings = normalizeSettings({ ...state.settings, weeklySeedOptionVisible: enabled });
+      if (isBackendConfigured()) {
+        const payload = await callEdge("admin-settings", {
+          admin: true,
+          method: "PUT",
+          body: { settings: { weeklySeedOptionVisible: enabled } },
+        });
+        if (payload.settings?.weeklySeedOptionVisible !== enabled) throw new Error("The recurring seed setting was not saved.");
+        state.settings = normalizeSettings(payload.settings);
+      } else {
+        state.settings = nextSettings;
+        saveState();
+      }
+      updateWeeklySeedOption();
+    },
+  );
+  renderAdminForm();
+});
 elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
   const homepagePayPalRoute = document.querySelector("#homeSuperAdminPayPal")?.checked === true
     ? "superadmin"

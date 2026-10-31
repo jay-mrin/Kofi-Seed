@@ -21,6 +21,7 @@ const ACTIVE_SETTING_KEYS = [
   "paypalCheckoutVisible",
   "homepagePayPalRoute",
   "alternateCardCheckoutVisible",
+  "weeklySeedOptionVisible",
 ] as const;
 
 function keepActiveSettings(settings: Record<string, unknown>) {
@@ -71,6 +72,9 @@ function applySiteSettings(
     next.blessingWallEnabled = submitted.blessingWallEnabled !== false &&
       submitted.blessingWallEnabled !== "false";
   }
+  if (Object.hasOwn(submitted, "weeklySeedOptionVisible")) {
+    next.weeklySeedOptionVisible = isEnabled(submitted.weeklySeedOptionVisible);
+  }
 
   return next;
 }
@@ -95,6 +99,7 @@ Deno.serve(withCors(async (request) => {
           ...keepActiveSettings(saved),
           ...selectedCheckout(saved),
           alternateCardCheckoutVisible: checkoutVisibility(saved, "alternateCardCheckoutVisible"),
+          weeklySeedOptionVisible: isEnabled(saved.weeklySeedOptionVisible),
         },
       });
     }
