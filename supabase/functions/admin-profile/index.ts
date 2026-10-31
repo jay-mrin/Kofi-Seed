@@ -1,5 +1,6 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
+import { getPayPalClientId } from "../_shared/paypal.ts";
 
 Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
@@ -10,6 +11,9 @@ Deno.serve(withCors(async (request) => {
 
     return jsonResponse({
       profile: adminProfile,
+      ...(adminProfile.role === "super_admin"
+        ? { payment: { superAdminPayPalClientId: getPayPalClientId("superadmin") } }
+        : {}),
     });
   } catch (error) {
     if (error instanceof Response) return error;

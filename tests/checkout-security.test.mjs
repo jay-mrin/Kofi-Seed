@@ -19,11 +19,11 @@ test("PayPal capture trusts the server-pinned payment attempt", () => {
   assert.doesNotMatch(source, /body\.donation|paypal_checkout_sessions|resolvePaymentRoute/);
 });
 
-test("PayPal creation accepts only the SuperAdmin SDK route and persists checkout metadata", () => {
+test("PayPal creation accepts only the Admin and SuperAdmin routes and persists checkout metadata", () => {
   const source = read("supabase/functions/create-paypal-order/index.ts");
 
-  assert.match(source, /const paymentRoute = "superadmin"/);
-  assert.match(source, /body\.paymentRoute !== paymentRoute/);
+  assert.match(source, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
+  assert.match(source, /if \(!paymentRoute\)/);
   assert.match(source, /\.from\("payment_attempts"\)\s*\.insert/);
   assert.match(source, /customer_request: personalizedRequest/);
   assert.match(source, /const MIN_AMOUNT_CENTS = 1100/);
@@ -111,7 +111,7 @@ test("cleanup migrations close direct-table bypasses and remove retired schema",
   }
 });
 
-test("checkout analytics combine visits while isolating all payment records by route", () => {
+test("checkout analytics keep Admin views scoped while isolating payment records by route", () => {
   const analytics = read("supabase/functions/admin-analytics/index.ts");
   const app = read("src/app.js");
   const html = read("index.html");
@@ -121,7 +121,9 @@ test("checkout analytics combine visits while isolating all payment records by r
 
   assert.match(analytics, /\.from\("payment_attempts"\)/);
   assert.match(analytics, /adminProfile\.role === "super_admin"/);
-  assert.match(analytics, /\.from\("page_views"\)[\s\S]*\.in\("payment_route", \["standard", "superadmin"\]\)/);
+  assert.match(analytics, /pageViewQuery\.in\("payment_route", \["standard", "superadmin"\]\)[\s\S]*pageViewQuery\.eq\("payment_route", "standard"\)/);
+  assert.match(analytics, /pageViewsAreCombined: paymentRoute === "superadmin"/);
+  assert.match(bootstrap, /const paymentRoute = "standard"/);
   assert.match(analytics, /\.eq\("payment_route", paymentRoute\)/);
   assert.doesNotMatch(analytics, /oppositeRoute|oppositeCompleted/);
   assert.match(analytics, /\.from\("checkout_analytics_state"\)/);

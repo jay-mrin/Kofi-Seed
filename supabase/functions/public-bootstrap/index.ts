@@ -68,9 +68,7 @@ async function loadCriticalData(
     settings,
     payment: {
       adminPayPalClientId: getPayPalClientId("standard"),
-      superAdminPayPalClientId: getPayPalClientId("superadmin"),
       currency: Deno.env.get("PAYPAL_CURRENCY") || "USD",
-      env: Deno.env.get("PAYPAL_ENV") || "sandbox",
     },
   };
 }
@@ -179,7 +177,7 @@ Deno.serve(withCors(async (request) => {
       : "full";
     const visitorKey = url.searchParams.get("visitorKey") || "";
     const path = sanitizePath(url.searchParams.get("path"));
-    const paymentRoute = "superadmin";
+    const paymentRoute = "standard";
     const supabase = getSupabaseAdmin();
     const criticalDataPromise = mode === "content"
       ? Promise.resolve(null)

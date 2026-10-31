@@ -24,11 +24,11 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   assert.match(webhook, /handleSubscriptionWebhook/);
 });
 
-test("weekly plan preparation uses SuperAdmin and Monday 7:30 AM IST", () => {
+test("weekly plan preparation supports both routes and Monday 7:30 AM IST", () => {
   const prepare = read("supabase/functions/prepare-paypal-subscription/index.ts");
   const paypal = read("supabase/functions/_shared/paypal.ts");
 
-  assert.match(prepare, /const paymentRoute = "superadmin"/);
+  assert.match(prepare, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
   assert.match(prepare, /const daysUntilMonday = \(8 - istDay\) % 7/);
   assert.match(prepare, /Date\.UTC\([\s\S]*2,[\s\S]*0,[\s\S]*0/);
   assert.match(prepare, /if \(monday <= now\) monday\.setUTCDate\(monday\.getUTCDate\(\) \+ 7\)/);

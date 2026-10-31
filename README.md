@@ -35,7 +35,7 @@ The payment column includes a Blessing Wall loaded from `seed_comments`. Initial
    - `supabaseAnonKey`
    - `backendEnabled: true`
 
-   PayPal client IDs are provided by the backend. Do not put PayPal client secrets in browser configuration.
+   The Admin client ID comes from public bootstrap; the SuperAdmin client ID is returned only after SuperAdmin authentication. Do not put PayPal client secrets in browser configuration.
 
 2. Copy `.env.example` to `.env` for your local notes only. Do not commit real secrets.
 

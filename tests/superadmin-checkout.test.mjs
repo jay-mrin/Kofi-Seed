@@ -7,19 +7,21 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (filePath) => readFileSync(path.join(repositoryRoot, filePath), "utf8");
 
-test("new PayPal orders and weekly plans use SuperAdmin", () => {
+test("Admin and SuperAdmin PayPal orders and weekly plans use separate routes", () => {
   const app = read("src/app.js");
   const order = read("supabase/functions/create-paypal-order/index.ts");
   const weekly = read("supabase/functions/prepare-paypal-subscription/index.ts");
   const bootstrap = read("supabase/functions/public-bootstrap/index.ts");
+  const profile = read("supabase/functions/admin-profile/index.ts");
+  const paypal = read("supabase/functions/_shared/paypal.ts");
 
-  assert.match(app, /function getCheckoutRoute\(\)\s*\{\s*return "superadmin";/);
-  assert.match(order, /const paymentRoute = "superadmin";/);
-  assert.match(order, /body\.paymentRoute !== paymentRoute/);
-  assert.match(weekly, /const paymentRoute = "superadmin";/);
-  assert.match(weekly, /body\.paymentRoute !== paymentRoute/);
-  assert.match(bootstrap, /superAdminPayPalClientId: getPayPalClientId\("superadmin"\)/);
-  assert.doesNotMatch(bootstrap, /paypalClientId: getPayPalClientId\(\)/);
+  assert.match(app, /function getCheckoutRoute\(\)[\s\S]*elements\.supportCard\?\.parentElement === elements\.superAdminCheckoutHost/);
+  assert.match(order, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
+  assert.match(weekly, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
+  assert.match(bootstrap, /adminPayPalClientId: getPayPalClientId\("standard"\)/);
+  assert.doesNotMatch(bootstrap, /superAdminPayPalClientId/);
+  assert.match(profile, /adminProfile\.role === "super_admin"[\s\S]*getPayPalClientId\("superadmin"\)/);
+  assert.match(paypal, /paymentRoute === "standard"[\s\S]*ADMIN_PAYPAL_ENV[\s\S]*PAYPAL_ENV/);
 });
 
 test("legacy Admin records and webhooks remain available", () => {
@@ -40,6 +42,6 @@ test("SuperAdmin Checkout keeps the PayPal form independent of the Home display 
   assert.ok(html.indexOf('id="superAdminCheckoutHost"') < html.indexOf('id="adminForm"'));
   assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*superAdminCheckoutHost\.appendChild\(elements\.supportCard\)[\s\S]*supportHomeColumn\.insertBefore\(elements\.supportCard, elements\.supportRitualCard\)[\s\S]*elements\.supportCard\.hidden = !inPortal && !state\.settings\.paypalCheckoutVisible/);
   assert.match(app, /placePayPalCheckoutInPortal\(isSuperAdmin\)/);
-  assert.match(app, /function closeAdminPanel\(\) \{\s*placePayPalCheckoutInPortal\(false\)/);
+  assert.match(app, /function closeAdminPanel\(\) \{\s*clearAdminSession\(\);\s*placePayPalCheckoutInPortal\(false\)/);
   assert.match(app, /const inSuperAdminPortal = elements\.supportCard\.parentElement === elements\.superAdminCheckoutHost;[\s\S]*elements\.supportCard\.hidden = !inSuperAdminPortal && !settings\.paypalCheckoutVisible/);
 });

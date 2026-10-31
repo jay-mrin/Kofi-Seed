@@ -624,6 +624,15 @@ function setAdminSession(session) {
 function clearAdminSession() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   state.adminProfile = null;
+  if (paymentConfig.superAdminPayPalClientId) {
+    resetPayPalSdk("paypalSysSuperAdminOnce");
+    resetPayPalSdk("paypalSysSuperAdminWeekly");
+    if (elements.supportCard?.parentElement === elements.superAdminCheckoutHost) {
+      closeInlinePayPalCheckout();
+      clearPayPalButtons();
+    }
+    paymentConfig.superAdminPayPalClientId = "";
+  }
 }
 
 function getAdminAccessToken() {
@@ -718,6 +727,9 @@ async function loadAdminProfile() {
   });
 
   state.adminProfile = payload.profile || null;
+  paymentConfig.superAdminPayPalClientId = state.adminProfile?.role === "super_admin"
+    ? payload.payment?.superAdminPayPalClientId || ""
+    : "";
   return state.adminProfile;
 }
 
@@ -745,7 +757,7 @@ function applyBootstrap(payload) {
   if (payload.payment) {
     paymentConfig = {
       adminPayPalClientId: payload.payment.adminPayPalClientId || "",
-      superAdminPayPalClientId: payload.payment.superAdminPayPalClientId || "",
+      superAdminPayPalClientId: paymentConfig.superAdminPayPalClientId,
       currency: payload.payment.currency || PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
     };
   }
@@ -1683,7 +1695,7 @@ async function loadAdminAnalytics(options = {}) {
     const expectedRoute = state.adminProfile?.role === "super_admin" ? "superadmin" : "standard";
     if (
       state.analytics.paymentRoute !== expectedRoute ||
-      state.analytics.pageViewsAreCombined !== true
+      state.analytics.pageViewsAreCombined !== (expectedRoute === "superadmin")
     ) {
       throw new Error(`${routeLabel} checkout analytics returned an incorrect activity scope.`);
     }
@@ -1959,10 +1971,12 @@ function renderAdminAnalytics() {
     elements.adminAnalyticsTitle.textContent = `3. ${routeLabel} checkout activity`;
   }
   if (elements.adminAnalyticsDescription) {
-    elements.adminAnalyticsDescription.textContent = `All page visits and ${routeLabel} checkout activity from the last 24 hours. Payment records are private to this account.`;
+    elements.adminAnalyticsDescription.textContent = `${isSuperAdmin ? "All page visits" : "Admin checkout page visits"} and ${routeLabel} checkout activity from the last 24 hours. Payment records are private to this account.`;
   }
   if (elements.adminPageViewsLabel) {
-    elements.adminPageViewsLabel.textContent = "All checkout-route views last 24 hours";
+    elements.adminPageViewsLabel.textContent = isSuperAdmin
+      ? "All checkout-route views last 24 hours"
+      : "Admin checkout page views last 24 hours";
   }
   if (elements.adminPaymentStartsLabel) {
     elements.adminPaymentStartsLabel.textContent = `Persisted ${routeLabel} checkout attempts`;
@@ -3322,8 +3336,8 @@ function openStandardPanel() {
 }
 
 function closeAdminPanel() {
-  placePayPalCheckoutInPortal(false);
   clearAdminSession();
+  placePayPalCheckoutInPortal(false);
   window.clearTimeout(setAdminStatus.timeout);
   if (elements.adminActionStatus) {
     elements.adminActionStatus.hidden = true;

@@ -12,7 +12,7 @@ function createEmptyAnalytics(
     generatedAt,
     resetAt,
     paymentRoute,
-    pageViewsAreCombined: true,
+    pageViewsAreCombined: paymentRoute === "superadmin",
     pageViewsLast24h: 0,
     paymentStartsLast24h: 0,
     completedPaymentsLast24h: 0,
@@ -98,13 +98,15 @@ Deno.serve(withCors(async (request) => {
 
     const { since, resetAt } = await getAnalyticsSince(supabase, paymentRoute);
 
-    const { data, error } = await supabase
+    const pageViewQuery = supabase
       .from("page_views")
       .select("id")
       .gte("last_seen_at", since)
-      .in("payment_route", ["standard", "superadmin"])
       .order("last_seen_at", { ascending: false })
       .limit(10000);
+    const { data, error } = await (paymentRoute === "superadmin"
+      ? pageViewQuery.in("payment_route", ["standard", "superadmin"])
+      : pageViewQuery.eq("payment_route", "standard"));
 
     if (error) throw error;
 
@@ -130,7 +132,7 @@ Deno.serve(withCors(async (request) => {
       generatedAt: new Date().toISOString(),
       resetAt,
       paymentRoute,
-      pageViewsAreCombined: true,
+      pageViewsAreCombined: paymentRoute === "superadmin",
       pageViewsLast24h: rows.length,
       paymentStartsLast24h: attempts.length,
       completedPaymentsLast24h: completedPayments,
