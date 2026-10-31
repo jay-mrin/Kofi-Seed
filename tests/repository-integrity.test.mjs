@@ -215,6 +215,8 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(weekly\)/);
   assert.match(app, /const paypal = await loadPayPalSdk\(weekly\)/);
   assert.match(app, /await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
+  assert.match(app, /if \(paypalEligible\) \{\s*ui\.paypalButton\.hidden = false;\s*await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
+  assert.match(app, /ui\.paypalButton\.hidden = false;\s*await subscriptionButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /waitForRenderedPayPalButton/);
   assert.match(app, /querySelectorAll\("iframe"\)/);
   assert.match(app, /paypalCardButtons = paypal\.Buttons\(buildPayPalButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);

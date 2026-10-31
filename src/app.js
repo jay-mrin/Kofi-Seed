@@ -2777,6 +2777,7 @@ async function renderFreshPayPalButtons() {
       if (!subscriptionButtons.isEligible()) {
         throw new Error("PayPal subscriptions are unavailable for this account.");
       }
+      ui.paypalButton.hidden = false;
       await subscriptionButtons.render(ui.paypalButtonContainer);
       await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal subscription button");
       let cardReady = false;
@@ -2810,6 +2811,7 @@ async function renderFreshPayPalButtons() {
     }
 
     if (paypalEligible) {
+      ui.paypalButton.hidden = false;
       await paypalButtons.render(ui.paypalButtonContainer);
       await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal button");
     }
