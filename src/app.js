@@ -1853,6 +1853,7 @@ function renderSettings() {
     const inSuperAdminPortal = elements.supportCard.parentElement === elements.superAdminCheckoutHost;
     elements.supportCard.hidden = !inSuperAdminPortal && !settings.paypalCheckoutVisible;
   }
+  updateWeeklySeedOption();
   if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
   const dodoPaymentPanel = document.querySelector("#dodoPaymentPanel");
   if (dodoPaymentPanel && !document.querySelector("#dodoPaymentDialog")?.open) dodoPaymentPanel.hidden = true;
@@ -1953,6 +1954,14 @@ function getCheckoutRoute() {
   return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
     ? "superadmin"
     : state.settings.homepagePayPalRoute;
+}
+
+function updateWeeklySeedOption() {
+  const isSuperAdminCheckout = getCheckoutRoute() === "superadmin";
+  const option = elements.weeklySeedToggle.closest(".weekly-seed-option");
+  if (option) option.hidden = !isSuperAdminCheckout;
+  elements.weeklySeedToggle.disabled = !isSuperAdminCheckout;
+  if (!isSuperAdminCheckout) elements.weeklySeedToggle.checked = false;
 }
 
 function renderAdminAnalytics() {
@@ -2892,6 +2901,7 @@ async function finishVerifiedDonation(payload) {
 
 function openInlinePayPalCheckout() {
   alternateCheckoutSource = "paypal";
+  updateWeeklySeedOption();
   const ui = getCheckoutUi();
   setPaymentStatus("");
   if (typeof elements.paypalPaymentDialog.showModal === "function") {
@@ -2926,7 +2936,7 @@ function continueWithPayPal() {
   pendingDonation = {
     ...pendingDonation,
     email: getPaymentEmail(),
-    frequency: elements.weeklySeedToggle.checked ? "weekly" : "once",
+    frequency: getCheckoutRoute() === "superadmin" && elements.weeklySeedToggle.checked ? "weekly" : "once",
     message: ui.messageInput.value.trim(),
   };
   elements.paypalContinueButton.hidden = true;
@@ -3167,6 +3177,7 @@ function placePayPalCheckoutInPortal(inPortal) {
     elements.supportHomeColumn.insertBefore(elements.supportCard, elements.supportRitualCard);
   }
   elements.supportCard.hidden = !inPortal && !state.settings.paypalCheckoutVisible;
+  updateWeeklySeedOption();
 }
 
 function renderStandardCalendar() {

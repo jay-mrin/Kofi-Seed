@@ -14,7 +14,7 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   const webhook = read("supabase/functions/paypal-webhook/index.ts");
   assert.match(html, /id="messageInput"[\s\S]*<strong>Sow Seed Weekly<\/strong>[\s\S]*id="weeklySeedToggle"[\s\S]*id="paypalContinueButton"[^>]*>Continue To Seed<\/button>/);
   assert.doesNotMatch(html, /weeklySeedHint|Pay now, then every Monday|Off: one-time payment/);
-  assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
+  assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: getCheckoutRoute\(\) === "superadmin" && elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
   assert.match(app, /buildPayPalSubscriptionButtonOptions[\s\S]*createSubscription:/);
   assert.match(app, /subscriptionCardButtons = paypal\.Buttons\(buildPayPalSubscriptionButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
   assert.match(app, /subscriptionCardButtons\.isEligible\(\)/);
@@ -22,6 +22,46 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   assert.match(app, /confirm-paypal-subscription/);
   assert.match(app, /intent: weekly \? "subscription" : "capture"/);
   assert.match(webhook, /handleSubscriptionWebhook/);
+});
+
+test("Admin checkout hides recurring sowing and always starts one-time", () => {
+  const app = read("src/app.js");
+  const html = read("index.html");
+  const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
+  const optionSource = app.match(/function updateWeeklySeedOption\(\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(routeSource && optionSource);
+  assert.match(html, /class="weekly-seed-option"[^>]*hidden/);
+  assert.match(app, /function openInlinePayPalCheckout\(\)[\s\S]*updateWeeklySeedOption\(\)/);
+  assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*updateWeeklySeedOption\(\)/);
+
+  const host = {};
+  const option = { hidden: false };
+  const toggle = {
+    checked: true,
+    disabled: false,
+    closest: () => option,
+  };
+  const context = {
+    elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: host, weeklySeedToggle: toggle },
+    state: { settings: { homepagePayPalRoute: "standard" } },
+  };
+  const update = () => vm.runInNewContext(`${routeSource}\n${optionSource}\nupdateWeeklySeedOption()`, context);
+
+  update();
+  assert.equal(option.hidden, true);
+  assert.equal(toggle.disabled, true);
+  assert.equal(toggle.checked, false);
+
+  context.state.settings.homepagePayPalRoute = "superadmin";
+  update();
+  assert.equal(option.hidden, false);
+  assert.equal(toggle.disabled, false);
+
+  context.state.settings.homepagePayPalRoute = "standard";
+  context.elements.supportCard.parentElement = host;
+  update();
+  assert.equal(option.hidden, false);
+  assert.equal(toggle.disabled, false);
 });
 
 test("weekly plan preparation supports both routes and Monday 7:30 AM IST", () => {
