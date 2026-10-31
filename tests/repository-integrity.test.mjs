@@ -203,7 +203,7 @@ test("optimized page images stay within the initial transfer budget", () => {
   assert.doesNotMatch(html, /assets\/(?:jesus-profile|sow-cover)\.(?:jpg|png)/);
 });
 
-test("PayPal and PayPal card use the SDK while the alternate card is scoped to Dodo seeds", () => {
+test("one-time custom card checkout and weekly PayPal options stay separate", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
   const styles = readRepositoryFile("src/styles.css");
@@ -236,7 +236,15 @@ test("PayPal and PayPal card use the SDK while the alternate card is scoped to D
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
-  assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*link\?\.addEventListener\("click", \(event\)[\s\S]*event\.preventDefault\(\)[\s\S]*classList\.contains\("is-disabled"\)[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)[\s\S]*openAlternateCheckout\(link\)/);
+  assert.match(html, /id="alternateCardCheckoutVisible" type="checkbox"/);
+  assert.match(app, /const cardFirst = !weekly && Boolean\(state\.settings\.alternateCardCheckoutVisible\)/);
+  assert.match(app, /cardFirst\s*\? \[ui\.cardButton, ui\.paypalCardButton, ui\.paypalButton\]/);
+  assert.match(app, /const paypalEligible = !cardFirst && paypalButtons\.isEligible\(\)/);
+  assert.match(app, /ui\.paypalButton\.hidden = cardFirst/);
+  assert.match(app, /ui\.cardButton\.hidden = !cardFirst/);
+  assert.match(app, /if \(isPayPalCardCheckout\) url\.searchParams\.set\("paymentRoute", pendingDonation\.paymentRoute\)/);
+  assert.match(app, /isPayPalCardCheckout && \(pendingDonation\?\.frequency !== "once" \|\| !pendingDonation\?\.paymentRoute\)/);
+  assert.match(app, /if \(!openAlternateCheckout\(link\)\) return;[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)/);
   assert.match(app, /if \(elements\.cardButton\) elements\.cardButton\.hidden = true/);
   assert.match(app, /if \(dodoPaymentPanel && !document\.querySelector\("#dodoPaymentDialog"\)\?\.open\) dodoPaymentPanel\.hidden = true/);
   assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
