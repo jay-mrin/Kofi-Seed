@@ -85,7 +85,7 @@ test("recurring seed visibility defaults off and only SuperAdmin can change it",
   const settings = read("supabase/functions/admin-settings/index.ts");
   assert.match(app, /weeklySeedOptionVisible: false/);
   assert.match(html, /id="adminWeeklySeedOptionVisible" type="checkbox"/);
-  assert.match(html, /<section class="admin-section admin-super-checkout-section admin-recurring-settings-section" hidden>/);
+  assert.match(html, /id="superAdminPaymentControlSection" hidden>[\s\S]*id="adminWeeklySeedOptionVisible" type="checkbox"/);
   assert.match(settings, /"weeklySeedOptionVisible"/);
   assert.doesNotMatch(settings, /applySiteSettings/);
   assert.match(settings, /let settingsToSave = \{ \.\.\.existingSettings \}/);

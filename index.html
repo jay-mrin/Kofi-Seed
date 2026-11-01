@@ -136,19 +136,6 @@
 
       <div class="admin-status" id="adminActionStatus" role="status" aria-live="polite" hidden></div>
 
-      <section class="admin-section admin-super-checkout-section superadmin-paypal-section" id="superAdminPayPalSection" hidden>
-        <details class="checkout-routing-details">
-          <summary class="admin-super-checkout-heading">
-            <span class="checkout-routing-summary-copy">
-              <strong>Checkout</strong>
-              <small>PayPal checkout for SuperAdmin</small>
-            </span>
-            <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
-          </summary>
-          <div class="home-checkout-view superadmin-checkout-host" id="superAdminCheckoutHost"></div>
-        </details>
-      </section>
-
       <div class="admin-form admin-portal-grid" id="adminForm">
 
 
@@ -198,17 +185,6 @@
         </section>
 
         <div class="admin-right-column">
-          <section class="admin-section admin-super-checkout-section admin-recurring-settings-section" hidden>
-            <h3>Recurring seed option</h3>
-            <label class="admin-toggle">
-              <input id="adminWeeklySeedOptionVisible" type="checkbox" />
-              <span>
-                <strong>Show Sow Seed Weekly</strong>
-                Show the weekly subscription choice at checkout. Off hides the choice. Changes save automatically.
-              </span>
-            </label>
-          </section>
-
           <section class="admin-section admin-analytics-section">
             <details class="admin-analytics-details">
               <summary class="admin-analytics-summary">
@@ -254,40 +230,60 @@
             </details>
           </section>
 
-        <section class="admin-section admin-super-checkout-section" id="adminSuperCheckoutSection" hidden>
-          <details class="checkout-routing-details">
+        <section class="admin-section admin-super-checkout-section admin-payment-control-section" id="superAdminPaymentControlSection" hidden>
+          <details class="checkout-routing-details" id="superAdminPaymentControlDetails">
             <summary class="admin-super-checkout-heading">
               <span class="checkout-routing-summary-copy">
-                <strong>Checkout display</strong>
-                <small>Choose which PayPal account handles Home checkout</small>
+                <strong>Payment Control</strong>
+                <small>Manage checkout, recurring seeds, and payment options</small>
               </span>
               <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
             </summary>
-            <div class="checkout-routing-content">
-              <div class="checkout-routing-override">
-                <label class="admin-toggle checkout-routing-toggle">
-                  <input id="homeSuperAdminPayPal" type="radio" name="checkoutProvider" value="superadmin" />
+            <div class="payment-control-content">
+              <section class="payment-control-group admin-recurring-settings-section">
+                <h3>Recurring seed option</h3>
+                <label class="admin-toggle">
+                  <input id="adminWeeklySeedOptionVisible" type="checkbox" />
                   <span>
-                    <strong>Superadmin[Paypal]</strong>
-                    Show the SuperAdmin PayPal checkout on Home. Orders go to the SuperAdmin calendar.
+                    <strong>Show Sow Seed Weekly</strong>
+                    Show the weekly subscription choice at checkout. Off hides the choice. Changes save automatically.
                   </span>
                 </label>
-                <label class="admin-toggle checkout-routing-toggle">
-                  <input id="homeAdminPayPal" type="radio" name="checkoutProvider" value="standard" checked />
-                  <span>
-                    <strong>Admin[Paypal]</strong>
-                    Show the Admin PayPal checkout on Home. Orders go to the Admin calendar.
-                  </span>
-                </label>
-              </div>
-              <label class="admin-toggle checkout-routing-toggle">
-                <input id="alternateCardCheckoutVisible" type="checkbox" />
-                <span>
-                  <strong>Show Credit &amp; Debit Card button</strong>
-                  Show the custom card checkout first, then PayPal debit or credit card for one-time seeds. Weekly subscriptions keep both PayPal options.
-                </span>
-              </label>
-              <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save checkout choice</button>
+              </section>
+              <section class="payment-control-group" id="adminSuperCheckoutSection" hidden>
+                <h3>Checkout display</h3>
+                <p>Choose which PayPal account handles Home checkout</p>
+                <div class="checkout-routing-content">
+                  <div class="checkout-routing-override">
+                    <label class="admin-toggle checkout-routing-toggle">
+                      <input id="homeSuperAdminPayPal" type="radio" name="checkoutProvider" value="superadmin" />
+                      <span>
+                        <strong>Superadmin[Paypal]</strong>
+                        Show the SuperAdmin PayPal checkout on Home. Orders go to the SuperAdmin calendar.
+                      </span>
+                    </label>
+                    <label class="admin-toggle checkout-routing-toggle">
+                      <input id="homeAdminPayPal" type="radio" name="checkoutProvider" value="standard" checked />
+                      <span>
+                        <strong>Admin[Paypal]</strong>
+                        Show the Admin PayPal checkout on Home. Orders go to the Admin calendar.
+                      </span>
+                    </label>
+                  </div>
+                  <label class="admin-toggle checkout-routing-toggle">
+                    <input id="alternateCardCheckoutVisible" type="checkbox" />
+                    <span>
+                      <strong>Show Credit &amp; Debit Card button</strong>
+                      Show the custom card checkout first, then PayPal debit or credit card for one-time seeds. Weekly subscriptions keep both PayPal options.
+                    </span>
+                  </label>
+                  <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save checkout choice</button>
+                </div>
+              </section>
+              <section class="payment-control-group superadmin-paypal-section" id="superAdminPayPalSection" hidden>
+                <h3>SuperAdmin checkout</h3>
+                <div class="home-checkout-view superadmin-checkout-host" id="superAdminCheckoutHost"></div>
+              </section>
             </div>
           </details>
         </section>

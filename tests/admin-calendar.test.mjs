@@ -94,6 +94,34 @@ test("a response from a closed or replaced session cannot populate another porta
   assert.deepEqual(calendar.snapshot().publicRecords, [{ id: "public-order" }]);
 });
 
+test("a late SuperAdmin activity response cannot appear in the Admin portal", async () => {
+  const requests = [];
+  const context = vm.createContext({
+    token: "super-session",
+    state: { adminProfile: { role: "super_admin" }, analytics: { paymentRoute: "superadmin", pageViewsLast24h: 4 } },
+    isBackendConfigured: () => true,
+    getAdminAccessToken: () => context.token,
+    normalizeAnalytics: (payload) => payload,
+    setAdminStatus: () => {},
+    showToast: () => {},
+    renderAdminAnalytics: () => {},
+    callEdge: () => new Promise((resolve) => requests.push(resolve)),
+  });
+  vm.runInContext(source(app, "loadAdminAnalytics"), context);
+  const superRequest = context.loadAdminAnalytics();
+  context.token = "admin-session";
+  context.state.adminProfile = { role: "admin" };
+  context.state.analytics = { paymentRoute: "standard", pageViewsLast24h: 0 };
+  requests[0]({ paymentRoute: "superadmin", pageViewsAreCombined: true, pageViewsLast24h: 4 });
+  await superRequest;
+  assert.deepEqual(context.state.analytics, { paymentRoute: "standard", pageViewsLast24h: 0 });
+
+  const adminRequest = context.loadAdminAnalytics();
+  requests[1]({ paymentRoute: "standard", pageViewsAreCombined: false, pageViewsLast24h: 2 });
+  await adminRequest;
+  assert.equal(context.state.analytics.pageViewsLast24h, 2);
+});
+
 test("public content refreshes cannot replace private calendar records", async () => {
   const calendar = createCalendar();
   calendar.context.state.adminProfile.role = "super_admin";

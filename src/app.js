@@ -213,6 +213,9 @@ const elements = {
   adminLoginForm: document.querySelector("#adminLoginForm"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
   adminPanel: document.querySelector("#adminPanel"),
+  adminPortalGrid: document.querySelector("#adminForm"),
+  adminRightColumn: document.querySelector(".admin-right-column"),
+  adminAnalyticsSection: document.querySelector(".admin-analytics-section"),
   standardPanel: document.querySelector("#standardPanel"),
   closeStandardButton: document.querySelector("#closeStandardButton"),
   standardCalendarPrev: document.querySelector("#standardCalendarPrev"),
@@ -626,6 +629,7 @@ function setAdminSession(session) {
 function clearAdminSession() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   state.adminProfile = null;
+  state.analytics = createEmptyAnalytics();
   adminCalendarRequestId += 1;
   adminCalendarDonations = [];
   adminCalendarLoadedMonth = "";
@@ -1707,7 +1711,10 @@ async function loadAdminDonations(options = {}) {
 }
 
 async function loadAdminAnalytics(options = {}) {
-  if (!isBackendConfigured() || !getAdminAccessToken()) return;
+  const accessToken = getAdminAccessToken();
+  const role = state.adminProfile?.role;
+  if (!isBackendConfigured() || !accessToken || !["admin", "super_admin"].includes(role)) return;
+  const isCurrentSession = () => accessToken === getAdminAccessToken() && role === state.adminProfile?.role;
 
   const announce = Boolean(options.announce);
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
@@ -1722,20 +1729,23 @@ async function loadAdminAnalytics(options = {}) {
       method: "GET",
     });
 
-    state.analytics = normalizeAnalytics(payload);
-    const expectedRoute = state.adminProfile?.role === "super_admin" ? "superadmin" : "standard";
+    if (!isCurrentSession()) return;
+    const nextAnalytics = normalizeAnalytics(payload);
+    const expectedRoute = role === "super_admin" ? "superadmin" : "standard";
     if (
-      state.analytics.paymentRoute !== expectedRoute ||
-      state.analytics.pageViewsAreCombined !== (expectedRoute === "superadmin")
+      nextAnalytics.paymentRoute !== expectedRoute ||
+      nextAnalytics.pageViewsAreCombined !== (expectedRoute === "superadmin")
     ) {
       throw new Error(`${routeLabel} checkout analytics returned an incorrect activity scope.`);
     }
+    state.analytics = nextAnalytics;
     renderAdminAnalytics();
 
     if (announce) {
       setAdminStatus(`${routeLabel} checkout activity loaded for the last 24 hours.`, "success");
     }
   } catch (error) {
+    if (!isCurrentSession()) return;
     const message = error.message || "Could not load page view analytics.";
     setAdminStatus(message, "error", { persist: true });
     showToast(message);
@@ -1744,6 +1754,8 @@ async function loadAdminAnalytics(options = {}) {
 
 async function resetAdminAnalytics() {
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
+  const accessToken = getAdminAccessToken();
+  const role = state.adminProfile?.role;
   if (!isBackendConfigured() || !getAdminAccessToken()) {
     state.analytics = createEmptyAnalytics();
     renderAdminAnalytics();
@@ -1765,6 +1777,7 @@ async function resetAdminAnalytics() {
         method: "DELETE",
       });
 
+      if (accessToken !== getAdminAccessToken() || role !== state.adminProfile?.role) return payload;
       state.analytics = normalizeAnalytics(payload);
       renderAdminAnalytics();
       return payload;
@@ -1774,6 +1787,7 @@ async function resetAdminAnalytics() {
 
 async function decrementPageView() {
   if (state.adminProfile?.role !== "super_admin") return;
+  const accessToken = getAdminAccessToken();
 
   const currentViews = normalizeAnalytics(state.analytics).pageViewsLast24h;
   if (currentViews <= 0) {
@@ -1807,6 +1821,7 @@ async function decrementPageView() {
         method: "POST",
       });
 
+      if (accessToken !== getAdminAccessToken() || state.adminProfile?.role !== "super_admin") return payload;
       state.analytics = normalizeAnalytics(payload);
       renderAdminAnalytics();
       return payload;
@@ -2005,7 +2020,7 @@ function renderAdminAnalytics() {
   const hasValidDate = generatedAt && !Number.isNaN(generatedAt.getTime());
 
   if (elements.adminAnalyticsTitle) {
-    elements.adminAnalyticsTitle.textContent = `2. ${routeLabel} checkout activity`;
+    elements.adminAnalyticsTitle.textContent = `${isSuperAdmin ? "1" : "2"}. ${routeLabel} checkout activity`;
   }
   if (elements.adminAnalyticsDescription) {
     elements.adminAnalyticsDescription.textContent = `${isSuperAdmin ? "All page visits" : "Admin checkout page visits"} and ${routeLabel} checkout activity from the last 24 hours. Payment records are private to this account.`;
@@ -3371,9 +3386,14 @@ function openAdminPanel() {
   }
   elements.adminPanel.classList.toggle("is-super-admin", isSuperAdmin);
   elements.superAdminPayPalSection.hidden = !isSuperAdmin;
+  if (isSuperAdmin && elements.adminAnalyticsSection.parentElement !== elements.adminPanel) {
+    elements.adminPanel.insertBefore(elements.adminAnalyticsSection, elements.adminPortalGrid);
+  } else if (!isSuperAdmin && elements.adminAnalyticsSection.parentElement !== elements.adminRightColumn) {
+    elements.adminRightColumn.prepend(elements.adminAnalyticsSection);
+  }
   if (elements.adminDonationHeading) {
     elements.adminDonationHeading.textContent = isSuperAdmin
-      ? "SuperAdmin collection calendar"
+      ? "2. SuperAdmin collection calendar"
       : "1. Admin order calendar";
   }
   elements.adminCalendarGrid.setAttribute(

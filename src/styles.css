@@ -3682,6 +3682,10 @@ legend::after {
 .checkout-routing-content #saveCheckoutRouteButton { justify-self: end; }
 
 .admin-analytics-section { padding: 12px 16px; }
+.admin-panel.is-super-admin > .admin-analytics-section {
+  width: min(1440px, 100%);
+  margin: 0 auto 22px;
+}
 .admin-analytics-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; cursor: pointer; }
 .admin-analytics-summary::-webkit-details-marker { display: none; }
 .admin-analytics-summary > span:first-child { display: grid; gap: 2px; }
@@ -3693,6 +3697,42 @@ legend::after {
 .admin-analytics-heading { align-items: center; }
 .admin-analytics-heading p { margin: 0; color: #736954; font-size: 13px; font-weight: 700; }
 .admin-right-column > .admin-super-checkout-section { grid-column: 1; }
+
+.payment-control-content {
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.payment-control-group {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(217, 215, 207, 0.72);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.payment-control-group h3,
+.payment-control-group p {
+  margin: 0;
+}
+
+.payment-control-group p {
+  color: #736954;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.payment-control-group .checkout-routing-content {
+  padding-top: 0;
+}
+
+.payment-control-group.superadmin-paypal-section {
+  width: 100%;
+  margin: 0;
+}
 
 /* Home page DodoPayments-ready seed checkout */
 .dodo-checkout-card {
