@@ -75,7 +75,7 @@ test("the first Dodo card option stays disabled after one opening", () => {
   assert.match(html, /class="dodo-payment-guidance">Complete The Payment To Get Your Seed<\/p>/);
   assert.match(read("src/styles.css"), /\.dodo-payment-guidance \{[\s\S]*color: #1f1f1f;[\s\S]*font-weight: 800;/);
   assert.match(app, /\[elements\.alternateCardCheckoutLink, elements\.dodoAlternateCardCheckoutLink\][\s\S]*classList\.add\("is-disabled"\)/);
-  assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Try Again<\/p>/);
+  assert.match(html, /id="dodoAlternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Choose Other Card Option Server is Down<\/p>/);
   assert.ok(closeCheckout);
   assert.doesNotMatch(closeCheckout, /dodoAlternateCardCheckoutLink/);
   assert.doesNotMatch(closeCheckout, /classList\.remove\("is-disabled"\)/);

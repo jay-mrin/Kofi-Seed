@@ -32,6 +32,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -2274,6 +2276,7 @@ legend::after {
   font-size: 14px;
   font-weight: 700;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .card-choice.is-disabled .alternate-card-retry { display: block; }
@@ -5444,4 +5447,85 @@ main {
 .superadmin-checkout-host .donation-card.minimal-offering {
   width: min(980px, 100%);
   margin: 0 auto;
+}
+
+/* Let phone layouts shrink to their viewport instead of clipping their contents. */
+body,
+main,
+.support-page-grid > *,
+.seed-payment-dialog-card,
+.payment-choice {
+  min-width: 0;
+}
+
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+@media (max-width: 680px) {
+  .home-checkout-view .dodo-field input,
+  .home-checkout-view .dodo-message-field textarea,
+  .home-checkout-view .minimal-offering .minimal-text-field input,
+  .home-checkout-view .minimal-offering .minimal-text-field textarea,
+  .ritual-option-details input {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .support-creator-shell .profile-copy h1 {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+
+  .checkout-card-heading h2,
+  .seed-payment-dialog-heading h2,
+  .alternate-checkout-heading h2 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .seed-payment-dialog,
+  .receipt-dialog,
+  .payment-failure-dialog,
+  .book-preview-dialog {
+    max-width: calc(100% - 24px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .alternate-checkout-dialog {
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  .alternate-checkout-card {
+    min-width: 0;
+    min-height: 0;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+}
+
+@media (max-width: 380px) {
+  .home-checkout-view .minimal-offering .seed-quantity-row,
+  .home-checkout-view .dodo-checkout-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-checkout-view .dodo-checkout-summary .dodo-total,
+  .home-checkout-view .dodo-checkout-summary .dodo-name-field {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .home-checkout-view .minimal-offering .seed-price strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
