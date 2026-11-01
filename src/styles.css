@@ -696,8 +696,7 @@ a {
   background: #fffaf0;
 }
 
-.admin-donations,
-.admin-settings-section {
+.admin-donations {
   max-height: calc(100dvh - 128px);
   overflow: auto;
 }
@@ -1414,8 +1413,7 @@ a {
   overflow-wrap: anywhere;
 }
 
-.admin-order-meta strong,
-.admin-fulfillment-field span {
+.admin-order-meta strong {
   display: block;
   margin-bottom: 3px;
   color: #8c7a5c;
@@ -1435,24 +1433,6 @@ a {
 
 .admin-order-request strong {
   color: #342c1e;
-}
-
-.admin-fulfillment-field {
-  display: grid;
-  gap: 4px;
-}
-
-.admin-fulfillment-field textarea {
-  min-height: 58px;
-  padding: 10px;
-  border: 1px solid rgba(217, 215, 207, 0.84);
-  border-radius: 12px;
-  color: #342c1e;
-  background: #f5f2f0;
-  font: inherit;
-  font-size: 12px;
-  line-height: 1.35;
-  resize: vertical;
 }
 
 .admin-order-actions {
@@ -2734,7 +2714,6 @@ legend::after {
   }
 
   .admin-donations,
-  .admin-settings-section,
   .admin-analytics-section {
     max-height: none;
   }
@@ -2820,7 +2799,6 @@ legend::after {
   }
 
   .admin-donations,
-  .admin-settings-section,
   .admin-super-checkout-section,
   .admin-analytics-section {
     max-height: none;

@@ -87,9 +87,8 @@ test("recurring seed visibility defaults off and only SuperAdmin can change it",
   assert.match(html, /id="adminWeeklySeedOptionVisible" type="checkbox"/);
   assert.match(html, /<section class="admin-section admin-super-checkout-section admin-recurring-settings-section" hidden>/);
   assert.match(settings, /"weeklySeedOptionVisible"/);
-  const sharedSettings = settings.match(/function applySiteSettings\([\s\S]*?\n\}/)?.[0];
-  assert.ok(sharedSettings);
-  assert.doesNotMatch(sharedSettings, /weeklySeedOptionVisible/);
+  assert.doesNotMatch(settings, /applySiteSettings/);
+  assert.match(settings, /let settingsToSave = \{ \.\.\.existingSettings \}/);
   assert.match(settings, /if \(adminProfile\.role === "super_admin"\) \{[\s\S]*weeklySeedOptionVisible: Object\.hasOwn\(submittedSettings, "weeklySeedOptionVisible"\)/);
   assert.match(app, /adminWeeklySeedOptionVisible\?\.addEventListener\("change", async \(\) => \{\s*if \(state\.adminProfile\?\.role !== "super_admin"\)/);
   assert.match(app, /adminWeeklySeedOptionVisible\?\.addEventListener\("change"[\s\S]*body: \{ settings: \{ weeklySeedOptionVisible: enabled \} \}/);

@@ -56,26 +56,6 @@ function selectedCheckout(settings: Record<string, unknown>) {
   };
 }
 
-function applySiteSettings(
-  existing: Record<string, unknown>,
-  submitted: Record<string, unknown>,
-) {
-  const next = { ...existing };
-
-  if (Object.hasOwn(submitted, "seedPrice")) {
-    next.seedPrice = Math.max(
-      Number.parseInt(String(submitted.seedPrice), 10) || 11,
-      11,
-    );
-  }
-  if (Object.hasOwn(submitted, "blessingWallEnabled")) {
-    next.blessingWallEnabled = submitted.blessingWallEnabled !== false &&
-      submitted.blessingWallEnabled !== "false";
-  }
-
-  return next;
-}
-
 Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
@@ -125,7 +105,7 @@ Deno.serve(withCors(async (request) => {
         : {}) as Record<string, unknown>;
     const submittedSettings = keepActiveSettings(body.settings);
     const existingSettings = keepActiveSettings(currentSettings);
-    let settingsToSave = applySiteSettings(existingSettings, submittedSettings);
+    let settingsToSave = { ...existingSettings };
 
     if (adminProfile.role === "super_admin") {
       const submittedRoute = submittedSettings.homepagePayPalRoute;

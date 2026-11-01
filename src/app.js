@@ -209,7 +209,6 @@ const elements = {
   adminCalendarTitle: document.querySelector("#adminCalendarTitle"),
   adminDonationHeading: document.querySelector("#adminDonationHeading"),
   adminEmailInput: document.querySelector("#adminEmailInput"),
-  adminForm: document.querySelector("#adminForm"),
   adminLoginDialog: document.querySelector("#adminLoginDialog"),
   adminLoginForm: document.querySelector("#adminLoginForm"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
@@ -286,7 +285,6 @@ const elements = {
   receiptTitle: document.querySelector("#receiptTitle"),
   retryPaymentButton: document.querySelector("#retryPaymentButton"),
   saveCheckoutDisplayButton: document.querySelector("#saveCheckoutDisplayButton"),
-  saveAdminButton: document.querySelector("#saveAdminButton"),
   shareSupportButton: document.querySelector("#shareSupportButton"),
   supportGoal: document.querySelector("#supportGoal"),
   supportGoalFill: document.querySelector("#supportGoalFill"),
@@ -306,10 +304,6 @@ const elements = {
   toast: document.querySelector("#toast"),
   transactionBoardList: document.querySelector("#transactionBoardList"),
   topicPill: document.querySelector("#topicPill"),
-  adminInputs: {
-    blessingWallEnabled: document.querySelector("#adminBlessingWallEnabled"),
-    seedPrice: document.querySelector("#adminSeedPrice"),
-  },
 };
 
 let pendingFulfillmentAction = null;
@@ -337,7 +331,6 @@ let adminCalendarLoadedMonth = "";
 let adminCalendarLoading = false;
 let adminCalendarError = "";
 let adminCalendarRequestId = 0;
-const adminFulfillmentDrafts = new Map();
 let standardCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let selectedStandardDate = toDateKey(new Date());
 let standardTransactions = [];
@@ -638,7 +631,6 @@ function clearAdminSession() {
   adminCalendarLoadedMonth = "";
   adminCalendarLoading = false;
   adminCalendarError = "";
-  adminFulfillmentDrafts.clear();
   selectedAdminCalendarDate = toDateKey(new Date());
   adminCalendarCursor = fromDateKey(selectedAdminCalendarDate);
   renderAdminCalendar();
@@ -1070,6 +1062,7 @@ function getDigitalOrder(donation) {
     blessingMessage: donation?.fortuneMessage || "",
     fulfillmentStatus: rawOrder.fulfillmentStatus,
     fulfillmentNote: rawOrder.fulfillmentNote,
+    redeemedBookTitle: rawOrder.redeemedBookTitle || rawOrder.redeemed_book_title,
     fulfilledAt: rawOrder.fulfilledAt,
     createdAt: rawOrder.createdAt,
   };
@@ -1085,7 +1078,13 @@ function getDigitalOrderValue(donation, key, fallback = "") {
 function getFulfillmentStatusLabel(status, itemName = "") {
   const isBook = String(itemName).startsWith("Digital Book -");
   if (status === "fulfilled") return isBook ? "Delivered by email" : "Fulfilled";
-  return isBook ? "Paid, awaiting email delivery" : "Paid, awaiting personalized writing";
+  return "Unfulfilled";
+}
+
+function getAdminOrderItemLabel(itemName, redeemedBookTitle, isAdminPortal) {
+  if (!isAdminPortal) return itemName;
+  if (redeemedBookTitle) return `${redeemedBookTitle}[Seed]`;
+  return itemName === DIGITAL_ORDER_ITEM_NAME ? "Seed" : itemName;
 }
 
 function readableIndiaDateTime(dateString) {
@@ -1461,12 +1460,6 @@ function updateDonationDigitalOrder(donationId, order) {
   );
   if (isBackendConfigured()) adminCalendarDonations = updated;
   else state.donations = updated;
-  adminFulfillmentDrafts.delete(String(donationId));
-}
-
-function cssAttributeValue(value) {
-  const stringValue = String(value);
-  return window.CSS?.escape ? window.CSS.escape(stringValue) : stringValue.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function getLocalDatePart(date = new Date()) {
@@ -1520,9 +1513,6 @@ async function saveDigitalOrderFulfillment(donationId, button, fulfilledAt = "")
   const donation = getDonationById(donationId);
   const statusElement = elements.adminActionStatus;
   const panel = elements.adminPanel;
-  const detailRoot = elements.adminPanel;
-  const noteField = detailRoot.querySelector(`[data-fulfillment-note="${cssAttributeValue(donationId)}"]`);
-  const note = noteField?.value || "";
   const order = getDigitalOrder(donation);
   const nextStatus = order?.fulfillmentStatus === "fulfilled" ? "paid_awaiting_personalized_writing" : "fulfilled";
 
@@ -1541,7 +1531,7 @@ async function saveDigitalOrderFulfillment(donationId, button, fulfilledAt = "")
       successMessage:
         nextStatus === "fulfilled"
           ? "Digital order marked fulfilled. The proof PDF will include this status."
-          : "Digital order moved back to awaiting personalized writing.",
+          : "Digital order marked unfulfilled.",
       errorMessage: "Could not update digital order fulfillment.",
     },
     async () => {
@@ -1551,7 +1541,6 @@ async function saveDigitalOrderFulfillment(donationId, button, fulfilledAt = "")
         body: {
           donationId,
           fulfillmentStatus: nextStatus,
-          fulfillmentNote: note,
           fulfilledAt: nextStatus === "fulfilled" ? fulfilledAt : null,
         },
       });
@@ -1600,7 +1589,6 @@ async function deleteDonationRecord(donationId, button) {
 
       state.donations = state.donations.filter((item) => String(item.id) !== String(donationId));
       adminCalendarDonations = adminCalendarDonations.filter((item) => String(item.id) !== String(donationId));
-      adminFulfillmentDrafts.delete(String(donationId));
       state.seedComments = state.seedComments.filter((item) => String(item.donationId || "") !== String(donationId));
       renderAdminCalendar();
       await loadBackendData({ throwOnError: true });
@@ -1984,10 +1972,6 @@ function renderSeedComments() {
 
 function renderAdminForm() {
   const settings = state.settings;
-  const inputs = elements.adminInputs;
-
-  inputs.seedPrice.value = settings.seedPrice;
-  inputs.blessingWallEnabled.checked = Boolean(settings.blessingWallEnabled);
   const homeSuperAdminPayPal = document.querySelector("#homeSuperAdminPayPal");
   if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = settings.homepagePayPalRoute === "superadmin";
   const homeAdminPayPal = document.querySelector("#homeAdminPayPal");
@@ -2021,7 +2005,7 @@ function renderAdminAnalytics() {
   const hasValidDate = generatedAt && !Number.isNaN(generatedAt.getTime());
 
   if (elements.adminAnalyticsTitle) {
-    elements.adminAnalyticsTitle.textContent = `3. ${routeLabel} checkout activity`;
+    elements.adminAnalyticsTitle.textContent = `2. ${routeLabel} checkout activity`;
   }
   if (elements.adminAnalyticsDescription) {
     elements.adminAnalyticsDescription.textContent = `${isSuperAdmin ? "All page visits" : "Admin checkout page visits"} and ${routeLabel} checkout activity from the last 24 hours. Payment records are private to this account.`;
@@ -2139,13 +2123,10 @@ function renderCalendarDetails(context) {
           const contactEmail = getDigitalOrderValue(donation, "contactEmail", "");
           const request = getDigitalOrderValue(donation, "personalizedRequest", donation.message || "No request entered.");
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
-          const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", "");
-          const note = adminFulfillmentDrafts.get(String(donation.id)) ?? getDigitalOrderValue(donation, "fulfillmentNote", "");
+          const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", getDonationRawValue(donation, "RedeemedBookTitle", ""));
           const isFulfilled = status === "fulfilled";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
-          const itemLabel = context.isAdminPortal && itemName === DIGITAL_ORDER_ITEM_NAME
-            ? "Seed"
-            : itemName;
+          const itemLabel = getAdminOrderItemLabel(itemName, redeemedBookTitle, context.isAdminPortal);
           return `
             <article class="admin-calendar-donation${donation.isPreview ? " is-preview" : ""}">
               ${donation.isPreview ? '<p class="admin-order-preview-label">Sample order · No payment was made</p>' : ""}
@@ -2163,14 +2144,9 @@ function renderCalendarDetails(context) {
                 <span><strong>Item</strong>${escapeHtml(itemLabel)}</span>
                 ${isRitualOrder ? `<span><strong>Ritual for</strong>${escapeHtml(request)}</span>` : ""}
                 ${isRitualOrder ? "" : `<span><strong>Status</strong>${escapeHtml(getFulfillmentStatusLabel(status, order?.itemName))}</span>`}
-                ${context.isAdminPortal && !isRitualOrder ? `<span><strong>Reedemed</strong>${redeemedBookTitle ? escapeHtml(redeemedBookTitle) : "&#160;"}</span>` : ""}
               </div>
               ${context.isAdminPortal ? "" : `<p class="admin-order-request"><strong>${isBookOrder ? "Customer message" : "Request"}:</strong> ${escapeHtml(request)}</p>`}
-              ${donation.isPreview ? "" : `<label class="admin-fulfillment-field">
-                <span>Fulfillment note</span>
-                <textarea data-fulfillment-note="${escapeHtml(donation.id)}" placeholder="Write proof notes, delivery details, or custom writing summary.">${escapeHtml(note)}</textarea>
-              </label>
-              <div class="admin-order-actions">
+              ${donation.isPreview ? "" : `<div class="admin-order-actions">
                 <button class="button button-secondary" type="button" data-download-order-proof="${escapeHtml(donation.id)}" ${isFulfilled ? "" : "disabled title=\"Available after the order is fulfilled\""}>Download PDF</button>
                 <button class="button button-primary" type="button" data-save-fulfillment="${escapeHtml(donation.id)}">
                   ${isFulfilled ? "Reopen order" : isBookOrder ? "Mark delivered" : "Mark fulfilled"}
@@ -3418,11 +3394,6 @@ function openAdminPanel() {
   });
   placePayPalCheckoutInPortal(isSuperAdmin);
 
-  const saveButton = elements.saveAdminButton;
-  if (saveButton) {
-    saveButton.style.display = isSuperAdmin ? "none" : "";
-  }
-
   renderAdminForm();
   renderAdminCalendar();
   renderAdminAnalytics();
@@ -3430,7 +3401,7 @@ function openAdminPanel() {
   if (isSuperAdmin) {
     setAdminStatus("SuperAdmin ready. Manage checkout display and private collections.", "info", { persist: true });
   } else {
-    setAdminStatus("Admin ready. Manage orders, site settings, and analytics.", "info", { persist: true });
+    setAdminStatus("Admin ready. Manage orders and checkout activity.", "info", { persist: true });
   }
   
   document.body.classList.add("admin-open");
@@ -3476,16 +3447,6 @@ function closeAdminPanel() {
       elements.adminBackdrop.hidden = true;
     }
   }, 180);
-}
-
-function getAdminSettings() {
-  const inputs = elements.adminInputs;
-
-  return normalizeSettings({
-    ...state.settings,
-    blessingWallEnabled: inputs.blessingWallEnabled.checked,
-    seedPrice: inputs.seedPrice.value,
-  });
 }
 
 function getViewIdFromHash() {
@@ -3550,17 +3511,6 @@ function setButtonBusy(button, isBusy, busyText = "") {
   } else if (!isBusy) {
     button.textContent = button.dataset.defaultText;
   }
-}
-
-function getSettingsChangeCount(previousSettings, nextSettings) {
-  const previous = normalizeSettings(previousSettings);
-  const next = normalizeSettings(nextSettings);
-
-  return Object.keys(next).reduce((count, key) => {
-    const before = Array.isArray(previous[key]) ? previous[key].join(",") : String(previous[key] ?? "");
-    const after = Array.isArray(next[key]) ? next[key].join(",") : String(next[key] ?? "");
-    return count + (before === after ? 0 : 1);
-  }, 0);
 }
 
 async function runAdminAction({ button, busyText, loadingMessage, successMessage, errorMessage }, action) {
@@ -3683,10 +3633,6 @@ function handleAdminCalendarDetailClick(event) {
 }
 
 elements.adminCalendarDetails.addEventListener("click", handleAdminCalendarDetailClick);
-elements.adminCalendarDetails.addEventListener("input", (event) => {
-  const note = event.target.closest("[data-fulfillment-note]");
-  if (note) adminFulfillmentDrafts.set(note.dataset.fulfillmentNote, note.value);
-});
 elements.retryAdminCalendarButton?.addEventListener("click", () => {
   void loadAdminDonations({ announce: true });
 });
@@ -3720,10 +3666,6 @@ elements.refreshAdminButton.addEventListener("click", refreshAdminPortalData);
 elements.resetAdminAnalyticsButton.addEventListener("click", resetAdminAnalytics);
 elements.decrementPageViewButton?.addEventListener("click", decrementPageView);
 
-elements.adminForm.addEventListener("input", () => {
-
-  setAdminStatus("Unsaved site setting changes. Click Save site settings to publish them.", "dirty", { persist: true });
-});
 elements.showMoreButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const content = document.querySelector(`#${button.dataset.toggleTarget}`);
@@ -4118,43 +4060,6 @@ elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
     },
   );
 });
-elements.adminForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const nextSettings = getAdminSettings();
-  const changedCount = getSettingsChangeCount(state.settings, nextSettings);
-  const successMessage = changedCount
-    ? `Saved ${changedCount} goal setting${changedCount === 1 ? "" : "s"}.`
-    : "No goal setting changes found.";
-
-  await runAdminAction(
-    {
-      button: elements.saveAdminButton,
-      busyText: "Saving...",
-      loadingMessage: "Saving site settings...",
-      successMessage,
-      errorMessage: "Could not save site settings.",
-    },
-    async () => {
-      if (isBackendConfigured() && getAdminAccessToken()) {
-        const payload = await callEdge("admin-settings", {
-          admin: true,
-          body: { settings: nextSettings },
-          method: "PUT",
-        });
-        state.settings = normalizeSettings(payload.settings || nextSettings);
-        await loadBackendData();
-      } else {
-        state.settings = nextSettings;
-        saveState();
-      }
-
-      setAmount(state.settings.seedPrice);
-      renderApp();
-    },
-  );
-});
-
 elements.closeReceiptButton.addEventListener("click", closeReceipt);
 elements.doneButton.addEventListener("click", closeReceipt);
 elements.receiptDialog.addEventListener("close", () => {

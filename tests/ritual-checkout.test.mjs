@@ -67,7 +67,7 @@ test("ritual checkout is created server-side and verified before recording the m
   assert.match(orders, /attempt\.product_id !== ritual\.productId/);
   assert.match(orders, /item_name: itemName/);
   assert.match(app, /isRitualOrder \? "" : `<span><strong>Status/);
-  assert.match(app, /context\.isAdminPortal && !isRitualOrder/);
+  assert.match(app, /isRitualOrder \? `<span><strong>Ritual for/);
 });
 
 test("ritual details and the recipient reach the order calendar; confirmation uses the ritual receipt", () => {

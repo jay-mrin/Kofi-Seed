@@ -25,6 +25,22 @@ type DeleteDonationBody = {
   password?: string;
 };
 
+function buildFulfillmentUpdate(
+  body: UpdateOrderBody,
+  fulfillmentStatus: "fulfilled" | "paid_awaiting_personalized_writing",
+  requestedFulfilledAt: string,
+) {
+  return {
+    fulfillment_status: fulfillmentStatus,
+    ...(Object.hasOwn(body, "fulfillmentNote")
+      ? { fulfillment_note: String(body.fulfillmentNote || "").trim().slice(0, 1200) || null }
+      : {}),
+    fulfilled_at: fulfillmentStatus === "fulfilled"
+      ? new Date(requestedFulfilledAt).toISOString()
+      : null,
+  };
+}
+
 function isDateOnly(value: string | null) {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
 }
@@ -300,10 +316,6 @@ Deno.serve(withCors(async (request) => {
       const fulfillmentStatus = body.fulfillmentStatus === "fulfilled"
         ? "fulfilled"
         : "paid_awaiting_personalized_writing";
-      const fulfillmentNote = String(body.fulfillmentNote || "").trim().slice(
-        0,
-        1200,
-      );
       const requestedFulfilledAt = String(body.fulfilledAt || "").trim();
 
       if (
@@ -334,13 +346,7 @@ Deno.serve(withCors(async (request) => {
 
       const { data, error } = await supabase
         .from("digital_orders")
-        .update({
-          fulfillment_status: fulfillmentStatus,
-          fulfillment_note: fulfillmentNote || null,
-          fulfilled_at: fulfillmentStatus === "fulfilled"
-            ? new Date(requestedFulfilledAt).toISOString()
-            : null,
-        })
+        .update(buildFulfillmentUpdate(body, fulfillmentStatus, requestedFulfilledAt))
         .eq("donation_id", donationId)
         .select(
           "id, order_number, donation_id, payment_provider, provider_order_id, provider_transaction_id, paypal_order_id, paypal_capture_id, customer_name, contact_email, payer_email, amount, currency, item_name, redeemed_book_title, personalized_request, blessing_message, fulfillment_status, fulfillment_note, fulfilled_at, created_at, updated_at",

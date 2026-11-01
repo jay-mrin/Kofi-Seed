@@ -149,7 +149,7 @@
         </details>
       </section>
 
-      <form class="admin-form admin-portal-grid" id="adminForm">
+      <div class="admin-form admin-portal-grid" id="adminForm">
 
 
         <section class="admin-section admin-donations">
@@ -198,26 +198,6 @@
         </section>
 
         <div class="admin-right-column">
-          <section class="admin-section admin-settings-section">
-            <h3>2. Site settings</h3>
-            <div class="admin-grid">
-              <label>
-                <span>Seed price ($)</span>
-                <input id="adminSeedPrice" type="number" min="7" step="1" />
-              </label>
-            </div>
-            <label class="admin-toggle">
-              <input id="adminBlessingWallEnabled" type="checkbox" />
-              <span>
-                <strong>Blessing Wall</strong>
-                Show or hide the public community blessing comments section.
-              </span>
-            </label>
-            <div class="admin-actions">
-              <button class="button button-primary" id="saveAdminButton" type="submit">Save site settings</button>
-            </div>
-          </section>
-
           <section class="admin-section admin-super-checkout-section admin-recurring-settings-section" hidden>
             <h3>Recurring seed option</h3>
             <label class="admin-toggle">
@@ -232,7 +212,7 @@
           <section class="admin-section admin-analytics-section">
             <details class="admin-analytics-details">
               <summary class="admin-analytics-summary">
-                <span><strong id="adminAnalyticsTitle">3. Admin checkout activity</strong><small>Page visits, checkout activity, and payment history</small></span>
+                <span><strong id="adminAnalyticsTitle">2. Admin checkout activity</strong><small>Page visits, checkout activity, and payment history</small></span>
                 <span class="analytics-chevron" aria-hidden="true">⌄</span>
               </summary>
               <div class="admin-analytics-content">
@@ -313,7 +293,7 @@
         </section>
         </div>
 
-      </form>
+      </div>
     </section>
 
     <main id="home">
