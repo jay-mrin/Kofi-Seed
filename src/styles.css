@@ -715,20 +715,6 @@ a {
     #fffdfb;
 }
 
-.admin-panel.is-super-admin .admin-portal-grid {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.admin-panel.is-super-admin .admin-super-checkout-section,
-.admin-panel.is-super-admin .admin-donations {
-  grid-column: 1;
-}
-
-.admin-panel.is-super-admin .admin-right-column {
-  grid-column: 1;
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .admin-panel.is-super-admin .admin-super-checkout-section {
   max-height: none;
 }
@@ -2701,16 +2687,6 @@ legend::after {
   .admin-right-column {
     grid-column: 2;
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .admin-panel.is-super-admin .admin-portal-grid,
-  .admin-panel.is-super-admin .admin-right-column {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .admin-panel.is-super-admin .admin-right-column,
-  .admin-panel.is-super-admin .admin-donations {
-    grid-column: 1;
   }
 
   .admin-donations,
