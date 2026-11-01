@@ -2939,13 +2939,13 @@ async function renderFreshPayPalButtons() {
     ui.cardButton.hidden = !cardFirst;
     setPaymentStatus(cardFirst
       ? (paypalCardReady
-        ? "Choose custom credit or debit card, or PayPal debit or credit card to continue."
-        : "Choose custom credit or debit card to continue.")
+        ? "If one card option doesn't work, please try the other."
+        : "Use the custom card option below to continue.")
       : (paypalCardEligible && !paypalCardReady
         ? "PayPal debit or credit card is temporarily unavailable. You can continue with PayPal."
         : paypalCardReady
-          ? "Choose PayPal or PayPal debit or credit card to continue"
-          : "Choose PayPal to continue"), !cardFirst && paypalCardEligible && !paypalCardReady);
+          ? "If one PayPal option doesn't work, please try the other."
+          : "Use PayPal below to continue."), !cardFirst && paypalCardEligible && !paypalCardReady);
   } catch (error) {
     clearPayPalButtons();
     if (namespace) resetPayPalSdk(namespace);
