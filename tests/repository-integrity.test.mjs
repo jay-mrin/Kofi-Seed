@@ -239,7 +239,7 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(html, /id="alternateCardCheckoutVisible" type="checkbox"/);
-  assert.match(app, /const cardFirst = !weekly && Boolean\(state\.settings\.alternateCardCheckoutVisible\)/);
+  assert.match(app, /let cardFirst = !weekly && isCustomCardCheckoutAvailable\(\)/);
   assert.match(app, /cardFirst\s*\? \[ui\.cardButton, ui\.paypalCardButton, ui\.paypalButton\]/);
   assert.match(app, /const paypalEligible = !cardFirst && paypalButtons\.isEligible\(\)/);
   assert.match(app, /ui\.paypalButton\.hidden = cardFirst/);

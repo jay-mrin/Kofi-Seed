@@ -117,6 +117,7 @@ A name and a valid email address are required at checkout so the order can be de
 
 Configure the Admin PayPal Business webhook with the deployed `paypal-webhook` URL and save its Webhook ID as `PAYPAL_WEBHOOK_ID`. The endpoint supports capture events and subscription events; the screenshot's **All Events** setting is supported. Keep the separate SuperAdmin webhook ID in `SUPER_ADMIN_PAYPAL_WEBHOOK_ID`.
 
+The custom card checkout is shown only for detected US visitors when its Payment Control switch is on. The Vercel function at `/api/visitor-country` reads Vercel's `x-vercel-ip-country` header and returns a country code with caching disabled. All other countries, failed lookups, and local static development default to the normal PayPal options. Weekly subscriptions always use the PayPal subscription flow. No country override is accepted from URL parameters or browser language settings.
 
 
 Every completed Dodo or PayPal payment creates a linked digital-service order for `Personalised Digital Writing - Custom Order Made Writing`. The collecting portal shows the provider transaction ID, personalised-writing request, fulfillment status, and a proof PDF download.

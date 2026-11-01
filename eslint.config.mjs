@@ -36,6 +36,17 @@ export default [
     },
   },
   {
+    files: ["api/*.js"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "commonjs",
+    },
+    rules: {
+      "no-undef": "error",
+      "no-unused-vars": "error",
+    },
+  },
+  {
     files: ["tests/*.mjs"],
     languageOptions: {
       ecmaVersion: "latest",

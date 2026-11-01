@@ -318,6 +318,8 @@ let transactionBoardCount = 0;
 const paypalSdkPromises = new Map();
 const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
+let visitorCountry = "";
+let visitorCountryPromise = null;
 let paymentConfig = {
   adminPayPalClientId: "",
   homepagePayPalClientId: "",
@@ -829,7 +831,39 @@ function getInitialDonationAmount() {
   return Math.max(Number(state.settings.seedPrice) || SEED_DOLLAR_VALUE, MIN_DONATION_AMOUNT);
 }
 
+function isCustomCardCheckoutAvailable() {
+  return state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US";
+}
+
+function loadVisitorCountry() {
+  if (visitorCountryPromise) return visitorCountryPromise;
+  visitorCountryPromise = (async () => {
+    let timeout;
+    try {
+      const controller = new window.AbortController();
+      timeout = window.setTimeout(() => controller.abort(), 2500);
+      const response = await fetch("/api/visitor-country", {
+        method: "GET",
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Visitor country unavailable.");
+      const payload = await response.json();
+      visitorCountry = typeof payload.country === "string" && /^[A-Z]{2}$/.test(payload.country)
+        ? payload.country : "";
+    } catch {
+      visitorCountry = "";
+    } finally {
+      window.clearTimeout(timeout);
+    }
+    return visitorCountry;
+  })();
+  return visitorCountryPromise;
+}
+
 async function initializeApp() {
+  void loadVisitorCountry();
   try {
     await loadBackendData({ mode: "critical" });
     setAmount(getInitialDonationAmount());
@@ -1901,7 +1935,7 @@ function renderSettings() {
     elements.supportCard.hidden = !inSuperAdminPortal && !settings.paypalCheckoutVisible;
   }
   updateWeeklySeedOption();
-  if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || !settings.dodoCheckoutVisible;
+  if (elements.dodoCardButton) elements.dodoCardButton.hidden = !settings.alternateCardCheckoutVisible || visitorCountry !== "US" || !settings.dodoCheckoutVisible;
   const dodoPaymentPanel = document.querySelector("#dodoPaymentPanel");
   if (dodoPaymentPanel && !document.querySelector("#dodoPaymentDialog")?.open) dodoPaymentPanel.hidden = true;
   if (elements.cardButton) elements.cardButton.hidden = true;
@@ -2449,7 +2483,7 @@ function setPayPalCheckoutLoading(isLoading) {
 function updatePayPalVisibility() {
   const ui = getCheckoutUi();
   const showPayPal = isPayPalConfigured() ||
-    (state.settings.alternateCardCheckoutVisible && pendingDonation?.frequency === "once");
+    (isCustomCardCheckoutAvailable() && pendingDonation?.frequency === "once");
 
   ui.paypalButton.hidden = true;
   ui.paypalCardButton.hidden = true;
@@ -2798,12 +2832,13 @@ async function renderFreshPayPalButtons() {
   let namespace = "";
   const ui = getCheckoutUi();
   const weekly = pendingDonation?.frequency === "weekly";
-  const cardFirst = !weekly && Boolean(state.settings.alternateCardCheckoutVisible);
 
   clearPayPalButtons();
-  orderPayPalPaymentChoices(cardFirst);
   setPaymentStatus("");
   setPayPalCheckoutLoading(true);
+  await loadVisitorCountry();
+  let cardFirst = !weekly && isCustomCardCheckoutAvailable();
+  orderPayPalPaymentChoices(cardFirst);
   if (pendingDonation) pendingDonation = { ...pendingDonation, paymentRoute: getCheckoutRoute() };
 
   if (!isBackendConfigured() || !backendReady) {
@@ -2819,6 +2854,8 @@ async function renderFreshPayPalButtons() {
 
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
+    cardFirst = !weekly && isCustomCardCheckoutAvailable();
+    orderPayPalPaymentChoices(cardFirst);
     const route = getCheckoutRoute();
     namespace = getPayPalSdkNamespace(weekly);
 
@@ -3167,7 +3204,7 @@ async function finishDodoPayment(payload) {
 function openAlternateCheckout(link) {
   const isDodoCheckout = link === elements.dodoAlternateCardCheckoutLink;
   const isPayPalCardCheckout = link === elements.alternateCardCheckoutLink;
-  if (!state.settings.alternateCardCheckoutVisible ||
+  if (!isCustomCardCheckoutAvailable() ||
       (isDodoCheckout && !state.settings.dodoCheckoutVisible) ||
       (isPayPalCardCheckout && (pendingDonation?.frequency !== "once" || !pendingDonation?.paymentRoute)) ||
       (!isDodoCheckout && !isPayPalCardCheckout)) return false;
@@ -3899,7 +3936,7 @@ elements.shareSupportButton?.addEventListener("click", async () => {
 [elements.alternateCardCheckoutLink, elements.dodoAlternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {
     event.preventDefault();
-    if (!state.settings.alternateCardCheckoutVisible) return;
+    if (!isCustomCardCheckoutAvailable()) return;
     if (link === elements.dodoAlternateCardCheckoutLink) {
       if (!state.settings.dodoCheckoutVisible || !document.querySelector("#dodoCustomerEmail")?.reportValidity()) return;
       const dodoNameInput = document.querySelector("#dodoCustomerName");
