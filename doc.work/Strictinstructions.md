@@ -3,6 +3,7 @@
 These instructions apply to every task and every session in this project. Read and follow them before inspecting, changing, testing, deploying, or documenting the site.
 
 1. **Keep SuperAdmin data strictly inside the SuperAdmin portal.** Never use, display, expose, aggregate, copy, or share SuperAdmin data on any public page, in the Admin or Standard portals, or in any future portal. Do not use SuperAdmin data indirectly in public counters, totals, feeds, reports, or other derived information.
+   **User-authorized exception (2 November 2026):** The authenticated Standard Portal may show only names, amounts, and order dates for successful SuperAdmin PayPal orders placed on or after 3 November 2026 at 00:00 Asia/Kolkata, and only while their linked order is marked fulfilled. Orders placed on 2 November or earlier stay excluded even if fulfilled later. A SuperAdmin-only toggle controls this preview and defaults to enabled. This exception does not authorize exposure on other surfaces or changes to order history.
 
 2. **Do not run checks on custom URLs.** Do not open, fetch, probe, validate, crawl, or run automated checks against any custom URL provided for this project, especially payment links. AI initiated requests to these URLs can cause them to misbehave or stop working. Treat such URLs as opaque values unless the user explicitly gives a new instruction for a specific URL.
 

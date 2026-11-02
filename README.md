@@ -16,6 +16,8 @@ When `src/config.js` has `backendEnabled: false`, the app stays in local demo mo
 
 Admin and SuperAdmin retain separate calendars and payment records. The Standard portal has a read only calendar of successful transactions showing names and amounts. Historical Admin Dodo and PayPal orders remain visible alongside new Admin PayPal Business orders. SuperAdmin payments continue using their separate PayPal account and private calendar. Admin and SuperAdmin each use their own analytics reset timestamp.
 
+The Standard calendar also previews names and amounts for successful SuperAdmin PayPal orders placed from **3 November 2026, 00:00 India time**, only while their linked digital order is marked fulfilled. SuperAdmin orders placed on 2 November or earlier are always excluded, even when fulfilled later. SuperAdmin can disable this preview using **Show fulfilled orders in Standard Portal** above its collection calendar; it defaults to enabled. Calendar dates use India time. This preview does not expose order details or alter payment records. Deploy the updated `standard-transactions` and `admin-settings` Edge Functions together with the frontend for this feature.
+
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
 ## Files

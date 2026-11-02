@@ -22,6 +22,7 @@ const ACTIVE_SETTING_KEYS = [
   "homepagePayPalRoute",
   "alternateCardCheckoutVisible",
   "weeklySeedOptionVisible",
+  "superAdminStandardPreviewEnabled",
 ] as const;
 
 function keepActiveSettings(settings: Record<string, unknown>) {
@@ -124,6 +125,9 @@ Deno.serve(withCors(async (request) => {
         weeklySeedOptionVisible: Object.hasOwn(submittedSettings, "weeklySeedOptionVisible")
           ? isEnabled(submittedSettings.weeklySeedOptionVisible)
           : isEnabled(currentSettings.weeklySeedOptionVisible),
+        superAdminStandardPreviewEnabled: Object.hasOwn(submittedSettings, "superAdminStandardPreviewEnabled")
+          ? isEnabled(submittedSettings.superAdminStandardPreviewEnabled)
+          : currentSettings.superAdminStandardPreviewEnabled !== false && currentSettings.superAdminStandardPreviewEnabled !== "false",
       };
     } else {
       settingsToSave = {

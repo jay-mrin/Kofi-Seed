@@ -20,7 +20,7 @@ The site is a static HTML, CSS, and JavaScript frontend backed by Supabase. Supa
 | Customer | Provide name, email, and applicable request details; complete a checkout; receive a confirmation and fortune message after a verified payment. |
 | Admin | Sign in, see Admin collection orders, update fulfillment, download order proof PDFs, manage the seed price and Blessing Wall visibility, and view Admin scoped analytics. |
 | SuperAdmin | Sign in, see SuperAdmin collection orders and analytics, use the private PayPal checkout area, and control which checkout form appears on Home. |
-| Standard | Sign in to a read only calendar of successful public Admin routed transactions, with customer names and amounts. |
+| Standard | Sign in to a read only calendar showing names and amounts for successful public Admin transactions and eligible fulfilled SuperAdmin transactions. |
 
 Portal access is based on Supabase Auth plus the `admin_profiles` role. The public interface does not grant portal privileges by itself.
 
@@ -91,7 +91,7 @@ The portal is opened from the header and requires a signed in Supabase user with
 
 - **Admin:** order calendar, order details, fulfillment action, proof PDF download, seed price, Blessing Wall visibility, and Admin checkout analytics. The calendar retains older Admin PayPal orders alongside Admin Dodo orders.
 - **SuperAdmin:** separate collection calendar, private PayPal checkout section, checkout display settings, and SuperAdmin scoped analytics. Display settings choose the Home checkout provider and can enable a separate card option.
-- **Standard:** read only monthly calendar for successful public Admin routed transactions. It shows names and amounts, without order management controls.
+- **Standard:** read only monthly calendar showing names and amounts. Alongside successful public Admin transactions, it may preview successful SuperAdmin PayPal orders placed from 3 November 2026, 00:00 Asia/Kolkata, only while marked fulfilled. SuperAdmin orders placed on 2 November or earlier remain excluded even if fulfilled later. The SuperAdmin-only toggle above its collection calendar disables this preview and defaults to enabled. Calendar dates use India time. Full order details remain in the collecting portal, and the preview does not modify order history.
 
 Admin and SuperAdmin analytics include page visits, checkout starts, completed payments, and payment attempt details. They share the total page visit count but keep payment activity scoped to their own collection route. Each portal has its own analytics reset point.
 

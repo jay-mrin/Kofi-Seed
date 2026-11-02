@@ -154,6 +154,7 @@ const DEFAULT_SETTINGS = {
   homepagePayPalRoute: "standard",
   alternateCardCheckoutVisible: false,
   weeklySeedOptionVisible: false,
+  superAdminStandardPreviewEnabled: true,
 };
 
 const seedFeed = [
@@ -410,6 +411,7 @@ function normalizeSettings(settings) {
   next.homepagePayPalRoute = next.homepagePayPalRoute === "superadmin" ? "superadmin" : "standard";
   next.alternateCardCheckoutVisible = next.alternateCardCheckoutVisible !== false && next.alternateCardCheckoutVisible !== "false";
   next.weeklySeedOptionVisible = next.weeklySeedOptionVisible === true || next.weeklySeedOptionVisible === "true";
+  next.superAdminStandardPreviewEnabled = next.superAdminStandardPreviewEnabled !== false && next.superAdminStandardPreviewEnabled !== "false";
 
   Object.keys(defaults).forEach((key) => {
     if (typeof defaults[key] !== "string") return;
@@ -2021,6 +2023,10 @@ function renderSeedComments() {
 
 function renderAdminForm() {
   const settings = state.settings;
+  const previewControl = document.querySelector("#superAdminStandardPreviewControl");
+  if (previewControl) previewControl.hidden = state.adminProfile?.role !== "super_admin";
+  const previewToggle = document.querySelector("#superAdminStandardPreviewEnabled");
+  if (previewToggle) previewToggle.checked = settings.superAdminStandardPreviewEnabled !== false && settings.superAdminStandardPreviewEnabled !== "false";
   const homeSuperAdminPayPal = document.querySelector("#homeSuperAdminPayPal");
   if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = settings.homepagePayPalRoute === "superadmin";
   const homeAdminPayPal = document.querySelector("#homeAdminPayPal");
@@ -3328,7 +3334,9 @@ function renderStandardCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const byDate = new Map();
   for (const transaction of standardTransactions) {
-    const date = String(transaction.createdAt || "").slice(0, 10);
+    const timestamp = new Date(transaction.createdAt).getTime();
+    if (!Number.isFinite(timestamp)) continue;
+    const date = new Date(timestamp + 330 * 60_000).toISOString().slice(0, 10);
     if (!byDate.has(date)) byDate.set(date, []);
     byDate.get(date).push(transaction);
   }
@@ -4040,6 +4048,36 @@ elements.adminLoginDialog.addEventListener("close", () => {
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.closeStandardButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
+document.querySelector("#superAdminStandardPreviewEnabled")?.addEventListener("change", async (event) => {
+  if (state.adminProfile?.role !== "super_admin") {
+    renderAdminForm();
+    return;
+  }
+  const enabled = event.target.checked;
+  await runAdminAction(
+    {
+      button: event.target,
+      loadingMessage: "Saving Standard Portal preview...",
+      successMessage: enabled ? "Eligible fulfilled orders are visible in Standard Portal." : "SuperAdmin order preview is hidden in Standard Portal.",
+      errorMessage: "Could not save Standard Portal preview.",
+    },
+    async () => {
+      if (isBackendConfigured()) {
+        const payload = await callEdge("admin-settings", {
+          admin: true,
+          method: "PUT",
+          body: { settings: { superAdminStandardPreviewEnabled: enabled } },
+        });
+        if (payload.settings?.superAdminStandardPreviewEnabled !== enabled) throw new Error("The preview setting was not saved.");
+        state.settings = normalizeSettings(payload.settings);
+      } else {
+        state.settings.superAdminStandardPreviewEnabled = enabled;
+        saveState();
+      }
+    },
+  );
+  renderAdminForm();
+});
 elements.adminWeeklySeedOptionVisible?.addEventListener("change", async () => {
   if (state.adminProfile?.role !== "super_admin") {
     renderAdminForm();
