@@ -1,8 +1,8 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
 
-// Order placement cutoff: 3 November 2026, 00:00 Asia/Kolkata.
-const SUPERADMIN_PREVIEW_START = "2026-11-02T18:30:00.000Z";
+// Order placement cutoff: 4 November 2026, 00:00 Asia/Kolkata.
+const SUPERADMIN_PREVIEW_START = "2026-11-03T18:30:00.000Z";
 
 Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);

@@ -56,7 +56,7 @@ async function loadTransactions(rows, enabled) {
   return (await response.json()).transactions;
 }
 
-test("SuperAdmin preview excludes November 2 and earlier even if fulfilled later, and returns only limited fields", async () => {
+test("SuperAdmin preview excludes November 3 and earlier even if fulfilled later, and returns only limited fields", async () => {
   const order = (name, createdAt, fulfillment = "fulfilled", status = "COMPLETED") => ({
     display_name: name, amount: 11, created_at: createdAt,
     payment_route: "superadmin", visibility_scope: "superadmin_private", payment_method: "paypal", paypal_status: status,
@@ -67,17 +67,19 @@ test("SuperAdmin preview excludes November 2 and earlier even if fulfilled later
     order("Older", "2026-11-01T00:00:00.000Z"),
     order("November 2", "2026-11-02T18:29:59.999Z"),
     order("November 3 midnight", "2026-11-02T18:30:00.000Z"),
-    order("Unfulfilled", "2026-11-03T12:00:00.000Z", "paid_awaiting_personalized_writing"),
-    order("Failed", "2026-11-03T13:00:00.000Z", "fulfilled", "FAILED"),
+    order("November 3 last millisecond", "2026-11-03T18:29:59.999Z"),
+    order("November 4 midnight", "2026-11-03T18:30:00.000Z"),
+    order("Unfulfilled", "2026-11-04T12:00:00.000Z", "paid_awaiting_personalized_writing"),
+    order("Failed", "2026-11-04T13:00:00.000Z", "fulfilled", "FAILED"),
     order("December", "2026-11-30T18:30:00.000Z"),
     { ...order("Admin", "2026-11-02T00:00:00.000Z"), payment_route: "standard", visibility_scope: "public" },
   ];
   const transactions = await loadTransactions(rows, true);
-  assert.deepEqual(transactions.map((row) => row.name), ["Admin", "November 3 midnight"]);
+  assert.deepEqual(transactions.map((row) => row.name), ["Admin", "November 4 midnight"]);
   for (const row of transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "name"]);
   assert.deepEqual((await loadTransactions(rows, false)).map((row) => row.name), ["Admin"]);
   assert.deepEqual((await loadTransactions(rows, "false")).map((row) => row.name), ["Admin"]);
-  assert.deepEqual((await loadTransactions(rows, undefined)).map((row) => row.name), ["Admin", "November 3 midnight"]);
+  assert.deepEqual((await loadTransactions(rows, undefined)).map((row) => row.name), ["Admin", "November 4 midnight"]);
 });
 
 test("standard sign in loads only the limited calendar", () => {
