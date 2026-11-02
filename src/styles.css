@@ -2198,6 +2198,15 @@ legend::after {
   min-height: 46px;
 }
 
+.paypal-card-fallback-arrows {
+  margin: 0 0 8px;
+  color: #0c6c7c;
+  font-size: clamp(14px, 4vw, 20px);
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .paypal-button-slot small {
   display: block;
   padding: 18px 18px;

@@ -265,6 +265,7 @@ const elements = {
   paymentFailureDialog: document.querySelector("#paymentFailureDialog"),
   ritualFailureDialog: document.querySelector("#ritualFailureDialog"),
   paymentStatus: document.querySelector("#paymentStatus"),
+  paypalCardFallbackArrows: document.querySelector("#paypalCardFallbackArrows"),
   alternateCardCheckoutLink: document.querySelector("#alternateCardCheckoutLink"),
   dodoAlternateCardCheckoutLink: document.querySelector("#dodoAlternateCardCheckoutLink"),
   dodoCardButton: document.querySelector("#dodoCardButton"),
@@ -2480,6 +2481,7 @@ function setPayPalCheckoutLoading(isLoading) {
   if (ui.paypalCheckoutLoader) ui.paypalCheckoutLoader.hidden = !isLoading;
 
   if (isLoading) {
+    elements.paypalCardFallbackArrows.hidden = true;
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
     ui.cardButton.hidden = true;
@@ -3258,6 +3260,10 @@ function closeAlternateCheckout() {
     elements.alternateCheckoutDialog.removeAttribute("open");
   }
   if (elements.alternateCheckoutFrame) elements.alternateCheckoutFrame.src = "about:blank";
+  if (alternateCheckoutSource === "paypal" && elements.paypalPaymentDialog.open) {
+    setPaymentStatus("The Server is Down Choose This One ⬇ For Seed");
+    elements.paypalCardFallbackArrows.hidden = false;
+  }
 }
 
 function returnToSowYourSeed() {
