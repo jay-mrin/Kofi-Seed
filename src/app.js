@@ -154,7 +154,6 @@ const DEFAULT_SETTINGS = {
   homepagePayPalRoute: "standard",
   alternateCardCheckoutVisible: false,
   weeklySeedOptionVisible: false,
-  superAdminStandardPreviewEnabled: true,
 };
 
 const seedFeed = [
@@ -190,6 +189,11 @@ const seedFeed = [
 
 const state = loadState();
 
+function readSocialSourceTag() {
+  const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
+  return path === "/sowseed" ? "anshu" : path === "/seed" ? "badal" : null;
+}
+
 const elements = {
   aboutCollapsed: document.querySelector("#aboutCollapsed"),
   aboutExpanded: document.querySelector("#aboutExpanded"),
@@ -216,13 +220,15 @@ const elements = {
   adminPortalGrid: document.querySelector("#adminForm"),
   adminRightColumn: document.querySelector(".admin-right-column"),
   adminAnalyticsSection: document.querySelector(".admin-analytics-section"),
-  standardPanel: document.querySelector("#standardPanel"),
-  closeStandardButton: document.querySelector("#closeStandardButton"),
-  standardCalendarPrev: document.querySelector("#standardCalendarPrev"),
-  standardCalendarNext: document.querySelector("#standardCalendarNext"),
-  standardCalendarTitle: document.querySelector("#standardCalendarTitle"),
-  standardCalendarGrid: document.querySelector("#standardCalendarGrid"),
-  standardCalendarDetails: document.querySelector("#standardCalendarDetails"),
+  socialPanel: document.querySelector("#socialPanel"),
+  socialPortal: document.querySelector("#socialPortal"),
+  socialTitle: document.querySelector("#socialTitle"),
+  closeSocialButton: document.querySelector("#closeSocialButton"),
+  socialCalendarPrev: document.querySelector("#socialCalendarPrev"),
+  socialCalendarNext: document.querySelector("#socialCalendarNext"),
+  socialCalendarTitle: document.querySelector("#socialCalendarTitle"),
+  socialCalendarGrid: document.querySelector("#socialCalendarGrid"),
+  socialCalendarDetails: document.querySelector("#socialCalendarDetails"),
   adminPaymentAttemptList: document.querySelector("#adminPaymentAttemptList"),
   adminPaymentStarts24h: document.querySelector("#adminPaymentStarts24h"),
   adminPaymentStartsLabel: document.querySelector("#adminPaymentStartsLabel"),
@@ -337,9 +343,9 @@ let adminCalendarLoadedMonth = "";
 let adminCalendarLoading = false;
 let adminCalendarError = "";
 let adminCalendarRequestId = 0;
-let standardCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-let selectedStandardDate = toDateKey(new Date());
-let standardTransactions = [];
+let socialCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedSocialDate = toDateKey(new Date());
+let socialTransactions = [];
 const showSampleAdminOrder = new URLSearchParams(window.location.search).get("preview_order") === "1";
 if (showSampleAdminOrder) {
   selectedAdminCalendarDate = toDateKey(new Date());
@@ -411,7 +417,6 @@ function normalizeSettings(settings) {
   next.homepagePayPalRoute = next.homepagePayPalRoute === "superadmin" ? "superadmin" : "standard";
   next.alternateCardCheckoutVisible = next.alternateCardCheckoutVisible !== false && next.alternateCardCheckoutVisible !== "false";
   next.weeklySeedOptionVisible = next.weeklySeedOptionVisible === true || next.weeklySeedOptionVisible === "true";
-  next.superAdminStandardPreviewEnabled = next.superAdminStandardPreviewEnabled !== false && next.superAdminStandardPreviewEnabled !== "false";
 
   Object.keys(defaults).forEach((key) => {
     if (typeof defaults[key] !== "string") return;
@@ -637,6 +642,9 @@ function setAdminSession(session) {
 function clearAdminSession() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   state.adminProfile = null;
+  socialTransactions = [];
+  elements.socialCalendarGrid?.replaceChildren();
+  elements.socialCalendarDetails?.replaceChildren();
   state.analytics = createEmptyAnalytics();
   adminCalendarRequestId += 1;
   adminCalendarDonations = [];
@@ -1870,8 +1878,8 @@ async function decrementPageView() {
 }
 
 async function refreshAdminPortalData() {
-  if (state.adminProfile?.role === "standard") {
-    await loadStandardTransactions();
+  if (state.adminProfile?.role === "social_partner") {
+    await loadSocialTransactions();
     return;
   }
   if (!isBackendConfigured() || !getAdminAccessToken()) {
@@ -2027,10 +2035,6 @@ function renderSeedComments() {
 
 function renderAdminForm() {
   const settings = state.settings;
-  const previewControl = document.querySelector("#superAdminStandardPreviewControl");
-  if (previewControl) previewControl.hidden = state.adminProfile?.role !== "super_admin";
-  const previewToggle = document.querySelector("#superAdminStandardPreviewEnabled");
-  if (previewToggle) previewToggle.checked = settings.superAdminStandardPreviewEnabled !== false && settings.superAdminStandardPreviewEnabled !== "false";
   const homeSuperAdminPayPal = document.querySelector("#homeSuperAdminPayPal");
   if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = settings.homepagePayPalRoute === "superadmin";
   const homeAdminPayPal = document.querySelector("#homeAdminPayPal");
@@ -2420,10 +2424,11 @@ function getPaymentEmail() {
 }
 
 function getPayPalClientId() {
-  return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
-    ? paymentConfig.superAdminPayPalClientId
-    : paymentConfig.homepagePayPalClientId ||
-      (getCheckoutRoute() === "standard" ? paymentConfig.adminPayPalClientId : "");
+  if (elements.supportCard?.parentElement === elements.superAdminCheckoutHost) {
+    return paymentConfig.superAdminPayPalClientId;
+  }
+  return paymentConfig.homepagePayPalClientId ||
+    (getCheckoutRoute() === "standard" ? paymentConfig.adminPayPalClientId : "");
 }
 
 function isPayPalConfigured() {
@@ -2732,6 +2737,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
           message: pendingDonation.message,
           email: pendingDonation.email,
           paymentRoute: getCheckoutRoute(),
+          sourceTag: readSocialSourceTag(),
           productType: "seed",
         },
       });
@@ -2804,6 +2810,7 @@ function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
           email,
           message: pendingDonation.message,
           paymentRoute: getCheckoutRoute(),
+          sourceTag: readSocialSourceTag(),
         },
       });
       checkoutToken = prepared.checkoutToken;
@@ -3363,14 +3370,14 @@ function placePayPalCheckoutInPortal(inPortal) {
   updateWeeklySeedOption();
 }
 
-function renderStandardCalendar() {
-  if (!elements.standardCalendarGrid) return;
-  const year = standardCalendarCursor.getFullYear();
-  const month = standardCalendarCursor.getMonth();
+function renderSocialCalendar() {
+  if (!elements.socialCalendarGrid) return;
+  const year = socialCalendarCursor.getFullYear();
+  const month = socialCalendarCursor.getMonth();
   const firstDay = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const byDate = new Map();
-  for (const transaction of standardTransactions) {
+  for (const transaction of socialTransactions) {
     const timestamp = new Date(transaction.createdAt).getTime();
     if (!Number.isFinite(timestamp)) continue;
     const date = new Date(timestamp + 330 * 60_000).toISOString().slice(0, 10);
@@ -3378,13 +3385,13 @@ function renderStandardCalendar() {
     byDate.get(date).push(transaction);
   }
 
-  elements.standardCalendarTitle.textContent = formatMonthTitle(standardCalendarCursor);
-  elements.standardCalendarGrid.replaceChildren();
+  elements.socialCalendarTitle.textContent = formatMonthTitle(socialCalendarCursor);
+  elements.socialCalendarGrid.replaceChildren();
   for (let offset = 0; offset < firstDay.getDay(); offset += 1) {
     const blank = document.createElement("span");
     blank.className = "admin-calendar-day is-empty";
     blank.setAttribute("role", "presentation");
-    elements.standardCalendarGrid.append(blank);
+    elements.socialCalendarGrid.append(blank);
   }
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(year, month, day);
@@ -3392,11 +3399,11 @@ function renderStandardCalendar() {
     const records = byDate.get(dateKey) || [];
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `admin-calendar-day${records.length ? " has-donations" : ""}${dateKey === selectedStandardDate ? " is-selected" : ""}${dateKey === toDateKey(new Date()) ? " is-today" : ""}`;
+    button.className = `admin-calendar-day${records.length ? " has-donations" : ""}${dateKey === selectedSocialDate ? " is-selected" : ""}${dateKey === toDateKey(new Date()) ? " is-today" : ""}`;
     button.setAttribute("role", "gridcell");
-    button.setAttribute("aria-selected", String(dateKey === selectedStandardDate));
+    button.setAttribute("aria-selected", String(dateKey === selectedSocialDate));
     button.setAttribute("aria-label", `${readableDate(date)}, ${records.length} successful transactions`);
-    button.dataset.standardCalendarDate = dateKey;
+    button.dataset.socialCalendarDate = dateKey;
     const dayNumber = document.createElement("span");
     dayNumber.textContent = String(day);
     button.append(dayNumber);
@@ -3405,53 +3412,63 @@ function renderStandardCalendar() {
       count.textContent = "●";
       button.append(count);
     }
-    elements.standardCalendarGrid.append(button);
+    elements.socialCalendarGrid.append(button);
   }
 
-  const selected = byDate.get(selectedStandardDate) || [];
-  elements.standardCalendarDetails.replaceChildren();
+  const selected = byDate.get(selectedSocialDate) || [];
+  elements.socialCalendarDetails.replaceChildren();
   const heading = document.createElement("h4");
-  heading.textContent = readableDate(fromDateKey(selectedStandardDate));
-  elements.standardCalendarDetails.append(heading);
+  heading.textContent = readableDate(fromDateKey(selectedSocialDate));
+  elements.socialCalendarDetails.append(heading);
   if (!selected.length) {
     const empty = document.createElement("p");
     empty.textContent = "No successful transactions on this date.";
-    elements.standardCalendarDetails.append(empty);
+    elements.socialCalendarDetails.append(empty);
   } else {
     for (const transaction of selected) {
       const row = document.createElement("div");
-      row.className = "standard-transaction";
+      row.className = "social-transaction";
+      const identity = document.createElement("span");
+      identity.className = "social-order-identity";
       const name = document.createElement("span");
       name.textContent = transaction.name || "Customer";
+      identity.append(name);
+      const email = document.createElement("small");
+      email.textContent = transaction.email || "Email unavailable";
+      identity.append(email);
       const amount = document.createElement("strong");
       amount.textContent = money(Number(transaction.amount) || 0);
-      row.append(name, amount);
-      elements.standardCalendarDetails.append(row);
+      row.append(identity, amount);
+      elements.socialCalendarDetails.append(row);
     }
   }
 }
 
-async function loadStandardTransactions() {
-  const month = getMonthKey(standardCalendarCursor);
-  elements.standardCalendarPrev.disabled = true;
-  elements.standardCalendarNext.disabled = true;
-  elements.standardCalendarDetails.textContent = "Loading successful transactions...";
+async function loadSocialTransactions() {
+  const month = getMonthKey(socialCalendarCursor);
+  const source = state.adminProfile?.socialSource;
+  const accessToken = getAdminAccessToken();
+  if (state.adminProfile?.role !== "social_partner") return;
+  elements.socialCalendarPrev.disabled = true;
+  elements.socialCalendarNext.disabled = true;
+  elements.socialCalendarDetails.textContent = "Loading successful transactions...";
   try {
-    const payload = await callEdge(`standard-transactions?month=${month}`, { admin: true, method: "GET" });
-    if (month !== getMonthKey(standardCalendarCursor) || state.adminProfile?.role !== "standard") return;
-    standardTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
-    renderStandardCalendar();
+    const payload = await callEdge(`social-portal-transactions?month=${month}`, { admin: true, method: "GET" });
+    if (month !== getMonthKey(socialCalendarCursor) || state.adminProfile?.role !== "social_partner" ||
+        source !== state.adminProfile?.socialSource || accessToken !== getAdminAccessToken()) return;
+    socialTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
+    renderSocialCalendar();
   } catch (error) {
-    elements.standardCalendarDetails.textContent = error.message || "Could not load transactions.";
+    elements.socialCalendarDetails.textContent = error.message || "Could not load transactions.";
   } finally {
-    elements.standardCalendarPrev.disabled = false;
-    elements.standardCalendarNext.disabled = false;
+    elements.socialCalendarPrev.disabled = false;
+    elements.socialCalendarNext.disabled = false;
   }
 }
 
 function openAdminPanel() {
   const isSuperAdmin = state.adminProfile?.role === "super_admin";
-  if (state.adminProfile?.role === "standard") return openStandardPanel();
+  if (state.adminProfile?.role === "social_partner") return openSocialPanel();
 
   const titleEl = document.getElementById("adminTitle");
   if (titleEl) {
@@ -3517,15 +3534,25 @@ function openAdminPanel() {
   });
 }
 
-function openStandardPanel() {
+function openSocialPanel() {
+  if (state.adminProfile?.role !== "social_partner") return;
+  selectedSocialDate = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+  socialCalendarCursor = fromDateKey(selectedSocialDate);
+  elements.socialTitle.textContent = state.adminProfile.displayName ||
+    (state.adminProfile.socialSource === "anshu" ? "AnshuPortal" : "Badal Portal");
+  elements.closeSocialButton.setAttribute("aria-label", `Close ${elements.socialTitle.textContent}`);
+  elements.socialPortal.setAttribute("aria-label", "Tagged PayPal orders calendar");
+  socialTransactions = [];
+  elements.socialCalendarGrid.replaceChildren();
+  elements.socialCalendarDetails.textContent = "Loading successful transactions...";
   document.body.classList.add("admin-open");
   elements.adminBackdrop.hidden = false;
-  elements.standardPanel.setAttribute("aria-hidden", "false");
-  elements.adminMenuButton.setAttribute("aria-controls", "standardPanel");
+  elements.socialPanel.setAttribute("aria-hidden", "false");
+  elements.adminMenuButton.setAttribute("aria-controls", "socialPanel");
   elements.adminMenuButton.setAttribute("aria-expanded", "true");
   window.requestAnimationFrame(() => {
     elements.adminBackdrop.classList.add("is-open");
-    elements.standardPanel.classList.add("is-open");
+    elements.socialPanel.classList.add("is-open");
   });
 }
 
@@ -3539,13 +3566,13 @@ function closeAdminPanel() {
   document.body.classList.remove("admin-open");
   elements.adminBackdrop.classList.remove("is-open");
   elements.adminPanel.classList.remove("is-open");
-  elements.standardPanel.classList.remove("is-open");
+  elements.socialPanel.classList.remove("is-open");
   elements.adminPanel.setAttribute("aria-hidden", "true");
-  elements.standardPanel.setAttribute("aria-hidden", "true");
+  elements.socialPanel.setAttribute("aria-hidden", "true");
   elements.adminMenuButton.setAttribute("aria-controls", "adminLoginDialog");
   elements.adminMenuButton.setAttribute("aria-expanded", "false");
   window.setTimeout(() => {
-    if (!elements.adminPanel.classList.contains("is-open") && !elements.standardPanel.classList.contains("is-open")) {
+    if (!elements.adminPanel.classList.contains("is-open") && !elements.socialPanel.classList.contains("is-open")) {
       elements.adminBackdrop.hidden = true;
     }
   }, 180);
@@ -3896,7 +3923,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
         createOrder: async () => {
           status.textContent = "Opening secure PayPal checkout…";
           const order = await callEdge("create-paypal-order", {
-            body: { ...details, productType: "ritual", paymentRoute: getCheckoutRoute() },
+            body: { ...details, productType: "ritual", paymentRoute: getCheckoutRoute(), sourceTag: readSocialSourceTag() },
           });
           return order.id;
         },
@@ -4023,25 +4050,25 @@ elements.transactionBoardList?.addEventListener("scroll", () => {
     void loadTransactionBoard();
   }
 });
-elements.standardCalendarPrev.addEventListener("click", () => {
-  standardCalendarCursor = new Date(standardCalendarCursor.getFullYear(), standardCalendarCursor.getMonth() - 1, 1);
-  selectedStandardDate = toDateKey(standardCalendarCursor);
-  standardTransactions = [];
-  renderStandardCalendar();
-  loadStandardTransactions();
+elements.socialCalendarPrev.addEventListener("click", () => {
+  socialCalendarCursor = new Date(socialCalendarCursor.getFullYear(), socialCalendarCursor.getMonth() - 1, 1);
+  selectedSocialDate = toDateKey(socialCalendarCursor);
+  socialTransactions = [];
+  renderSocialCalendar();
+  loadSocialTransactions();
 });
-elements.standardCalendarNext.addEventListener("click", () => {
-  standardCalendarCursor = new Date(standardCalendarCursor.getFullYear(), standardCalendarCursor.getMonth() + 1, 1);
-  selectedStandardDate = toDateKey(standardCalendarCursor);
-  standardTransactions = [];
-  renderStandardCalendar();
-  loadStandardTransactions();
+elements.socialCalendarNext.addEventListener("click", () => {
+  socialCalendarCursor = new Date(socialCalendarCursor.getFullYear(), socialCalendarCursor.getMonth() + 1, 1);
+  selectedSocialDate = toDateKey(socialCalendarCursor);
+  socialTransactions = [];
+  renderSocialCalendar();
+  loadSocialTransactions();
 });
-elements.standardCalendarGrid.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-standard-calendar-date]");
+elements.socialCalendarGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-social-calendar-date]");
   if (!button) return;
-  selectedStandardDate = button.dataset.standardCalendarDate;
-  renderStandardCalendar();
+  selectedSocialDate = button.dataset.socialCalendarDate;
+  renderSocialCalendar();
 });
 elements.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -4059,9 +4086,9 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
       await signInAdmin(email, password);
       await loadAdminProfile();
       closeAdminLogin();
-      if (state.adminProfile?.role === "standard") {
-        openStandardPanel();
-        await loadStandardTransactions();
+      if (state.adminProfile?.role === "social_partner") {
+        openSocialPanel();
+        await loadSocialTransactions();
       } else {
         openAdminPanel();
         await Promise.all([
@@ -4092,38 +4119,8 @@ elements.adminLoginDialog.addEventListener("close", () => {
   elements.adminPasswordError.textContent = "";
 });
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
-elements.closeStandardButton.addEventListener("click", closeAdminPanel);
+elements.closeSocialButton.addEventListener("click", closeAdminPanel);
 elements.adminBackdrop.addEventListener("click", closeAdminPanel);
-document.querySelector("#superAdminStandardPreviewEnabled")?.addEventListener("change", async (event) => {
-  if (state.adminProfile?.role !== "super_admin") {
-    renderAdminForm();
-    return;
-  }
-  const enabled = event.target.checked;
-  await runAdminAction(
-    {
-      button: event.target,
-      loadingMessage: "Saving Standard Portal preview...",
-      successMessage: enabled ? "Eligible fulfilled orders are visible in Standard Portal." : "SuperAdmin order preview is hidden in Standard Portal.",
-      errorMessage: "Could not save Standard Portal preview.",
-    },
-    async () => {
-      if (isBackendConfigured()) {
-        const payload = await callEdge("admin-settings", {
-          admin: true,
-          method: "PUT",
-          body: { settings: { superAdminStandardPreviewEnabled: enabled } },
-        });
-        if (payload.settings?.superAdminStandardPreviewEnabled !== enabled) throw new Error("The preview setting was not saved.");
-        state.settings = normalizeSettings(payload.settings);
-      } else {
-        state.settings.superAdminStandardPreviewEnabled = enabled;
-        saveState();
-      }
-    },
-  );
-  renderAdminForm();
-});
 elements.adminWeeklySeedOptionVisible?.addEventListener("change", async () => {
   if (state.adminProfile?.role !== "super_admin") {
     renderAdminForm();
@@ -4171,9 +4168,9 @@ elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
     {
       button: elements.saveCheckoutDisplayButton,
       busyText: "Saving...",
-      loadingMessage: "Saving Home checkout choice...",
-      successMessage: () => "Home checkout choice saved.",
-      errorMessage: "Could not save the Home checkout choice.",
+      loadingMessage: "Saving PayPal checkout choice...",
+      successMessage: () => "PayPal checkout choice saved for all public links.",
+      errorMessage: "Could not save the PayPal checkout choice.",
     },
     async () => {
       if (isBackendConfigured() && getAdminAccessToken()) {
@@ -4184,13 +4181,13 @@ elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
         });
         if (payload.settings?.homepagePayPalRoute !== nextSettings.homepagePayPalRoute ||
             Boolean(payload.settings?.alternateCardCheckoutVisible) !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The server did not save the selected Home checkout. Update the admin-settings function.");
+          throw new Error("The server did not save the selected PayPal checkout. Update the admin-settings function.");
         }
         state.settings = normalizeSettings(payload.settings || nextSettings);
         await loadBackendData({ throwOnError: true });
         if (state.settings.homepagePayPalRoute !== nextSettings.homepagePayPalRoute ||
             state.settings.alternateCardCheckoutVisible !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The selected Home checkout did not persist after reloading settings.");
+          throw new Error("The selected PayPal checkout did not persist after reloading settings.");
         }
       } else {
         state.settings = nextSettings;

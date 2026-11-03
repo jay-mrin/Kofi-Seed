@@ -20,7 +20,7 @@ test("Admin and SuperAdmin PayPal orders and weekly plans use separate routes", 
   assert.match(weekly, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
   assert.match(bootstrap, /adminPayPalClientId: getPayPalClientId\("standard"\)/);
   assert.doesNotMatch(bootstrap, /superAdminPayPalClientId/);
-  assert.match(profile, /adminProfile\.role === "super_admin"[\s\S]*getPayPalClientId\("superadmin"\)/);
+  assert.match(profile, /profile\.role === "super_admin"[\s\S]*getPayPalClientId\("superadmin"\)/);
   assert.match(paypal, /paymentRoute === "standard"[\s\S]*ADMIN_PAYPAL_ENV[\s\S]*PAYPAL_ENV/);
 });
 

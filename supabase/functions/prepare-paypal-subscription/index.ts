@@ -14,6 +14,7 @@ import {
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
+import { parseSocialSource } from "../_shared/social-source.ts";
 
 type PrepareBody = {
   amount?: number;
@@ -21,6 +22,7 @@ type PrepareBody = {
   email?: string;
   message?: string;
   paymentRoute?: string;
+  sourceTag?: string;
 };
 
 const MIN_AMOUNT_CENTS = 1100;
@@ -178,6 +180,7 @@ Deno.serve(withCors(async (request) => {
         product_type: "personalized_seed_writing_subscription",
         product_id: plan.paypal_plan_id,
         payment_route: paymentRoute,
+        social_source: parseSocialSource(body.sourceTag),
         status: "started",
         raw_payment: { billingAnchor: billingAnchor.toISOString() },
       })
@@ -193,6 +196,7 @@ Deno.serve(withCors(async (request) => {
         amount: centsToMoney(amountCents),
         currency: getPayPalCurrency(),
         payment_route: paymentRoute,
+        social_source: parseSocialSource(body.sourceTag),
         paypal_plan_id: plan.paypal_plan_id,
         status: "pending",
         frequency: "weekly",

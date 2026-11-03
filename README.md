@@ -14,9 +14,7 @@ Then open `http://127.0.0.1:5173`.
 
 When `src/config.js` has `backendEnabled: false`, the app stays in local demo mode. When Supabase values are filled and `backendEnabled: true`, public data, site settings, orders, community blessing comments, and PayPal checkout are loaded through Supabase Edge Functions. Dodo confirmation remains available for pending or historical payments.
 
-Admin and SuperAdmin retain separate calendars and payment records. The Standard portal has a read only calendar of successful transactions showing names and amounts. Historical Admin Dodo and PayPal orders remain visible alongside new Admin PayPal Business orders. SuperAdmin payments continue using their separate PayPal account and private calendar. Admin and SuperAdmin each use their own analytics reset timestamp.
-
-The Standard calendar also previews names and amounts for successful SuperAdmin PayPal orders placed from **4 November 2026, 00:00 India time**, only while their linked digital order is marked fulfilled. SuperAdmin orders placed on 3 November or earlier are always excluded, even when fulfilled later. SuperAdmin can disable this preview using **Show fulfilled orders in Standard Portal** above its collection calendar; it defaults to enabled. Calendar dates use India time. This preview does not expose order details or alter payment records. Deploy the updated `standard-transactions` and `admin-settings` Edge Functions together with the frontend for this feature.
+Admin and SuperAdmin retain separate calendars and payment records. Historical Admin Dodo and PayPal orders remain visible alongside new Admin PayPal Business orders. SuperAdmin payments continue using their separate PayPal account and private calendar. Admin and SuperAdmin each use their own analytics reset timestamp. The database value `payment_route = 'standard'` still identifies Admin orders.
 
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
@@ -64,10 +62,6 @@ on conflict (user_id) do update set email = excluded.email, role = excluded.role
 insert into public.admin_profiles (user_id, email, role)
 values ('YOUR_SUPERADMIN_AUTH_USER_ID', 'superadmin@example.com', 'super_admin')
 on conflict (user_id) do update set email = excluded.email, role = excluded.role;
-
-insert into public.admin_profiles (user_id, email, role)
-values ('YOUR_STANDARD_AUTH_USER_ID', 'standard@example.com', 'standard')
-on conflict (user_id) do update set email = excluded.email, role = excluded.role;
 ```
 
 6. Set Edge Function secrets:
@@ -112,6 +106,43 @@ The PayPal SDK is never preloaded. When a customer opens checkout, the app loads
 For your India-registered PayPal Business account, test with PayPal sandbox buyer accounts before switching to live credentials.
 
 New Admin checkout uses `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID`. Set `ADMIN_PAYPAL_ENV` to `live` or `sandbox` for that account; this setting does not change the SuperAdmin environment. Admin PayPal orders are recorded in the Admin calendar and linked digital-order workflow. SuperAdmin checkouts continue using `SUPER_ADMIN_PAYPAL_*` credentials and the SuperAdmin calendar.
+
+## Social source portals
+
+Share `https://www.seedgarden.space/sowseed` for Anshu's account and `https://www.seedgarden.space/seed` for Badal's account. All three public checkout paths use the PayPal account selected in SuperAdmin Payment Control: Admin PayPal when Admin is selected, or SuperAdmin PayPal when SuperAdmin is selected. The shared payment-option and weekly-seed settings apply to each path. Only PayPal checkout started on a tagged path is attributed to Anshu or Badal. Checkout on the normal site path `/` has no social tag, even after a visitor previously opened a tagged path. Custom card and Dodo checkout are unchanged. Existing and untagged orders remain unassigned.
+
+AnshuPortal and Badal Portal use the same calendar layout. Each account sees only its own tagged PayPal orders from 4 November 2026 at 00:00 Asia/Kolkata onward, with name, amount, email, and order date. Both Admin (`standard`) and SuperAdmin PayPal routes are included under the user-authorized exception in `doc.work/Strictinstructions.md`. Existing Admin and SuperAdmin order records and visibility remain unchanged.
+
+Apply `202611040002_retire_standard_portal.sql` before deploying this frontend. It removes old Standard Portal profile access and its preview setting without changing orders. Remove any previously deployed `standard-transactions` Edge Function from Supabase; removing its source from this repository does not undeploy it.
+
+After applying `202611040001_social_source_portals.sql` and deploying the functions, create the two email/password users in Supabase Auth using the credentials supplied privately by the owner. Confirm their email addresses in Auth. Do not put their passwords in this repository. Then run the following SQL in the Supabase SQL editor to attach the two Auth users to their scoped portals:
+
+```sql
+do $$
+begin
+  if (select count(*) from auth.users where lower(email) in ('anshu@gmail.com', 'badal@gmail.com')) <> 2 then
+    raise exception 'Both social portal Auth users must exist first';
+  end if;
+  if exists (
+    select 1 from public.admin_profiles p
+    join auth.users u on u.id = p.user_id
+    where lower(u.email) in ('anshu@gmail.com', 'badal@gmail.com')
+  ) then
+    raise exception 'Social portal users must not have admin profiles';
+  end if;
+  insert into public.social_portal_profiles (user_id, email, display_name, social_source)
+  select id, lower(email),
+    case lower(email) when 'anshu@gmail.com' then 'AnshuPortal' else 'Badal Portal' end,
+    case lower(email) when 'anshu@gmail.com' then 'anshu' else 'badal' end
+  from auth.users
+  where lower(email) in ('anshu@gmail.com', 'badal@gmail.com')
+  on conflict (user_id) do update set
+    email = excluded.email,
+    display_name = excluded.display_name,
+    social_source = excluded.social_source;
+end;
+$$;
+```
 
 The SuperAdmin portal's **Checkout display** control selects `Superadmin[Paypal]` or `Admin[Paypal]` for Home. The selected account receives new Home payments and its portal receives the resulting orders. The checkout inside the SuperAdmin portal always uses the SuperAdmin account. Existing Dodo orders and pending Dodo confirmations remain intact.
 

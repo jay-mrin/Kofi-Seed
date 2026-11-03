@@ -42,7 +42,7 @@ verify_jwt = true
 [functions.admin-analytics]
 verify_jwt = true
 
-[functions.standard-transactions]
+[functions.social-portal-transactions]
 verify_jwt = true
 
 [functions.public-transactions]

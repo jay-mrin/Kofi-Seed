@@ -14,6 +14,7 @@ import {
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
+import { parseSocialSource } from "../_shared/social-source.ts";
 
 type CreateOrderBody = {
   amount?: number;
@@ -23,6 +24,7 @@ type CreateOrderBody = {
   paymentRoute?: string;
   productType?: string;
   ritualTier?: string;
+  sourceTag?: string;
 };
 
 function isValidEmail(value: string) {
@@ -113,6 +115,7 @@ Deno.serve(withCors(async (request) => {
         product_id: ritual ? ritualTier : null,
         paypal_order_id: order.id,
         payment_route: paymentRoute,
+        social_source: parseSocialSource(body.sourceTag),
         status: "started",
         raw_payment: {
           order,

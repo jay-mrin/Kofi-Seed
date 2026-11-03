@@ -1,5 +1,5 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
-import { requireAdmin } from "../_shared/supabase.ts";
+import { getPortalProfile } from "../_shared/supabase.ts";
 import { getPayPalClientId } from "../_shared/paypal.ts";
 
 Deno.serve(withCors(async (request) => {
@@ -7,11 +7,11 @@ Deno.serve(withCors(async (request) => {
   if (options) return options;
 
   try {
-    const { adminProfile } = await requireAdmin(request, { allowedRoles: ["admin", "super_admin", "standard"] });
+    const { profile } = await getPortalProfile(request);
 
     return jsonResponse({
-      profile: adminProfile,
-      ...(adminProfile.role === "super_admin"
+      profile,
+      ...(profile.role === "super_admin"
         ? { payment: { superAdminPayPalClientId: getPayPalClientId("superadmin") } }
         : {}),
     });

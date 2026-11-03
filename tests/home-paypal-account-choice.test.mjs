@@ -8,7 +8,7 @@ import vm from "node:vm";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => readFileSync(path.join(root, file), "utf8");
 
-test("the selected PayPal account powers Home while the portal uses SuperAdmin", () => {
+test("Home and both tagged links use the selected PayPal account while the portal uses SuperAdmin", () => {
   const html = read("index.html");
   const app = read("src/app.js");
   const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
@@ -20,6 +20,7 @@ test("the selected PayPal account powers Home while the portal uses SuperAdmin",
   const host = {};
   const supportCard = { parentElement: {} };
   const context = {
+    window: { location: { pathname: "/" } },
     elements: { supportCard, superAdminCheckoutHost: host },
     state: { settings: { homepagePayPalRoute: "standard" } },
     paymentConfig: {
@@ -34,8 +35,17 @@ test("the selected PayPal account powers Home while the portal uses SuperAdmin",
   );
 
   assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
+  context.window.location.pathname = "/sowseed";
+  assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
+  context.window.location.pathname = "/seed";
+  assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
+  context.window.location.pathname = "/";
   context.state.settings.homepagePayPalRoute = "superadmin";
   context.paymentConfig.homepagePayPalClientId = "public-superadmin-client";
+  assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "public-superadmin-client" });
+  context.window.location.pathname = "/sowseed";
+  assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "public-superadmin-client" });
+  context.window.location.pathname = "/seed";
   assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "public-superadmin-client" });
   supportCard.parentElement = host;
   context.state.settings.homepagePayPalRoute = "standard";

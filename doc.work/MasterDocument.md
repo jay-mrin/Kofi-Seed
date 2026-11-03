@@ -125,7 +125,7 @@ The active Edge Functions cover public bootstrap and transactions, checkout crea
 5. Run the local static server with `npm run dev` and open `http://127.0.0.1:5173`.
 6. Run `npm run check` before deployment. Deploy functions with `npm run supabase:deploy` when intended.
 
-The repository includes Node tests for integrity, checkout security, Dodo, ritual checkout, public transactions, weekly subscriptions, the Standard portal, and SuperAdmin behavior. Use provider test environments for checkout verification.
+The repository includes Node tests for integrity, checkout security, Dodo, ritual checkout, public transactions, weekly subscriptions, social portals, and SuperAdmin behavior. Use provider test environments for checkout verification.
 
 ## 8. Current review notes
 

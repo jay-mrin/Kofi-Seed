@@ -315,7 +315,7 @@ Deno.serve(withCors(async (request) => {
     const { data: paymentAttempt, error: attemptError } = await supabase
       .from("payment_attempts")
       .select(
-        "id, paypal_order_id, payment_route, amount, currency, display_name, contact_email, customer_request, supporter_message, product_type, product_id, status, failure_reason, raw_payment, expires_at",
+        "id, paypal_order_id, payment_route, social_source, amount, currency, display_name, contact_email, customer_request, supporter_message, product_type, product_id, status, failure_reason, raw_payment, expires_at",
       )
       .eq("paypal_order_id", orderId)
       .maybeSingle();
@@ -520,6 +520,7 @@ Deno.serve(withCors(async (request) => {
         paypal_payer_email: order.payer?.email_address || null,
         paypal_status: capture.status,
         payment_route: paymentRoute,
+        social_source: paymentAttempt.social_source || null,
         visibility_scope: paymentRoute === "superadmin"
           ? "superadmin_private"
           : "public",

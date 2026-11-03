@@ -446,7 +446,7 @@ a {
 }
 
 .admin-panel,
-.standard-panel {
+.social-panel {
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -470,14 +470,14 @@ a {
 }
 
 .admin-panel.is-open,
-.standard-panel.is-open {
+.social-panel.is-open {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
   visibility: visible;
 }
 
-.standard-portal {
+.social-portal {
   width: min(760px, 100%);
   margin: 0 auto;
   padding: clamp(18px, 3vw, 32px);
@@ -487,7 +487,7 @@ a {
   box-shadow: var(--shadow);
 }
 
-.standard-panel-header {
+.social-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -495,14 +495,14 @@ a {
   margin: 0 auto 22px;
 }
 
-.standard-panel-header h2 {
+.social-panel-header h2 {
   margin: 0;
   color: #342c1e;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(30px, 5vw, 42px);
 }
 
-.standard-calendar-header {
+.social-calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -510,28 +510,28 @@ a {
   margin-bottom: 20px;
 }
 
-.standard-calendar-header h3 {
+.social-calendar-header h3 {
   margin: 0;
   text-align: center;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(25px, 4vw, 34px);
 }
 
-.standard-calendar-details {
+.social-calendar-details {
   margin-top: 22px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.standard-calendar-details h4 {
+.social-calendar-details h4 {
   margin: 0 0 12px;
 }
 
-.standard-calendar-details p {
+.social-calendar-details p {
   color: var(--muted);
 }
 
-.standard-transaction {
+.social-transaction {
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -539,7 +539,19 @@ a {
   border-top: 1px solid var(--line);
 }
 
-.standard-transaction span {
+.social-transaction span {
+  overflow-wrap: anywhere;
+}
+
+.social-order-identity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.social-order-identity small {
+  color: #756f62;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
