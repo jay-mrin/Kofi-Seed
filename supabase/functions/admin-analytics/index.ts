@@ -111,7 +111,8 @@ Deno.serve(withCors(async (request) => {
     if (error) throw error;
 
     const attemptFields =
-      "id, display_name, contact_email, amount, currency, payment_route, status, created_at, confirmed_at";
+      "id, display_name, contact_email, amount, currency, payment_route, status, created_at, confirmed_at" +
+      (paymentRoute === "superadmin" ? ", failure_reason" : "");
     const { data: attemptData, error: attemptError } = await supabase
       .from("payment_attempts")
       .select(attemptFields)
@@ -144,7 +145,12 @@ Deno.serve(withCors(async (request) => {
         currency: attempt.currency || "USD",
         displayStatus: attempt.status === "confirmed"
           ? "completed"
+          : paymentRoute === "superadmin" && attempt.status === "failed"
+          ? "failed"
           : "not_completed",
+        ...(paymentRoute === "superadmin" && attempt.status !== "confirmed"
+          ? { failureReason: attempt.failure_reason || null }
+          : {}),
         startedAt: attempt.created_at,
         completedAt: attempt.confirmed_at,
       })),

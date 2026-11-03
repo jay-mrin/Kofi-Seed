@@ -1154,6 +1154,19 @@ a {
   background: rgba(230, 39, 39, 0.1);
 }
 
+.admin-payment-attempt-reason {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #777d8d;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.admin-payment-attempt-reason.is-failed {
+  color: #8f1616;
+}
+
 .admin-payment-attempt-empty {
   padding: 12px;
   border: 1px dashed rgba(217, 215, 207, 0.9);

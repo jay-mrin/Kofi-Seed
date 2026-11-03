@@ -103,8 +103,12 @@ Deno.serve(withCors(async (request) => {
         const isRetryableFailure = ["DECLINED", "DENIED", "FAILED"].includes(
           normalizedStatus,
         );
+        const providerReason = String(resource.status_details?.reason || "").trim();
         const failureReason = isRetryableFailure
-          ? paymentAttempt.failure_reason || `PAYMENT_CAPTURE_${normalizedStatus}`
+          ? paymentAttempt.failure_reason ||
+            (attemptRoute === "superadmin" && /^[A-Z0-9_]{3,80}$/.test(providerReason)
+              ? providerReason
+              : `PAYMENT_CAPTURE_${normalizedStatus}`)
           : null;
         const { error: updateAttemptError } = await supabase
           .from("payment_attempts")

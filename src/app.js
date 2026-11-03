@@ -495,6 +495,7 @@ function normalizeAnalytics(analytics) {
         .map((attempt) => {
           const displayStatus = attempt?.displayStatus === "completed" || attempt?.completed === true
             ? "completed"
+            : attempt?.displayStatus === "failed" ? "failed"
             : attempt?.displayStatus === "not_completed" ? "not_completed" : null;
 
           if (!displayStatus) return null;
@@ -506,6 +507,9 @@ function normalizeAnalytics(analytics) {
             amount: Math.max(Number(attempt?.amount) || 0, 0),
             currency: String(attempt?.currency || "USD").trim().slice(0, 3).toUpperCase() || "USD",
             displayStatus,
+            failureReason: displayStatus === "completed"
+              ? null
+              : String(attempt?.failureReason || "").trim().slice(0, 240) || null,
             startedAt: attempt?.startedAt || null,
             completedAt: attempt?.completedAt || null,
           };
@@ -2051,6 +2055,22 @@ function updateWeeklySeedOption() {
   if (!showWeeklyOption) elements.weeklySeedToggle.checked = false;
 }
 
+function formatPaymentFailureReason(reason) {
+  const descriptions = {
+    INSTRUMENT_DECLINED: "PayPal declined the selected payment method.",
+    PAYMENT_CAPTURE_DECLINED: "PayPal declined the payment capture.",
+    PAYMENT_CAPTURE_DENIED: "PayPal denied the payment capture.",
+    PAYMENT_CAPTURE_FAILED: "PayPal could not complete the payment capture.",
+    CARD_EXPIRED: "The card has expired.",
+    ORDER_NOT_APPROVED: "The buyer has not approved the payment.",
+    MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: "PayPal's payment attempt limit was reached.",
+    REDIRECT_PAYER_FOR_ALTERNATE_FUNDING: "PayPal requested a different payment method.",
+    PAYPAL_CAPTURE_ERROR: "PayPal could not process the payment capture.",
+  };
+  const description = Object.hasOwn(descriptions, reason) ? descriptions[reason] : null;
+  return description ? `${description} (${reason})` : reason;
+}
+
 function renderAdminAnalytics() {
   if (!elements.adminPageViews24h || !elements.adminPaymentStarts24h || !elements.adminAnalyticsUpdated) return;
 
@@ -2094,7 +2114,15 @@ function renderAdminAnalytics() {
             const startedAt = attempt.startedAt ? new Date(attempt.startedAt) : null;
             const hasValidStartedAt = startedAt && !Number.isNaN(startedAt.getTime());
             const isCompleted = attempt.displayStatus === "completed";
-            const statusLabel = isCompleted ? "Completed" : "Not completed";
+            const isFailed = isSuperAdmin && attempt.displayStatus === "failed";
+            const failureReason = isSuperAdmin && !isCompleted ? attempt.failureReason : null;
+            const hasPaymentIssue = Boolean(failureReason || isFailed);
+            const reasonText = failureReason
+              ? formatPaymentFailureReason(failureReason)
+              : isFailed ? "No reason recorded for this attempt." : "No failure reported; checkout was not completed.";
+            const statusLabel = isCompleted
+              ? "Completed"
+              : isFailed ? "Failed" : failureReason ? "Payment issue" : "Not completed";
 
             return `
               <article class="admin-payment-attempt">
@@ -2109,6 +2137,9 @@ function renderAdminAnalytics() {
                 <span class="admin-payment-attempt-status ${isCompleted ? "is-completed" : "is-incomplete"}">
                   ${statusLabel}
                 </span>
+                ${isSuperAdmin && !isCompleted
+                  ? `<p class="admin-payment-attempt-reason ${hasPaymentIssue ? "is-failed" : ""}">${hasPaymentIssue ? "Reason:" : "Status:"} ${escapeHtml(reasonText)}</p>`
+                  : ""}
               </article>
             `;
           })

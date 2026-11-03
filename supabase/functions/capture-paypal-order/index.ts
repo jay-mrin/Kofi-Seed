@@ -424,6 +424,18 @@ Deno.serve(withCors(async (request) => {
           );
         }
 
+        if (error instanceof PayPalApiError && paymentRoute === "superadmin") {
+          const issue = /^[A-Z0-9_]{3,80}$/.test(error.issue)
+            ? error.issue
+            : "PAYPAL_CAPTURE_ERROR";
+          const { error: issueUpdateError } = await supabase
+            .from("payment_attempts")
+            .update({ failure_reason: issue })
+            .eq("id", paymentAttempt.id)
+            .eq("status", "started");
+          if (issueUpdateError) throw issueUpdateError;
+        }
+
         throw error;
       }
     }
