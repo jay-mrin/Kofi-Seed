@@ -215,6 +215,7 @@ const elements = {
   adminEmailInput: document.querySelector("#adminEmailInput"),
   adminLoginDialog: document.querySelector("#adminLoginDialog"),
   adminLoginForm: document.querySelector("#adminLoginForm"),
+  enterPortalButton: document.querySelector("#enterPortalButton"),
   adminMenuButton: document.querySelector("#adminMenuButton"),
   adminPanel: document.querySelector("#adminPanel"),
   adminPortalGrid: document.querySelector("#adminForm"),
@@ -3321,6 +3322,7 @@ function returnToSowYourSeed() {
 
 function openAdminLogin() {
   clearAdminSession();
+  setPortalLoginBusy(false);
   if (elements.adminEmailInput) {
     elements.adminEmailInput.value = "";
     elements.adminEmailInput.required = isBackendConfigured();
@@ -3640,6 +3642,12 @@ function setButtonBusy(button, isBusy, busyText = "") {
   } else if (!isBusy) {
     button.textContent = button.dataset.defaultText;
   }
+}
+
+function setPortalLoginBusy(isBusy) {
+  setButtonBusy(elements.enterPortalButton, isBusy);
+  elements.enterPortalButton.setAttribute("aria-busy", String(isBusy));
+  elements.enterPortalButton.setAttribute("aria-label", isBusy ? "Entering portal" : "Enter portal");
 }
 
 function setRefreshAdminButtonBusy(isBusy) {
@@ -4072,6 +4080,7 @@ elements.socialCalendarGrid.addEventListener("click", (event) => {
 });
 elements.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (elements.enterPortalButton.disabled) return;
 
   if (isBackendConfigured()) {
     const email = elements.adminEmailInput.value.trim();
@@ -4082,6 +4091,7 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
       return;
     }
 
+    setPortalLoginBusy(true);
     try {
       await signInAdmin(email, password);
       await loadAdminProfile();
@@ -4099,6 +4109,8 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
     } catch (error) {
       elements.adminPasswordError.textContent = error.message || "Could not sign in.";
       elements.adminPasswordInput.select();
+    } finally {
+      setPortalLoginBusy(false);
     }
 
     return;
