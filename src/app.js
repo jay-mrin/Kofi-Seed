@@ -2526,7 +2526,7 @@ function orderPayPalPaymentChoices(cardFirst) {
   const container = ui.inlinePaypalCheckout;
   if (!container) return;
   const choices = cardFirst
-    ? [ui.cardButton, ui.paypalCardButton, ui.paypalButton]
+    ? [ui.cardButton, ui.paypalButton, ui.paypalCardButton]
     : [ui.paypalButton, ui.paypalCardButton, ui.cardButton];
   choices.forEach((choice) => container.appendChild(choice));
 }
@@ -2935,17 +2935,25 @@ async function renderFreshPayPalButtons() {
 
     const paypalButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.PAYPAL));
     const paypalCardButtons = paypal.Buttons(buildPayPalButtonOptions(paypal, paypal.FUNDING.CARD));
-    const paypalEligible = !cardFirst && paypalButtons.isEligible();
+    const paypalEligible = paypalButtons.isEligible();
     const paypalCardEligible = paypalCardButtons.isEligible();
 
-    if (!cardFirst && !paypalEligible) {
+    if (!cardFirst && !paypalEligible && !paypalCardEligible) {
       throw new Error("PayPal did not return an eligible checkout option.");
     }
 
+    let paypalReady = false;
     if (paypalEligible) {
       ui.paypalButton.hidden = false;
-      await paypalButtons.render(ui.paypalButtonContainer);
-      await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal button");
+      try {
+        await paypalButtons.render(ui.paypalButtonContainer);
+        await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal button");
+        paypalReady = true;
+      } catch (paypalError) {
+        console.warn("PayPal button could not load.", paypalError);
+        ui.paypalButton.hidden = true;
+        ui.paypalButtonContainer.innerHTML = "";
+      }
     }
 
     let paypalCardReady = false;
@@ -2963,18 +2971,23 @@ async function renderFreshPayPalButtons() {
       }
     }
 
-    ui.paypalButton.hidden = cardFirst;
+    if (!cardFirst && !paypalReady && !paypalCardReady) {
+      throw new Error("PayPal checkout options could not load. Please try again.");
+    }
+
+    ui.paypalButton.hidden = !paypalReady;
     ui.paypalCardButton.hidden = !paypalCardReady;
     ui.cardButton.hidden = !cardFirst;
     setPaymentStatus(cardFirst
-      ? (paypalCardReady
-        ? "If one card option doesn't work, please try the other."
-        : "Use the custom card option below to continue.")
-      : (paypalCardEligible && !paypalCardReady
-        ? "PayPal debit or credit card is temporarily unavailable. You can continue with PayPal."
-        : paypalCardReady
-          ? "If one PayPal option doesn't work, please try the other."
-          : "Use PayPal below to continue."), !cardFirst && paypalCardEligible && !paypalCardReady);
+      ? (paypalReady && paypalCardReady
+        ? "Choose custom card, PayPal, or PayPal debit or credit card."
+        : "Use any available option below to continue.")
+      : (paypalReady && paypalCardReady
+        ? "Choose PayPal or PayPal debit or credit card."
+        : paypalReady
+          ? "PayPal debit or credit card is unavailable. Continue with PayPal."
+          : "PayPal is unavailable. Continue with PayPal debit or credit card."),
+    !cardFirst && (!paypalReady || !paypalCardReady));
   } catch (error) {
     clearPayPalButtons();
     if (namespace) resetPayPalSdk(namespace);
@@ -3063,9 +3076,6 @@ function openInlinePayPalCheckout() {
   alternateCheckoutSource = "paypal";
   updateWeeklySeedOption();
   const ui = getCheckoutUi();
-  ui.cardButton.classList.remove("is-disabled");
-  ui.alternateCardCheckoutLink.removeAttribute("aria-disabled");
-  ui.alternateCardCheckoutLink.removeAttribute("tabindex");
   setPaymentStatus("");
   if (typeof elements.paypalPaymentDialog.showModal === "function") {
     elements.paypalPaymentDialog.showModal();

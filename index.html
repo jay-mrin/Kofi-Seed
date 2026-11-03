@@ -280,8 +280,8 @@
                   <label class="admin-toggle checkout-routing-toggle">
                     <input id="alternateCardCheckoutVisible" type="checkbox" />
                     <span>
-                      <strong>Show Credit &amp; Debit Card button</strong>
-                      US visitors see custom card checkout first, then PayPal debit or credit card for one-time seeds. Other countries use the normal PayPal options. Weekly subscriptions keep both PayPal options.
+                      <strong>Show custom Credit &amp; Debit first</strong>
+                      For US visitors, one-time checkout shows custom card, PayPal, then PayPal credit or debit card. When off, both PayPal options remain available. Weekly subscriptions keep both PayPal options.
                     </span>
                   </label>
                   <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save checkout choice</button>
@@ -422,16 +422,16 @@
                   <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
                 </div>
                 <div class="payment-choice card-choice" id="cardButton" hidden>
-                  <span>Alternate debit or credit card</span>
+                  <span>Custom credit or debit card</span>
                   <small class="preferred-payment-label">Preferred</small>
                   <a
                     class="alternate-card-link"
                     id="alternateCardCheckoutLink"
                     href="https://sowseed-receiver-seed-alternate-server.vercel.app/"
-                    aria-label="Open alternate debit or credit card checkout popup"
+                    aria-label="Open custom credit or debit card checkout popup"
                     aria-haspopup="dialog"
                     aria-controls="alternateCheckoutDialog"
-                  >Debit or Credit Card</a>
+                  >Custom Credit or Debit Card</a>
                   <p class="alternate-card-retry" aria-live="polite">Choose Other Card Option Server is Down</p>
                 </div>
               </section>
@@ -891,7 +891,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=152" defer></script>
+    <script src="src/app.js?v=153" defer></script>
     <script src="src/home-dodo-checkout.js?v=15" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

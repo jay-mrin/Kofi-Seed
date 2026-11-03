@@ -215,7 +215,7 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(app, /resetAllPayPalSdks\(\)[\s\S]*const paypal = await loadPayPalSdk\(weekly\)/);
   assert.match(app, /const paypal = await loadPayPalSdk\(weekly\)/);
   assert.match(app, /await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
-  assert.match(app, /if \(paypalEligible\) \{\s*ui\.paypalButton\.hidden = false;\s*await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
+  assert.match(app, /if \(paypalEligible\) \{\s*ui\.paypalButton\.hidden = false;\s*try \{\s*await paypalButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /ui\.paypalButton\.hidden = false;\s*await subscriptionButtons\.render\(ui\.paypalButtonContainer\)/);
   assert.match(app, /waitForRenderedPayPalButton/);
   assert.match(app, /querySelectorAll\("iframe"\)/);
@@ -235,14 +235,15 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(html, /class="alternate-checkout-fallback"[\s\S]*<strong>If the server is down try other debit card payment button<\/strong>/);
   assert.match(html, /id="paypalButton"[\s\S]*id="paypalCardButton"[\s\S]*id="cardButton"[\s\S]*id="alternateCardCheckoutLink"/);
   assert.match(html, /class="preferred-payment-label"[\s\S]*Preferred/);
+  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*>Custom Credit or Debit Card<\/a>/);
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
   assert.match(html, /id="alternateCardCheckoutVisible" type="checkbox"/);
   assert.match(app, /let cardFirst = !weekly && isCustomCardCheckoutAvailable\(\)/);
-  assert.match(app, /cardFirst\s*\? \[ui\.cardButton, ui\.paypalCardButton, ui\.paypalButton\]/);
-  assert.match(app, /const paypalEligible = !cardFirst && paypalButtons\.isEligible\(\)/);
-  assert.match(app, /ui\.paypalButton\.hidden = cardFirst/);
+  assert.match(app, /cardFirst\s*\? \[ui\.cardButton, ui\.paypalButton, ui\.paypalCardButton\]/);
+  assert.match(app, /const paypalEligible = paypalButtons\.isEligible\(\)/);
+  assert.match(app, /ui\.paypalButton\.hidden = !paypalReady/);
   assert.match(app, /ui\.cardButton\.hidden = !cardFirst/);
   assert.match(app, /if \(isPayPalCardCheckout\) url\.searchParams\.set\("paymentRoute", pendingDonation\.paymentRoute\)/);
   assert.match(app, /isPayPalCardCheckout && \(pendingDonation\?\.frequency !== "once" \|\| !pendingDonation\?\.paymentRoute\)/);
