@@ -235,7 +235,7 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(html, /class="alternate-checkout-fallback"[\s\S]*<strong>If the server is down try other debit card payment button<\/strong>/);
   assert.match(html, /id="paypalButton"[\s\S]*id="paypalCardButton"[\s\S]*id="cardButton"[\s\S]*id="alternateCardCheckoutLink"/);
   assert.match(html, /class="preferred-payment-label"[\s\S]*Preferred/);
-  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*>Custom Credit or Debit Card<\/a>/);
+  assert.match(html, /id="cardButton"[\s\S]*<span>Choose Card or Paypal<\/span>[\s\S]*id="alternateCardCheckoutLink"[\s\S]*>Debit or Credit Card<\/a>/);
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
@@ -252,7 +252,7 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(app, /if \(dodoPaymentPanel && !document\.querySelector\("#dodoPaymentDialog"\)\?\.open\) dodoPaymentPanel\.hidden = true/);
   assert.match(styles, /\.payment-choice\[hidden\] \{ display: none; \}/);
   assert.match(styles, /\.alternate-card-link\s*\{/);
-  assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: #0070ba[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
+  assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: var\(--button-gold\)[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
   assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-link\s*\{\s*display: none;/);
   assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-retry\s*\{\s*display: block;/);
   assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Choose Other Card Option Server is Down<\/p>/);

@@ -2311,11 +2311,11 @@ legend::after {
   align-items: center;
   justify-content: center;
   padding: 10px 18px;
-  border: 1px solid #005ea6;
+  border: 1px solid var(--button-gold-hover);
   border-radius: var(--button-radius);
   color: #ffffff;
-  background: #0070ba;
-  box-shadow: 0 8px 18px rgba(0, 48, 135, 0.24);
+  background: var(--button-gold);
+  box-shadow: 0 8px 18px rgba(91, 73, 45, 0.2);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
   font-weight: 600;
@@ -2327,8 +2327,8 @@ legend::after {
 }
 
 .alternate-card-link:hover {
-  background: #005ea6;
-  box-shadow: 0 11px 22px rgba(0, 48, 135, 0.3);
+  background: var(--button-gold-hover);
+  box-shadow: 0 11px 22px rgba(91, 73, 45, 0.25);
   filter: none;
 }
 
@@ -2340,7 +2340,7 @@ legend::after {
 .preferred-payment-label {
   display: block;
   margin: 0 0 6px;
-  color: #0070ba;
+  color: var(--teal-dark);
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.06em;

@@ -2988,10 +2988,10 @@ async function renderFreshPayPalButtons() {
     ui.cardButton.hidden = !cardFirst;
     setPaymentStatus(cardFirst
       ? (paypalReady && paypalCardReady
-        ? "Choose custom card, PayPal, or PayPal debit or credit card."
+        ? ""
         : "Use any available option below to continue.")
       : (paypalReady && paypalCardReady
-        ? "Choose PayPal or PayPal debit or credit card."
+        ? "Choose Card or Paypal"
         : paypalReady
           ? "PayPal debit or credit card is unavailable. Continue with PayPal."
           : "PayPal is unavailable. Continue with PayPal debit or credit card."),
