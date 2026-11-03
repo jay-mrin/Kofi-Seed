@@ -206,7 +206,6 @@ const elements = {
   adminCalendarGrid: document.querySelector("#adminCalendarGrid"),
   adminCalendarNext: document.querySelector("#adminCalendarNext"),
   adminCalendarPrev: document.querySelector("#adminCalendarPrev"),
-  adminCalendarSummary: document.querySelector("#adminCalendarSummary"),
   adminCalendarTitle: document.querySelector("#adminCalendarTitle"),
   adminDonationHeading: document.querySelector("#adminDonationHeading"),
   adminEmailInput: document.querySelector("#adminEmailInput"),
@@ -1881,7 +1880,7 @@ async function refreshAdminPortalData() {
   }
 
   setAdminBusy(true);
-  setButtonBusy(elements.refreshAdminButton, true, "Reloading...");
+  setRefreshAdminButtonBusy(true);
   if (elements.adminCalendarPrev) elements.adminCalendarPrev.disabled = true;
   if (elements.adminCalendarNext) elements.adminCalendarNext.disabled = true;
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
@@ -1900,7 +1899,7 @@ async function refreshAdminPortalData() {
   } finally {
     if (elements.adminCalendarPrev) elements.adminCalendarPrev.disabled = false;
     if (elements.adminCalendarNext) elements.adminCalendarNext.disabled = false;
-    setButtonBusy(elements.refreshAdminButton, false, "Reloading...");
+    setRefreshAdminButtonBusy(false);
     setAdminBusy(false);
   }
 }
@@ -2165,25 +2164,21 @@ function renderCalendarDetails(context) {
   const selectedDate = fromDateKey(context.selectedDate);
   const total = donations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
 
-  if (!donations.length) {
-    context.details.innerHTML = `
-      <div class="admin-calendar-empty">
-        <strong>${readableDate(selectedDate)}</strong>
-        <span>No ${escapeHtml(context.emptyRecordLabel)} recorded on this day.</span>
-      </div>
-    `;
-    return;
-  }
+  const previousDayCard = context.details.querySelector(".admin-calendar-selected-day");
+  const keepExpanded = previousDayCard?.open && previousDayCard.dataset.date === context.selectedDate;
 
   context.details.innerHTML = `
-    <div class="admin-calendar-detail-heading">
-      <div>
-        <span>Selected day</span>
+    <details class="admin-calendar-selected-day" data-date="${escapeHtml(context.selectedDate)}"${keepExpanded ? " open" : ""}>
+    <summary class="admin-calendar-detail-heading">
+      <span class="admin-calendar-detail-date">
+        <small>Selected day</small>
         <strong>${readableDate(selectedDate)}</strong>
-      </div>
+      </span>
       <b>${donations.length} order${donations.length === 1 ? "" : "s"} · ${money(total)}</b>
-    </div>
+      <svg class="admin-calendar-detail-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+    </summary>
     <div class="admin-calendar-list">
+      ${donations.length ? "" : `<div class="admin-calendar-empty"><span>No ${escapeHtml(context.emptyRecordLabel)} recorded on this day.</span></div>`}
       ${donations
         .map((donation) => {
           const name = donation.anonymous ? "Private customer" : donation.name || "Unknown customer";
@@ -2249,6 +2244,10 @@ function renderCalendarDetails(context) {
         })
         .join("")}
     </div>
+    <div class="admin-calendar-summary">
+      ${getCalendarSummaryMarkup(context)}
+    </div>
+    </details>
   `;
 }
 
@@ -2262,20 +2261,14 @@ function getCalendarMonthDonations(context) {
   });
 }
 
-function renderCalendarSummary(context) {
-  if (!context.summary) return;
-  if (!context.loaded) {
-    context.summary.replaceChildren();
-    return;
-  }
-
+function getCalendarSummaryMarkup(context) {
   const donationsByDate = getDonationsByDate(context.donations);
   const dayDonations = donationsByDate[context.selectedDate] || [];
   const monthDonations = getCalendarMonthDonations(context);
   const dayTotal = dayDonations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
   const monthTotal = monthDonations.reduce((sum, donation) => sum + (Number.parseFloat(donation.amount) || 0), 0);
 
-  context.summary.innerHTML = `
+  return `
     <article>
       <span>${readableDate(fromDateKey(context.selectedDate))}</span>
       <strong>${money(dayTotal)}</strong>
@@ -2348,7 +2341,6 @@ function renderCalendarGrid(context) {
     : formatMonthTitle(context.cursor);
   context.grid.innerHTML = cells.join("");
   renderCalendarDetails(context);
-  renderCalendarSummary(context);
 }
 
 function getPrimaryAdminCalendarContext() {
@@ -2370,7 +2362,6 @@ function getPrimaryAdminCalendarContext() {
     emptyRecordLabel: state.adminProfile?.role === "super_admin" ? "SuperAdmin PayPal orders" : "Admin orders",
     grid: elements.adminCalendarGrid,
     selectedDate: selectedAdminCalendarDate,
-    summary: elements.adminCalendarSummary,
     title: elements.adminCalendarTitle,
     titlePrefix: state.adminProfile?.role === "super_admin" ? "Private collection" : "",
   };
@@ -2380,7 +2371,6 @@ function renderAdminCalendar() {
   if (isBackendConfigured() && !["admin", "super_admin"].includes(state.adminProfile?.role)) {
     elements.adminCalendarGrid.replaceChildren();
     elements.adminCalendarDetails.replaceChildren();
-    elements.adminCalendarSummary.replaceChildren();
     elements.adminCalendarGrid.setAttribute("aria-busy", "false");
     if (elements.adminCalendarLoadStatus) elements.adminCalendarLoadStatus.hidden = true;
     if (elements.retryAdminCalendarButton) elements.retryAdminCalendarButton.hidden = true;
@@ -3613,6 +3603,15 @@ function setButtonBusy(button, isBusy, busyText = "") {
   } else if (!isBusy) {
     button.textContent = button.dataset.defaultText;
   }
+}
+
+function setRefreshAdminButtonBusy(isBusy) {
+  const button = elements.refreshAdminButton;
+  if (!button) return;
+
+  button.disabled = isBusy;
+  button.classList.toggle("is-loading", isBusy);
+  button.querySelector("span").textContent = isBusy ? "Reloading..." : "Reload data";
 }
 
 async function runAdminAction({ button, busyText, loadingMessage, successMessage, errorMessage }, action) {

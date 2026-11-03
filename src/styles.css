@@ -595,6 +595,14 @@ a {
   stroke-linejoin: round;
 }
 
+.button.admin-refresh-button.is-loading::after {
+  content: none;
+}
+
+.admin-refresh-button.is-loading svg {
+  animation: admin-spin 720ms linear infinite;
+}
+
 .admin-close-button {
   flex: 0 0 auto;
 }
@@ -1188,7 +1196,6 @@ a {
 
 .admin-calendar {
   display: grid;
-  min-height: calc(100dvh - 198px);
   align-content: start;
   gap: 14px;
   padding: 16px;
@@ -1328,8 +1335,7 @@ a {
 .admin-calendar-details {
   display: grid;
   gap: 10px;
-  min-height: 96px;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid rgba(217, 215, 207, 0.68);
   border-radius: 16px;
   background: #fffaf0;
@@ -1358,7 +1364,7 @@ a {
   font-size: 14px;
 }
 
-.admin-calendar-detail-heading span,
+.admin-calendar-detail-heading small,
 .admin-calendar-donation-main span {
   display: block;
   color: #8c7a5c;
@@ -1379,6 +1385,50 @@ a {
 .admin-calendar-detail-heading b,
 .admin-calendar-donation-main b {
   white-space: nowrap;
+}
+
+.admin-calendar-detail-heading {
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-calendar-detail-heading::-webkit-details-marker {
+  display: none;
+}
+
+.admin-calendar-detail-heading:focus-visible {
+  outline: 2px solid #8b631f;
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+.admin-calendar-detail-date {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-calendar-detail-heading b {
+  margin-left: auto;
+}
+
+.admin-calendar-detail-chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: #8b631f;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.admin-calendar-selected-day[open] .admin-calendar-detail-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-calendar-selected-day > .admin-calendar-list {
+  margin-top: 12px;
 }
 
 .admin-calendar-list {
@@ -1465,7 +1515,7 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: auto;
+  margin-top: 12px;
 }
 
 .admin-calendar-summary article {

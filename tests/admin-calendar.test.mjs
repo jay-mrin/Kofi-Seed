@@ -147,6 +147,57 @@ test("failed refreshes preserve the loaded month and expose a retryable error", 
   assert.equal(calendar.snapshot().loading, false);
 });
 
+test("selected-day orders and totals collapse together, preserve expansion on refresh, and reset for a different day", () => {
+  let previousCard = null;
+  const details = { innerHTML: "", querySelector: () => previousCard };
+  const donation = Object.freeze({ id: "saved-order", name: "Customer", amount: 11, createdAt: "2026-11-03T10:00:00Z", isPreview: true });
+  const context = { details, loaded: true, selectedDate: "2026-11-03", cursor: new Date(2026, 10, 1), emptyRecordLabel: "Admin orders", donations: Object.freeze([donation]) };
+  const render = vm.runInNewContext(`${source(app, "getCalendarMonthDonations")}
+    ${source(app, "getCalendarSummaryMarkup")}
+    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
+    getDonationsByDate: (donations) => ({ "2026-11-03": donations, "2026-11-04": donations }),
+    fromDateKey: (date) => date,
+    readableDate: (date) => date,
+    readableTime: () => "10:00 AM",
+    formatMonthTitle: () => "November 2026",
+    money: (amount) => `$${amount}`,
+    escapeHtml: (value) => String(value),
+    getDigitalOrder: () => null,
+    getDigitalOrderValue: (_donation, _key, fallback) => fallback,
+    getDonationRawValue: (_donation, _key, fallback) => fallback,
+    getAdminOrderItemLabel: (item) => item,
+    getFulfillmentStatusLabel: () => "Unfulfilled",
+    DIGITAL_ORDER_ITEM_NAME: "Seed",
+  });
+  const isExpanded = () => /<details\b[^>]*\sopen(?:\s|>)/.test(details.innerHTML);
+
+  render(context);
+  assert.equal(isExpanded(), false);
+  assert.match(details.innerHTML, /<summary[^>]*>[\s\S]*2026-11-03[\s\S]*1 order · \$11[\s\S]*<\/summary>/);
+  assert.match(details.innerHTML, /<\/summary>[\s\S]*Customer[\s\S]*<\/details>/);
+  assert.match(details.innerHTML, /<\/summary>[\s\S]*class="admin-calendar-summary"[\s\S]*1 order selected day[\s\S]*November 2026[\s\S]*1 order this month[\s\S]*<\/details>/);
+
+  previousCard = { open: true, dataset: { date: "2026-11-03" } };
+  render(context);
+  assert.equal(isExpanded(), true);
+
+  previousCard.open = false;
+  render(context);
+  assert.equal(isExpanded(), false);
+
+  previousCard.open = true;
+  context.selectedDate = "2026-11-04";
+  render(context);
+  assert.equal(isExpanded(), false);
+  assert.equal(context.donations[0], donation);
+
+  context.donations = [];
+  render(context);
+  assert.equal(isExpanded(), false);
+  assert.match(details.innerHTML, /No Admin orders recorded on this day/);
+  assert.match(details.innerHTML, /0 orders selected day[\s\S]*0 orders this month[\s\S]*<\/details>/);
+});
+
 test("calendar month ranges include local midnight and daylight saving boundaries", () => {
   const rangeSource = source(endpoint, "getCalendarMonthRange").replace(/: (?:string|number)/g, "");
   const range = vm.runInNewContext(`${rangeSource}; getCalendarMonthRange`);

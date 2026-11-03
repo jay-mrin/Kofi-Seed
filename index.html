@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=190" />
+    <link rel="stylesheet" href="src/styles.css?v=194" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -143,13 +143,6 @@
           <div class="admin-donation-heading">
             <h3 id="adminDonationHeading">1. Admin PayPal order calendar</h3>
           </div>
-          <div id="superAdminStandardPreviewControl" hidden>
-            <label class="admin-toggle">
-              <input id="superAdminStandardPreviewEnabled" type="checkbox" checked />
-              <span><strong>Show fulfilled orders in Standard Portal</strong>Show customer names and amounts only. Changes save automatically.</span>
-            </label>
-            <p>Includes successful orders placed from 4 November 2026, midnight India time. Earlier orders are excluded.</p>
-          </div>
           <section class="admin-calendar" aria-labelledby="adminCalendarTitle">
             <div class="admin-calendar-header">
               <button
@@ -187,7 +180,6 @@
             <button class="button button-secondary" id="retryAdminCalendarButton" type="button" hidden>Try loading orders again</button>
             <div class="admin-calendar-grid" id="adminCalendarGrid" role="grid" aria-label="Daily Admin PayPal order records"></div>
             <div class="admin-calendar-details" id="adminCalendarDetails" aria-live="polite"></div>
-            <div class="admin-calendar-summary" id="adminCalendarSummary" aria-live="polite"></div>
           </section>
         </section>
 
@@ -247,6 +239,14 @@
               <span class="checkout-routing-chevron" aria-hidden="true">⌄</span>
             </summary>
             <div class="payment-control-content">
+              <section class="payment-control-group" id="superAdminStandardPreviewControl" hidden>
+                <h3>Standard Portal preview</h3>
+                <label class="admin-toggle">
+                  <input id="superAdminStandardPreviewEnabled" type="checkbox" checked />
+                  <span><strong>Show fulfilled orders in Standard Portal</strong>Show customer names and amounts only. Changes save automatically.</span>
+                </label>
+                <p>Includes successful orders placed from 4 November 2026, midnight India time. Earlier orders are excluded.</p>
+              </section>
               <section class="payment-control-group admin-recurring-settings-section">
                 <h3>Recurring seed option</h3>
                 <label class="admin-toggle">
@@ -891,7 +891,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=149" defer></script>
+    <script src="src/app.js?v=152" defer></script>
     <script src="src/home-dodo-checkout.js?v=15" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
