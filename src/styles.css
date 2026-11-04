@@ -511,37 +511,6 @@ a {
   font-size: clamp(30px, 5vw, 42px);
 }
 
-.social-panel-heading {
-  display: grid;
-  justify-items: start;
-  gap: 10px;
-}
-
-.social-export-button {
-  min-height: 40px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  color: #fff;
-  background: #8b631f;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.social-export-button:hover { background: #654814; }
-
-.social-export-scope {
-  color: #756f62;
-  font-size: 12px;
-}
-
-.social-export-status {
-  margin: 0;
-  color: #756f62;
-  font-size: 12px;
-}
-
-.social-export-status[hidden] { display: none; }
-
 .social-calendar-header {
   display: flex;
   align-items: center;

@@ -225,8 +225,6 @@ const elements = {
   socialPanel: document.querySelector("#socialPanel"),
   socialPortal: document.querySelector("#socialPortal"),
   socialTitle: document.querySelector("#socialTitle"),
-  exportSocialOrders: document.querySelector("#exportSocialOrders"),
-  socialExportStatus: document.querySelector("#socialExportStatus"),
   closeSocialButton: document.querySelector("#closeSocialButton"),
   socialCalendarPrev: document.querySelector("#socialCalendarPrev"),
   socialCalendarNext: document.querySelector("#socialCalendarNext"),
@@ -350,7 +348,6 @@ let adminCalendarRequestId = 0;
 let socialCalendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let selectedSocialDate = toDateKey(new Date());
 let socialTransactions = [];
-let socialCalendarLoadedMonth = "";
 const showSampleAdminOrder = new URLSearchParams(window.location.search).get("preview_order") === "1";
 if (showSampleAdminOrder) {
   selectedAdminCalendarDate = toDateKey(new Date());
@@ -648,9 +645,6 @@ function clearAdminSession() {
   localStorage.removeItem(ADMIN_SESSION_KEY);
   state.adminProfile = null;
   socialTransactions = [];
-  socialCalendarLoadedMonth = "";
-  if (elements.exportSocialOrders) elements.exportSocialOrders.disabled = true;
-  if (elements.socialExportStatus) elements.socialExportStatus.hidden = true;
   elements.socialCalendarGrid?.replaceChildren();
   elements.socialCalendarDetails?.replaceChildren();
   state.analytics = createEmptyAnalytics();
@@ -1173,6 +1167,13 @@ function formatSocialOrderIndiaDateTime(dateString) {
   return { date: `${day}/${month}/${year}`, time: `${indiaTimestamp.slice(11, 16)} IST` };
 }
 
+function getSocialNetAmount(transaction) {
+  return typeof transaction.netAmount === "number" &&
+      Number.isFinite(transaction.netAmount) && transaction.netAmount >= 0
+    ? transaction.netAmount
+    : null;
+}
+
 function normalizePdfText(value) {
   return String(value ?? "")
     .replaceAll("’", "'")
@@ -1433,133 +1434,6 @@ function buildPremiumOrderPdf(donation) {
 
   finishPremiumPdfPage(commands);
   pages.push(commands);
-  return buildPdfDocument(pages);
-}
-
-function wrapSocialPdfText(value, maxLength) {
-  const normalized = normalizePdfText(value) || "Not provided";
-  const lines = [];
-  for (const paragraph of normalized.split(/\n+/)) {
-    let remaining = paragraph.trim();
-    while (remaining.length > maxLength) {
-      const wordBreak = remaining.lastIndexOf(" ", maxLength);
-      const splitAt = wordBreak > Math.floor(maxLength / 2) ? wordBreak : maxLength;
-      lines.push(remaining.slice(0, splitAt).trim());
-      remaining = remaining.slice(splitAt).trimStart();
-    }
-    if (remaining) lines.push(remaining);
-  }
-  return lines.length ? lines : ["Not provided"];
-}
-
-function getSocialNetAmount(transaction) {
-  return typeof transaction.netAmount === "number" &&
-      Number.isFinite(transaction.netAmount) && transaction.netAmount >= 0
-    ? transaction.netAmount
-    : null;
-}
-
-function buildSocialOrdersPdf(portalName, dateKey, transactions) {
-  const [year, month, day] = dateKey.split("-");
-  const monthName = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"][Number(month) - 1];
-  const displayDate = `${day} ${monthName} ${year}`;
-  const portalLabel = portalName === "AnshuPortal" ? "ANSHU / PORTAL" : "BADAL / PORTAL";
-  const paidCents = transactions.reduce((sum, transaction) =>
-    sum + Math.round((Number(transaction.amount) || 0) * 100), 0);
-  const creditedAmounts = transactions.map(getSocialNetAmount);
-  const availableCredited = creditedAmounts.filter((amount) => amount !== null);
-  const creditedComplete = availableCredited.length === transactions.length;
-  const creditedCents = availableCredited.reduce((sum, amount) =>
-    sum + Math.round(amount * 100), 0);
-  const creditedTotal = creditedComplete ? `$${formatFixedAmount(creditedCents / 100)}` : "Unavailable";
-  const pages = [];
-  let commands;
-  let y;
-  const ink = "#171717";
-  const blue = "#0b388c";
-  const gray = "#747474";
-  const rule = (atY) => {
-    commands.push(`${pdfRgb("#dadde2")} RG`, "0.7 w", `38 ${atY} m 557 ${atY} l S`);
-  };
-
-  const newPage = (first = false) => {
-    commands = [];
-    pages.push(commands);
-    commands.push(`${pdfRgb("#ffffff")} rg`, `0 0 ${PDF_PAGE_WIDTH} ${PDF_PAGE_HEIGHT} re f`);
-    commands.push(`${pdfRgb(blue)} rg`, `0 830 ${PDF_PAGE_WIDTH} 12 re f`);
-    pdfText(commands, portalLabel, 38, 793, 14, "F2", blue);
-    pdfTextRight(commands, "SOW YOUR SEED HERE", 557, 794, 8.5, "F2", blue);
-    rule(779);
-    pdfText(commands, first ? "Daily Orders Report" : "Daily Orders Report (continued)", 38, 742, 22, "F2", ink);
-    pdfText(commands, `${displayDate}  |  00:00-23:59 IST`, 38, 721, 9, "F1", gray);
-
-    if (first) {
-      pdfText(commands, "TOTAL ORDERS", 38, 671, 8, "F2", gray);
-      pdfText(commands, "TOTAL PAID", 215, 671, 8, "F2", gray);
-      pdfText(commands, "TOTAL CREDITED", 392, 671, 8, "F2", gray);
-      pdfText(commands, String(transactions.length), 38, 642, 19, "F2", blue);
-      pdfText(commands, `$${formatFixedAmount(paidCents / 100)}`, 215, 642, 19, "F2", blue);
-      pdfText(commands, creditedTotal, 392, 642, creditedComplete ? 19 : 15, "F2", blue);
-      rule(620);
-      pdfText(commands, "Transaction Details", 38, 585, 12, "F2", ink);
-      pdfTextRight(commands, "Currency: USD", 557, 586, 8, "F1", gray);
-      y = 528;
-    } else {
-      pdfText(commands, "Transaction Details", 38, 678, 12, "F2", ink);
-      pdfTextRight(commands, "Currency: USD", 557, 679, 8, "F1", gray);
-      y = 621;
-    }
-
-    const headerY = y + 22;
-    pdfText(commands, "#", 40, headerY, 8, "F2", gray);
-    pdfText(commands, "CUSTOMER", 70, headerY, 8, "F2", gray);
-    pdfText(commands, "EMAIL", 205, headerY, 8, "F2", gray);
-    pdfText(commands, "TIME", 392, headerY, 8, "F2", gray);
-    pdfTextRight(commands, "PAID", 488, headerY, 8, "F2", gray);
-    pdfTextRight(commands, "CREDITED", 557, headerY, 8, "F2", gray);
-    rule(y + 11);
-  };
-
-  newPage(true);
-  transactions.forEach((transaction, index) => {
-    const nameLines = wrapSocialPdfText(transaction.name || "Customer", 22);
-    const emailLines = wrapSocialPdfText(transaction.email || "Email unavailable", 31);
-    const rowHeight = Math.max(40, 18 + Math.max(nameLines.length, emailLines.length) * 11);
-    if (y - rowHeight < 95) newPage();
-
-    pdfText(commands, String(index + 1).padStart(2, "0"), 40, y - 16, 8.5, "F1", gray);
-    nameLines.forEach((line, lineIndex) =>
-      pdfText(commands, line, 70, y - 16 - lineIndex * 11, 8.5, "F2", ink));
-    emailLines.forEach((line, lineIndex) =>
-      pdfText(commands, line, 205, y - 16 - lineIndex * 11, 7.6, "F1", gray));
-    pdfText(commands, formatSocialOrderIndiaDateTime(transaction.createdAt).time.replace(" IST", ""),
-      392, y - 16, 8.5, "F1", gray);
-    const netAmount = getSocialNetAmount(transaction);
-    pdfTextRight(commands, `$${formatFixedAmount(transaction.amount)}`, 488, y - 16, 8.5, "F1", ink);
-    pdfTextRight(commands, netAmount === null ? "Unavailable" : `$${formatFixedAmount(netAmount)}`,
-      557, y - 16, netAmount === null ? 7 : 8.5, "F2", ink);
-    rule(y - rowHeight);
-    y -= rowHeight;
-  });
-
-  if (y - (creditedComplete ? 55 : 75) < 88) newPage();
-  pdfText(commands, "GRAND TOTAL", 40, y - 25, 10, "F2", ink);
-  pdfTextRight(commands, `$${formatFixedAmount(paidCents / 100)}`, 488, y - 25, 10, "F2", ink);
-  pdfTextRight(commands, creditedTotal, 557, y - 25, creditedComplete ? 10 : 8, "F2", blue);
-  rule(y - 45);
-  if (!creditedComplete) {
-    const missingCount = transactions.length - availableCredited.length;
-    pdfText(commands, `Credited total unavailable: PayPal net amount missing for ${missingCount} order${missingCount === 1 ? "" : "s"}.`,
-      40, y - 62, 8, "F1", gray);
-  }
-
-  pages.forEach((page, index) => {
-    page.push(`${pdfRgb("#dadde2")} RG`, "0.7 w", "38 60 m 557 60 l S");
-    pdfText(page, "CONFIDENTIAL  |  Daily order report", 38, 42, 7.5, "F1", gray);
-    pdfTextRight(page, `${portalLabel.replace(" / ", " ")}  |  ${String(index + 1).padStart(2, "0")} / ${String(pages.length).padStart(2, "0")}`,
-      557, 42, 7.5, "F2", gray);
-  });
   return buildPdfDocument(pages);
 }
 
@@ -3582,15 +3456,6 @@ function getSocialIndiaDateKey(dateString) {
     : "";
 }
 
-function getSocialOrdersForSelectedDate(transactions, dateKey) {
-  return transactions.filter((transaction) => {
-    const timestamp = Date.parse(transaction.createdAt);
-    if (!Number.isFinite(timestamp)) return false;
-    const indiaDate = new Date(timestamp + 330 * 60_000);
-    return indiaDate.toISOString().slice(0, 10) === dateKey;
-  });
-}
-
 function renderSocialCalendar() {
   if (!elements.socialCalendarGrid) return;
   const year = socialCalendarCursor.getFullYear();
@@ -3636,7 +3501,6 @@ function renderSocialCalendar() {
   }
 
   const selected = byDate.get(selectedSocialDate) || [];
-  elements.exportSocialOrders.disabled = socialCalendarLoadedMonth !== getMonthKey(socialCalendarCursor);
   elements.socialCalendarDetails.replaceChildren();
   const heading = document.createElement("h4");
   heading.textContent = readableDate(fromDateKey(selectedSocialDate));
@@ -3690,8 +3554,6 @@ async function loadSocialTransactions() {
   const source = state.adminProfile?.socialSource;
   const accessToken = getAdminAccessToken();
   if (state.adminProfile?.role !== "social_partner") return;
-  socialCalendarLoadedMonth = "";
-  elements.exportSocialOrders.disabled = true;
   elements.socialCalendarPrev.disabled = true;
   elements.socialCalendarNext.disabled = true;
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
@@ -3700,7 +3562,6 @@ async function loadSocialTransactions() {
     if (month !== getMonthKey(socialCalendarCursor) || state.adminProfile?.role !== "social_partner" ||
         source !== state.adminProfile?.socialSource || accessToken !== getAdminAccessToken()) return;
     socialTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
-    socialCalendarLoadedMonth = month;
     renderSocialCalendar();
   } catch (error) {
     elements.socialCalendarDetails.textContent = error.message || "Could not load transactions.";
@@ -3708,23 +3569,6 @@ async function loadSocialTransactions() {
     elements.socialCalendarPrev.disabled = false;
     elements.socialCalendarNext.disabled = false;
   }
-}
-
-function exportSelectedSocialOrders() {
-  if (state.adminProfile?.role !== "social_partner" ||
-      socialCalendarLoadedMonth !== getMonthKey(socialCalendarCursor)) return;
-  const selected = getSocialOrdersForSelectedDate(socialTransactions, selectedSocialDate);
-  elements.socialExportStatus.hidden = false;
-  if (!selected.length) {
-    elements.socialExportStatus.textContent = "No orders on the selected date.";
-    return;
-  }
-
-  const source = state.adminProfile.socialSource;
-  const portalName = source === "anshu" ? "AnshuPortal" : "Badal Portal";
-  const pdf = buildSocialOrdersPdf(portalName, selectedSocialDate, selected);
-  downloadBlobFile(`${source}-orders-${selectedSocialDate}.pdf`, new Blob([pdf], { type: "application/pdf" }));
-  elements.socialExportStatus.textContent = `Exported ${selected.length} order${selected.length === 1 ? "" : "s"} as PDF for ${selectedSocialDate}.`;
 }
 
 function openAdminPanel() {
@@ -3804,9 +3648,6 @@ function openSocialPanel() {
   elements.closeSocialButton.setAttribute("aria-label", `Close ${elements.socialTitle.textContent}`);
   elements.socialPortal.setAttribute("aria-label", "Tagged PayPal orders calendar");
   socialTransactions = [];
-  socialCalendarLoadedMonth = "";
-  elements.exportSocialOrders.disabled = true;
-  elements.socialExportStatus.hidden = true;
   elements.socialCalendarGrid.replaceChildren();
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
   document.body.classList.add("admin-open");
@@ -4336,8 +4177,6 @@ elements.socialCalendarPrev.addEventListener("click", () => {
   socialCalendarCursor = new Date(socialCalendarCursor.getFullYear(), socialCalendarCursor.getMonth() - 1, 1);
   selectedSocialDate = toDateKey(socialCalendarCursor);
   socialTransactions = [];
-  socialCalendarLoadedMonth = "";
-  elements.socialExportStatus.hidden = true;
   renderSocialCalendar();
   loadSocialTransactions();
 });
@@ -4345,8 +4184,6 @@ elements.socialCalendarNext.addEventListener("click", () => {
   socialCalendarCursor = new Date(socialCalendarCursor.getFullYear(), socialCalendarCursor.getMonth() + 1, 1);
   selectedSocialDate = toDateKey(socialCalendarCursor);
   socialTransactions = [];
-  socialCalendarLoadedMonth = "";
-  elements.socialExportStatus.hidden = true;
   renderSocialCalendar();
   loadSocialTransactions();
 });
@@ -4354,10 +4191,8 @@ elements.socialCalendarGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-social-calendar-date]");
   if (!button) return;
   selectedSocialDate = button.dataset.socialCalendarDate;
-  elements.socialExportStatus.hidden = true;
   renderSocialCalendar();
 });
-elements.exportSocialOrders.addEventListener("click", exportSelectedSocialOrders);
 elements.adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (elements.enterPortalButton.disabled) return;
