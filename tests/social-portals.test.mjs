@@ -39,10 +39,8 @@ test("only the current tagged path attributes PayPal checkout", () => {
 async function readPortalMonth(rows, token, month = "2026-11") {
   const source = read("supabase/functions/social-portal-transactions/index.ts")
     .replace(/^import .*;\n/gm, "")
-    .replace("function getPayPalNetAmount(rawPayment: any, captureId: string): number | null", "function getPayPalNetAmount(rawPayment, captureId)")
-    .replace("(unit: any)", "(unit)")
     .replace(
-      "const transactions: Array<{ name: string; amount: number; netAmount: number | null; email: string; createdAt: string }> = [];",
+      "const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];",
       "const transactions = [];",
     );
   let handler;
@@ -52,8 +50,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
       const filters = [];
       const query = {
         select(fields) {
-          assert.match(fields, /raw_payment/);
-          assert.doesNotMatch(fields, /supporter_message|customer_request/);
+          assert.doesNotMatch(fields, /raw_payment|paypal_capture_id|supporter_message|customer_request/);
           return query;
         },
         eq(key, value) { filters.push((row) => row[key] === value); return query; },
@@ -102,12 +99,7 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
     paypal_status: "COMPLETED",
     payment_route: "standard",
     visibility_scope: "public",
-    paypal_capture_id: `CAP-${name}`,
     raw_payment: {
-      order: { purchase_units: [{ payments: { captures: [{
-        id: `CAP-${name}`,
-        seller_receivable_breakdown: { net_amount: { currency_code: "USD", value: "10.08" } },
-      }] } }] },
       unrelatedPrivateValue: "must not appear",
     },
     ...overrides,
@@ -117,12 +109,8 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
     order("AnshuFirst", "anshu", "2026-11-03T18:30:00.000Z"),
     order("AnshuSuper", "anshu", "2026-11-04T12:00:00.000Z", {
       payment_route: "superadmin", visibility_scope: "superadmin_private",
-      raw_payment: { capture: {
-        id: "CAP-AnshuSuper",
-        seller_receivable_breakdown: { net_amount: { currency_code: "USD", value: "9.98" } },
-      } },
     }),
-    order("BadalFirst", "badal", "2026-11-04T13:00:00.000Z", { raw_payment: {} }),
+    order("BadalFirst", "badal", "2026-11-04T13:00:00.000Z"),
     order("Failed", "anshu", "2026-11-04T14:00:00.000Z", { paypal_status: "FAILED" }),
     order("Dodo", "anshu", "2026-11-04T15:00:00.000Z", { payment_method: "dodo" }),
     order("Untagged", null, "2026-11-04T16:00:00.000Z"),
@@ -134,15 +122,14 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   assert.equal(anshu.status, 200);
   assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper"]);
   for (const row of anshu.body.transactions) {
-    assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name", "netAmount"]);
+    assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
     assert.match(row.email, /-order@example\.invalid$/);
   }
-  assert.deepEqual(anshu.body.transactions.map((row) => row.netAmount), [10.08, 9.98]);
   assert.doesNotMatch(JSON.stringify(anshu.body), /unrelatedPrivateValue|must not appear|raw_payment/);
 
   const badal = await readPortalMonth(rows, "badal");
   assert.deepEqual(badal.body.transactions.map((row) => row.name), ["BadalFirst"]);
-  assert.equal(badal.body.transactions[0].netAmount, null);
+  assert.deepEqual(Object.keys(badal.body.transactions[0]).sort(), ["amount", "createdAt", "email", "name"]);
   assert.deepEqual((await readPortalMonth(rows, "anshu", "2026-10")).body.transactions, []);
   assert.equal((await readPortalMonth(rows, "unknown")).status, 403);
 });
@@ -170,25 +157,13 @@ test("changing a recent SuperAdmin order's tag moves it between the two social p
   assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions.map((row) => row.name), ["Reassigned"]);
 });
 
-test("credited amount uses only the matching PayPal capture's USD net amount", () => {
-  const endpoint = read("supabase/functions/social-portal-transactions/index.ts");
-  const source = endpoint.match(/function getPayPalNetAmount\([^]*?\n\}/)?.[0]
-    ?.replace("rawPayment: any, captureId: string): number | null", "rawPayment, captureId)")
-    .replace("(unit: any)", "(unit)");
-  assert.ok(source);
-  const getNet = vm.runInNewContext(`${source}; getPayPalNetAmount`);
-  const capture = (id, currency, value) => ({
-    id, seller_receivable_breakdown: { net_amount: { currency_code: currency, value } },
-  });
-  assert.equal(getNet({
-    order: { purchase_units: [{ payments: { captures: [
-      capture("other", "USD", "1.00"), capture("mine", "USD", "10.08"),
-    ] } }] },
-  }, "mine"), 10.08);
-  assert.equal(getNet({ capture: capture("mine", "USD", "10.08") }, "other"), null);
-  assert.equal(getNet({ webhook: { resource: capture("mine", "USD", "9.98") } }, "mine"), 9.98);
-  assert.equal(getNet({ capture: capture("mine", "EUR", "10.08") }, "mine"), null);
-  assert.equal(getNet({ capture: capture("mine", "USD", "invalid") }, "mine"), null);
+test("social order cards show paid amount without credited details", () => {
+  const app = read("src/app.js");
+  const styles = read("src/styles.css");
+  assert.match(app, /paidLabel\.textContent = "Paid"/);
+  assert.match(app, /row\.append\(identity, paid\)/);
+  assert.doesNotMatch(app, /Credited|getSocialNetAmount|social-order-amounts/);
+  assert.doesNotMatch(styles, /social-order-amounts/);
 });
 
 test("SuperAdmin tagging is limited to eligible orders and updates only their portal source", () => {

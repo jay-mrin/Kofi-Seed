@@ -1167,13 +1167,6 @@ function formatSocialOrderIndiaDateTime(dateString) {
   return { date: `${day}/${month}/${year}`, time: `${indiaTimestamp.slice(11, 16)} IST` };
 }
 
-function getSocialNetAmount(transaction) {
-  return typeof transaction.netAmount === "number" &&
-      Number.isFinite(transaction.netAmount) && transaction.netAmount >= 0
-    ? transaction.netAmount
-    : null;
-}
-
 function normalizePdfText(value) {
   return String(value ?? "")
     .replaceAll("’", "'")
@@ -3527,23 +3520,14 @@ function renderSocialCalendar() {
       const email = document.createElement("small");
       email.textContent = transaction.email || "Email unavailable";
       identity.append(email);
-      const amounts = document.createElement("div");
-      amounts.className = "social-order-amounts";
-      const paid = document.createElement("span");
+      const paid = document.createElement("div");
+      paid.className = "social-order-paid";
       const paidLabel = document.createElement("small");
       paidLabel.textContent = "Paid";
       const paidValue = document.createElement("strong");
       paidValue.textContent = money(Number(transaction.amount) || 0);
       paid.append(paidLabel, paidValue);
-      const credited = document.createElement("span");
-      const creditedLabel = document.createElement("small");
-      creditedLabel.textContent = "Credited";
-      const creditedValue = document.createElement("strong");
-      const netAmount = getSocialNetAmount(transaction);
-      creditedValue.textContent = netAmount === null ? "Unavailable" : money(netAmount);
-      credited.append(creditedLabel, creditedValue);
-      amounts.append(paid, credited);
-      row.append(identity, amounts);
+      row.append(identity, paid);
       elements.socialCalendarDetails.append(row);
     }
   }

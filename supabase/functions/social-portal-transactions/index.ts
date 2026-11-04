@@ -5,30 +5,6 @@ import { requireSocialPortal } from "../_shared/supabase.ts";
 const SOCIAL_PORTAL_START = "2026-11-03T18:30:00.000Z";
 const IST_OFFSET_MS = 330 * 60_000;
 
-function getPayPalNetAmount(rawPayment: any, captureId: string): number | null {
-  if (!captureId || !rawPayment || typeof rawPayment !== "object") return null;
-  const purchaseUnits = Array.isArray(rawPayment.order?.purchase_units)
-    ? rawPayment.order.purchase_units
-    : [];
-  const orderCaptures = purchaseUnits.flatMap((unit: any) =>
-    Array.isArray(unit?.payments?.captures) ? unit.payments.captures : []);
-  const candidates = [
-    ...orderCaptures,
-    rawPayment.capture,
-    rawPayment.webhook?.resource,
-  ];
-  for (const capture of candidates) {
-    if (capture?.id !== captureId) continue;
-    const net = capture.seller_receivable_breakdown?.net_amount;
-    if (net?.currency_code !== "USD" ||
-        typeof net.value !== "string" ||
-        !/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(net.value)) continue;
-    const amount = Number(net.value);
-    if (Number.isFinite(amount)) return amount;
-  }
-  return null;
-}
-
 Deno.serve(withCors(async (request) => {
   const options = handleOptions(request);
   if (options) return options;
@@ -46,10 +22,10 @@ Deno.serve(withCors(async (request) => {
     const end = new Date(Date.UTC(year, monthNumber, 1) - IST_OFFSET_MS).toISOString();
     if (end <= SOCIAL_PORTAL_START) return jsonResponse({ transactions: [] });
 
-    const transactions: Array<{ name: string; amount: number; netAmount: number | null; email: string; createdAt: string }> = [];
+    const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];
     for (let offset = 0;; offset += 500) {
       const { data, error } = await supabase.from("donations")
-        .select("display_name, amount, created_at, paypal_payer_email, paypal_capture_id, raw_payment, digital_orders(contact_email)")
+        .select("display_name, amount, created_at, paypal_payer_email, digital_orders(contact_email)")
         .eq("social_source", socialSource)
         .eq("payment_method", "paypal")
         .eq("paypal_status", "COMPLETED")
@@ -70,7 +46,6 @@ Deno.serve(withCors(async (request) => {
         transactions.push({
           name: row.display_name,
           amount: Number(row.amount),
-          netAmount: getPayPalNetAmount(row.raw_payment, row.paypal_capture_id),
           email: order?.contact_email || row.paypal_payer_email || "",
           createdAt: row.created_at,
         });
