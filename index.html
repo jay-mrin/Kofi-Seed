@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=200" />
+    <link rel="stylesheet" href="src/styles.css?v=202" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -92,7 +92,12 @@
     <div class="admin-backdrop" id="adminBackdrop" hidden></div>
     <section class="social-panel" id="socialPanel" aria-labelledby="socialTitle" aria-hidden="true">
       <div class="social-panel-header">
-        <h2 id="socialTitle">Social Portal</h2>
+        <div class="social-panel-heading">
+          <h2 id="socialTitle">Social Portal</h2>
+          <button class="button social-export-button" id="exportSocialOrders" type="button">Export selected date PDF</button>
+          <small class="social-export-scope">00:00–23:59 IST on the selected date</small>
+          <p class="social-export-status" id="socialExportStatus" role="status" aria-live="polite" hidden></p>
+        </div>
         <button class="icon-button admin-close-button" id="closeSocialButton" type="button" aria-label="Close Social Portal">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </button>
@@ -895,7 +900,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=158" defer></script>
+    <script src="src/app.js?v=162" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

@@ -498,7 +498,7 @@ a {
 
 .social-panel-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: min(760px, 100%);
   margin: 0 auto 22px;
@@ -510,6 +510,37 @@ a {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(30px, 5vw, 42px);
 }
+
+.social-panel-heading {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.social-export-button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: #fff;
+  background: #8b631f;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.social-export-button:hover { background: #654814; }
+
+.social-export-scope {
+  color: #756f62;
+  font-size: 12px;
+}
+
+.social-export-status {
+  margin: 0;
+  color: #756f62;
+  font-size: 12px;
+}
+
+.social-export-status[hidden] { display: none; }
 
 .social-calendar-header {
   display: flex;
@@ -558,10 +589,60 @@ a {
   min-width: 0;
 }
 
+.social-order-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.social-order-heading time {
+  color: #756f62;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .social-order-identity small {
   color: #756f62;
   font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+.social-order-amounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(70px, auto));
+  gap: 8px 16px;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.social-order-amounts > span {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+
+.social-order-amounts small {
+  color: #756f62;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.social-order-amounts strong {
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .social-transaction {
+    flex-wrap: wrap;
+  }
+
+  .social-order-amounts {
+    width: 100%;
+    justify-content: start;
+    text-align: left;
+  }
 }
 
 .admin-panel-header,

@@ -39,8 +39,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
 async function readPortalMonth(rows, token, month = "2026-11") {
   const source = read("supabase/functions/social-portal-transactions/index.ts")
     .replace(/^import .*;\n/gm, "")
+    .replace("function getPayPalNetAmount(rawPayment: any, captureId: string): number | null", "function getPayPalNetAmount(rawPayment, captureId)")
+    .replace("(unit: any)", "(unit)")
     .replace(
-      "const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];",
+      "const transactions: Array<{ name: string; amount: number; netAmount: number | null; email: string; createdAt: string }> = [];",
       "const transactions = [];",
     );
   let handler;
@@ -50,7 +52,8 @@ async function readPortalMonth(rows, token, month = "2026-11") {
       const filters = [];
       const query = {
         select(fields) {
-          assert.doesNotMatch(fields, /raw_payment|supporter_message|customer_request/);
+          assert.match(fields, /raw_payment/);
+          assert.doesNotMatch(fields, /supporter_message|customer_request/);
           return query;
         },
         eq(key, value) { filters.push((row) => row[key] === value); return query; },
@@ -99,6 +102,14 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
     paypal_status: "COMPLETED",
     payment_route: "standard",
     visibility_scope: "public",
+    paypal_capture_id: `CAP-${name}`,
+    raw_payment: {
+      order: { purchase_units: [{ payments: { captures: [{
+        id: `CAP-${name}`,
+        seller_receivable_breakdown: { net_amount: { currency_code: "USD", value: "10.08" } },
+      }] } }] },
+      unrelatedPrivateValue: "must not appear",
+    },
     ...overrides,
   });
   const rows = [
@@ -106,8 +117,12 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
     order("AnshuFirst", "anshu", "2026-11-03T18:30:00.000Z"),
     order("AnshuSuper", "anshu", "2026-11-04T12:00:00.000Z", {
       payment_route: "superadmin", visibility_scope: "superadmin_private",
+      raw_payment: { capture: {
+        id: "CAP-AnshuSuper",
+        seller_receivable_breakdown: { net_amount: { currency_code: "USD", value: "9.98" } },
+      } },
     }),
-    order("BadalFirst", "badal", "2026-11-04T13:00:00.000Z"),
+    order("BadalFirst", "badal", "2026-11-04T13:00:00.000Z", { raw_payment: {} }),
     order("Failed", "anshu", "2026-11-04T14:00:00.000Z", { paypal_status: "FAILED" }),
     order("Dodo", "anshu", "2026-11-04T15:00:00.000Z", { payment_method: "dodo" }),
     order("Untagged", null, "2026-11-04T16:00:00.000Z"),
@@ -119,12 +134,15 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   assert.equal(anshu.status, 200);
   assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper"]);
   for (const row of anshu.body.transactions) {
-    assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
+    assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name", "netAmount"]);
     assert.match(row.email, /-order@example\.invalid$/);
   }
+  assert.deepEqual(anshu.body.transactions.map((row) => row.netAmount), [10.08, 9.98]);
+  assert.doesNotMatch(JSON.stringify(anshu.body), /unrelatedPrivateValue|must not appear|raw_payment/);
 
   const badal = await readPortalMonth(rows, "badal");
   assert.deepEqual(badal.body.transactions.map((row) => row.name), ["BadalFirst"]);
+  assert.equal(badal.body.transactions[0].netAmount, null);
   assert.deepEqual((await readPortalMonth(rows, "anshu", "2026-10")).body.transactions, []);
   assert.equal((await readPortalMonth(rows, "unknown")).status, 403);
 });
@@ -150,6 +168,101 @@ test("changing a recent SuperAdmin order's tag moves it between the two social p
   order.social_source = "badal";
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
   assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions.map((row) => row.name), ["Reassigned"]);
+});
+
+test("credited amount uses only the matching PayPal capture's USD net amount", () => {
+  const endpoint = read("supabase/functions/social-portal-transactions/index.ts");
+  const source = endpoint.match(/function getPayPalNetAmount\([^]*?\n\}/)?.[0]
+    ?.replace("rawPayment: any, captureId: string): number | null", "rawPayment, captureId)")
+    .replace("(unit: any)", "(unit)");
+  assert.ok(source);
+  const getNet = vm.runInNewContext(`${source}; getPayPalNetAmount`);
+  const capture = (id, currency, value) => ({
+    id, seller_receivable_breakdown: { net_amount: { currency_code: currency, value } },
+  });
+  assert.equal(getNet({
+    order: { purchase_units: [{ payments: { captures: [
+      capture("other", "USD", "1.00"), capture("mine", "USD", "10.08"),
+    ] } }] },
+  }, "mine"), 10.08);
+  assert.equal(getNet({ capture: capture("mine", "USD", "10.08") }, "other"), null);
+  assert.equal(getNet({ webhook: { resource: capture("mine", "USD", "9.98") } }, "mine"), 9.98);
+  assert.equal(getNet({ capture: capture("mine", "EUR", "10.08") }, "mine"), null);
+  assert.equal(getNet({ capture: capture("mine", "USD", "invalid") }, "mine"), null);
+});
+
+test("social order PDF shows the selected day's details and final amount total", () => {
+  const app = read("src/app.js");
+  const functionSource = (name) => {
+    const match = app.match(new RegExp(`function ${name}\\([^]*?\\n\\}`));
+    assert.ok(match, `Missing ${name}`);
+    return match[0];
+  };
+  const context = vm.createContext({ Date, Object, Number, String });
+  vm.runInContext("const PDF_PAGE_WIDTH = 595.2756; const PDF_PAGE_HEIGHT = 841.8898;\n" + [
+    "normalizePdfText", "pdfEscape", "pdfRgb", "pdfText", "pdfTextRight",
+    "pdfRoundedRect", "formatSocialOrderIndiaDateTime", "formatFixedAmount",
+    "wrapSocialPdfText", "getSocialNetAmount", "buildSocialOrdersPdf", "buildPdfDocument",
+  ].map(functionSource).join("\n"), context);
+  const pdf = context.buildSocialOrdersPdf("AnshuPortal", "2026-11-04", [
+    { name: "First Buyer", email: "one@example.invalid", createdAt: "2026-11-03T18:30:00.000Z", amount: 11, netAmount: 10.08 },
+    { name: "Second Buyer", email: "two@example.invalid", createdAt: "2026-11-04T18:29:59.000Z", amount: 22.5, netAmount: null },
+  ]);
+  assert.match(pdf, /^%PDF-1\.4/);
+  assert.match(pdf, /ANSHU \/ PORTAL/);
+  assert.match(pdf, /Daily Orders Report/);
+  assert.match(pdf, /04 November 2026  \|  00:00-23:59 IST/);
+  assert.match(pdf, /TOTAL ORDERS/);
+  assert.match(pdf, /TOTAL PAID/);
+  assert.match(pdf, /TOTAL CREDITED/);
+  assert.match(pdf, /Transaction Details/);
+  assert.match(pdf, /First Buyer/);
+  assert.match(pdf, /one@example\.invalid/);
+  assert.match(pdf, /00:00/);
+  assert.match(pdf, /23:59/);
+  assert.match(pdf, /\$11\.00/);
+  assert.match(pdf, /\$22\.50/);
+  assert.match(pdf, /CREDITED/);
+  assert.match(pdf, /\$10\.08/);
+  assert.match(pdf, /Unavailable/);
+  assert.match(pdf, /Credited total unavailable: PayPal net amount missing for 1 order/);
+  assert.match(pdf, /GRAND TOTAL/);
+  assert.match(pdf, /\$33\.50/);
+  const completePdf = context.buildSocialOrdersPdf("Badal Portal", "2026-11-04", [
+    { name: "First Buyer", email: "one@example.invalid", createdAt: "2026-11-03T18:30:00.000Z", amount: 11, netAmount: 10.08 },
+    { name: "Second Buyer", email: "two@example.invalid", createdAt: "2026-11-04T18:29:59.000Z", amount: 22.5, netAmount: 20.12 },
+  ]);
+  assert.match(completePdf, /BADAL \/ PORTAL/);
+  assert.match(completePdf, /\$30\.20/);
+  assert.doesNotMatch(completePdf, /Credited total unavailable/);
+  const manyOrders = Array.from({ length: 24 }, (_, index) => ({
+    name: `Buyer ${index + 1}`, email: `buyer${index + 1}@example.invalid`,
+    createdAt: "2026-11-04T12:00:00.000Z", amount: 11, netAmount: 10.08,
+  }));
+  const multiPagePdf = context.buildSocialOrdersPdf("Badal Portal", "2026-11-04", manyOrders);
+  assert.match(multiPagePdf, /\/Count [2-9]/);
+  assert.match(multiPagePdf, /Daily Orders Report .*continued/);
+  assert.equal((multiPagePdf.match(/GRAND TOTAL/g) || []).length, 1);
+  assert.match(multiPagePdf, /\$264\.00/);
+  assert.match(multiPagePdf, /\$241\.92/);
+});
+
+test("selected-date export includes the full India day from midnight through 23:59", () => {
+  const app = read("src/app.js");
+  const source = app.match(/function getSocialOrdersForSelectedDate\([^]*?\n\}/)?.[0];
+  assert.ok(source);
+  const select = vm.runInNewContext(`${source}; getSocialOrdersForSelectedDate`);
+  const transactions = [
+    { name: "Previous day", createdAt: "2026-11-03T18:29:59.000Z" },
+    { name: "Midnight", createdAt: "2026-11-03T18:30:00.000Z" },
+    { name: "Noon", createdAt: "2026-11-04T07:29:59.000Z" },
+    { name: "Afternoon", createdAt: "2026-11-04T07:30:00.000Z" },
+    { name: "Last second", createdAt: "2026-11-04T18:29:59.999Z" },
+    { name: "Next day", createdAt: "2026-11-04T18:30:00.000Z" },
+  ];
+  assert.deepEqual(Array.from(select(transactions, "2026-11-04"), (row) => row.name), ["Midnight", "Noon", "Afternoon", "Last second"]);
+  assert.match(app, /downloadBlobFile\(`\$\{source\}-orders-\$\{selectedSocialDate\}\.pdf`/);
+  assert.doesNotMatch(app, /social-portal-transactions\?export=all/);
 });
 
 test("SuperAdmin tagging is limited to eligible orders and updates only their portal source", () => {
