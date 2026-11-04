@@ -14,8 +14,11 @@ test("Home and both tagged links use the selected PayPal account while the porta
   const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
   const clientSource = app.match(/function getPayPalClientId\(\) \{[\s\S]*?\n\}/)?.[0];
   assert.ok(routeSource && clientSource);
-  assert.match(html, /id="homeSuperAdminPayPal"[^>]*value="superadmin"[\s\S]*<strong>Superadmin\[Paypal\]<\/strong>/);
-  assert.match(html, /id="homeAdminPayPal"[^>]*value="standard"[\s\S]*<strong>Admin\[Paypal\]<\/strong>/);
+  assert.match(html, /id="homeSuperAdminPayPal"[^>]*value="superadmin"[\s\S]*<strong>SuperAdmin PayPal<\/strong>/);
+  assert.match(html, /id="homeAdminPayPal"[^>]*value="standard"[\s\S]*<strong>Admin PayPal<\/strong>/);
+  assert.match(html, /id="homeCustomCreditDebit"[^>]*value="custom"[\s\S]*<strong>Custom Credit Debit<\/strong>/);
+  assert.doesNotMatch(html, /id="alternateCardCheckoutVisible" type="checkbox"/);
+  assert.match(app, /getCheckoutDisplaySelection\(\)/);
 
   const host = {};
   const supportCard = { parentElement: {} };
@@ -50,6 +53,42 @@ test("Home and both tagged links use the selected PayPal account while the porta
   supportCard.parentElement = host;
   context.state.settings.homepagePayPalRoute = "standard";
   assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "private-superadmin-client" });
+});
+
+test("saved checkout choice selects exactly one SuperAdmin control", () => {
+  const app = read("src/app.js");
+  const renderSource = app.match(/function renderAdminForm\(\) \{[\s\S]*?\n\}/)?.[0];
+  const selectionSource = app.match(/function getCheckoutDisplaySelection\(\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(renderSource && selectionSource);
+  const controls = Object.fromEntries(["homeSuperAdminPayPal", "homeAdminPayPal", "homeCustomCreditDebit"]
+    .map((id) => [`#${id}`, { checked: false }]));
+  const context = vm.createContext({
+    document: { querySelector: (selector) => controls[selector] },
+    elements: {},
+    state: { settings: { homepagePayPalRoute: "standard", alternateCardCheckoutVisible: false } },
+  });
+  vm.runInContext(renderSource, context);
+  const selected = () => Object.entries(controls).filter(([, control]) => control.checked).map(([id]) => id);
+
+  context.renderAdminForm();
+  assert.deepEqual(selected(), ["#homeAdminPayPal"]);
+  context.state.settings.homepagePayPalRoute = "superadmin";
+  context.renderAdminForm();
+  assert.deepEqual(selected(), ["#homeSuperAdminPayPal"]);
+  context.state.settings.alternateCardCheckoutVisible = true;
+  context.renderAdminForm();
+  assert.deepEqual(selected(), ["#homeCustomCreditDebit"]);
+
+  for (const [choice, expected] of [
+    ["standard", { homepagePayPalRoute: "standard", alternateCardCheckoutVisible: false }],
+    ["superadmin", { homepagePayPalRoute: "superadmin", alternateCardCheckoutVisible: false }],
+    ["custom", { homepagePayPalRoute: "superadmin", alternateCardCheckoutVisible: true }],
+  ]) {
+    const saved = vm.runInNewContext(`${selectionSource}\ngetCheckoutDisplaySelection()`, {
+      document: { querySelector: () => ({ value: choice }) },
+    });
+    assert.deepEqual({ ...saved }, expected);
+  }
 });
 
 test("only SuperAdmin can save the Home account choice without changing orders", () => {

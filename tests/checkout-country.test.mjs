@@ -32,7 +32,11 @@ test("country endpoint uses the deployment header and prevents shared caching", 
 });
 
 test("custom card requires both the enabled setting and a detected US country", () => {
-  const context = vm.createContext({ state: { settings: { alternateCardCheckoutVisible: false } } });
+  const portalHost = {};
+  const context = vm.createContext({
+    state: { settings: { alternateCardCheckoutVisible: false } },
+    elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: portalHost },
+  });
   vm.runInContext(`let visitorCountry = ""; ${source("isCustomCardCheckoutAvailable")}`, context);
   for (const enabled of [true, false]) {
     for (const country of ["US", "IN", "CA", "GB", "", "XX"]) {
@@ -41,7 +45,11 @@ test("custom card requires both the enabled setting and a detected US country", 
       assert.equal(context.isCustomCardCheckoutAvailable(), enabled && country === "US");
     }
   }
-  assert.match(app, /let cardFirst = !weekly && isCustomCardCheckoutAvailable\(\)/);
+  context.elements.supportCard.parentElement = portalHost;
+  vm.runInContext('visitorCountry = "US"', context);
+  context.state.settings.alternateCardCheckoutVisible = true;
+  assert.equal(context.isCustomCardCheckoutAvailable(), false);
+  assert.match(app, /if \(isCustomCardCheckoutAvailable\(\)\) \{\s*showCustomCardOnly\(\)/);
   assert.match(source("openAlternateCheckout"), /if \(!isCustomCardCheckoutAvailable\(\)/);
   assert.match(app, /if \(!isCustomCardCheckoutAvailable\(\)\) return;/);
 });
@@ -51,6 +59,7 @@ test("country lookup failures and unexpected responses fall back to normal PayPa
     let fetchCount = 0;
     const context = vm.createContext({
       state: { settings: { alternateCardCheckoutVisible: true } },
+      elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: {} },
       window: {
         AbortController: class { signal = {}; abort() {} },
         setTimeout: () => 1,

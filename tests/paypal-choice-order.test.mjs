@@ -15,8 +15,9 @@ function source(name) {
 }
 
 async function renderChoices({ customEnabled, country = "US", frequency = "once", paypalEligible = true, cardEligible = true, paypalFails = false }) {
-  const order = [];
   const rendered = [];
+  let bootstrapLoads = 0;
+  let sdkLoads = 0;
   const choice = (name) => ({ name, hidden: true });
   const ui = {
     cardButton: choice("custom"),
@@ -24,13 +25,6 @@ async function renderChoices({ customEnabled, country = "US", frequency = "once"
     paypalCardButton: choice("paypal-card"),
     paypalButtonContainer: { innerHTML: "" },
     paypalCardButtonContainer: { innerHTML: "" },
-    inlinePaypalCheckout: {
-      appendChild(node) {
-        const index = order.indexOf(node.name);
-        if (index !== -1) order.splice(index, 1);
-        order.push(node.name);
-      },
-    },
   };
   const paypal = {
     FUNDING: { PAYPAL: "paypal", CARD: "card" },
@@ -47,7 +41,8 @@ async function renderChoices({ customEnabled, country = "US", frequency = "once"
   };
   const context = vm.createContext({
     backendReady: true,
-    pendingDonation: { amount: 11, frequency, paymentRoute: "standard" },
+    pendingDonation: { amount: 11, frequency, paymentRoute: customEnabled ? "superadmin" : "standard" },
+    elements: { weeklySeedToggle: { checked: frequency === "weekly" } },
     getCheckoutUi: () => ui,
     clearPayPalButtons: () => {
       ui.paypalButtonContainer.innerHTML = "";
@@ -55,41 +50,44 @@ async function renderChoices({ customEnabled, country = "US", frequency = "once"
     },
     setPaymentStatus: () => {},
     setPayPalCheckoutLoading: () => {},
+    updateWeeklySeedOption: () => {},
     loadVisitorCountry: async () => {},
     isCustomCardCheckoutAvailable: () => customEnabled && country === "US",
-    getCheckoutRoute: () => "standard",
+    getCheckoutRoute: () => customEnabled ? "superadmin" : "standard",
     isBackendConfigured: () => true,
-    loadBackendData: async () => {},
+    loadBackendData: async () => { bootstrapLoads += 1; },
     getPayPalSdkNamespace: () => "test",
     isPayPalConfigured: () => true,
     resetAllPayPalSdks: () => {},
     resetPayPalSdk: () => {},
-    loadPayPalSdk: async () => paypal,
+    loadPayPalSdk: async () => { sdkLoads += 1; return paypal; },
     buildPayPalButtonOptions: (_paypal, fundingSource) => ({ fundingSource }),
     buildPayPalSubscriptionButtonOptions: (_paypal, fundingSource) => ({ fundingSource }),
     waitForRenderedPayPalButton: async () => {},
     console: { warn() {} },
   });
-  vm.runInContext(`${source("orderPayPalPaymentChoices")}\n${source("renderFreshPayPalButtons")}`, context);
+  vm.runInContext(source("renderFreshPayPalButtons"), context);
   await context.renderFreshPayPalButtons();
-  return { ui, order, rendered };
+  return { ui, rendered, bootstrapLoads, sdkLoads, pendingDonation: context.pendingDonation, weeklyChecked: context.elements.weeklySeedToggle.checked };
 }
 
-test("US custom checkout shows custom, PayPal, then PayPal card; turning it off keeps both PayPal buttons", async () => {
+test("US custom checkout shows only the custom card and does not start PayPal", async () => {
   const enabled = await renderChoices({ customEnabled: true });
-  assert.deepEqual(enabled.order, ["custom", "paypal", "paypal-card"]);
-  assert.deepEqual(enabled.rendered, ["paypal", "card"]);
+  assert.deepEqual(enabled.rendered, []);
+  assert.equal(enabled.bootstrapLoads, 0);
+  assert.equal(enabled.sdkLoads, 0);
   assert.equal(enabled.ui.cardButton.hidden, false);
-  assert.equal(enabled.ui.paypalButton.hidden, false);
-  assert.equal(enabled.ui.paypalCardButton.hidden, false);
+  assert.equal(enabled.ui.paypalButton.hidden, true);
+  assert.equal(enabled.ui.paypalCardButton.hidden, true);
 
   for (const options of [{ customEnabled: false }, { customEnabled: true, country: "GB" }]) {
     const normal = await renderChoices(options);
-    assert.deepEqual(normal.order, ["paypal", "paypal-card", "custom"]);
     assert.deepEqual(normal.rendered, ["paypal", "card"]);
     assert.equal(normal.ui.cardButton.hidden, true);
     assert.equal(normal.ui.paypalButton.hidden, false);
     assert.equal(normal.ui.paypalCardButton.hidden, false);
+    assert.equal(normal.sdkLoads, 1);
+    assert.equal(normal.pendingDonation.paymentRoute, options.customEnabled ? "superadmin" : "standard");
   }
 });
 
@@ -99,19 +97,25 @@ test("an unavailable PayPal button does not hide an eligible card button", async
   assert.equal(cardOnly.ui.paypalCardButton.hidden, false);
   assert.equal(cardOnly.ui.cardButton.hidden, true);
 
-  const failedPaypal = await renderChoices({ customEnabled: true, paypalFails: true });
-  assert.equal(failedPaypal.ui.cardButton.hidden, false);
+  const failedPaypal = await renderChoices({ customEnabled: true, country: "GB", paypalFails: true });
+  assert.equal(failedPaypal.ui.cardButton.hidden, true);
   assert.equal(failedPaypal.ui.paypalButton.hidden, true);
   assert.equal(failedPaypal.ui.paypalCardButton.hidden, false);
 });
 
-test("weekly checkout keeps both PayPal buttons and never shows the custom card", async () => {
-  const weekly = await renderChoices({ customEnabled: true, frequency: "weekly" });
-  assert.deepEqual(weekly.order, ["paypal", "paypal-card", "custom"]);
-  assert.deepEqual(weekly.rendered, ["paypal", "card"]);
-  assert.equal(weekly.ui.cardButton.hidden, true);
-  assert.equal(weekly.ui.paypalButton.hidden, false);
-  assert.equal(weekly.ui.paypalCardButton.hidden, false);
+test("US custom checkout cancels weekly selection while other countries keep PayPal subscriptions", async () => {
+  const us = await renderChoices({ customEnabled: true, frequency: "weekly" });
+  assert.deepEqual(us.rendered, []);
+  assert.equal(us.pendingDonation.frequency, "once");
+  assert.equal(us.weeklyChecked, false);
+  assert.equal(us.ui.cardButton.hidden, false);
+
+  const otherCountry = await renderChoices({ customEnabled: true, country: "GB", frequency: "weekly" });
+  assert.deepEqual(otherCountry.rendered, ["paypal", "card"]);
+  assert.equal(otherCountry.pendingDonation.frequency, "weekly");
+  assert.equal(otherCountry.ui.cardButton.hidden, true);
+  assert.equal(otherCountry.ui.paypalButton.hidden, false);
+  assert.equal(otherCountry.ui.paypalCardButton.hidden, false);
 });
 
 test("reopening the checkout preserves the custom card's used state", () => {

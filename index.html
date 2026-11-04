@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=203" />
+    <link rel="stylesheet" href="src/styles.css?v=204" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -251,31 +251,21 @@
               </section>
               <section class="payment-control-group" id="adminSuperCheckoutSection" hidden>
                 <h3>Checkout display</h3>
-                <p>Choose which PayPal account handles Home and both shared links</p>
                 <div class="checkout-routing-content">
                   <div class="checkout-routing-override">
                     <label class="admin-toggle checkout-routing-toggle">
                       <input id="homeSuperAdminPayPal" type="radio" name="checkoutProvider" value="superadmin" />
-                      <span>
-                        <strong>Superadmin[Paypal]</strong>
-                        Use SuperAdmin PayPal on Home and both shared links. Orders go to the SuperAdmin calendar.
-                      </span>
+                      <span><strong>SuperAdmin PayPal</strong></span>
                     </label>
                     <label class="admin-toggle checkout-routing-toggle">
                       <input id="homeAdminPayPal" type="radio" name="checkoutProvider" value="standard" checked />
-                      <span>
-                        <strong>Admin[Paypal]</strong>
-                        Use Admin PayPal on Home and both shared links. Orders go to the Admin calendar.
-                      </span>
+                      <span><strong>Admin PayPal</strong></span>
+                    </label>
+                    <label class="admin-toggle checkout-routing-toggle">
+                      <input id="homeCustomCreditDebit" type="radio" name="checkoutProvider" value="custom" />
+                      <span><strong>Custom Credit Debit</strong></span>
                     </label>
                   </div>
-                  <label class="admin-toggle checkout-routing-toggle">
-                    <input id="alternateCardCheckoutVisible" type="checkbox" />
-                    <span>
-                      <strong>Show custom Credit &amp; Debit first</strong>
-                      For US visitors, one-time checkout shows custom card, PayPal, then PayPal credit or debit card. When off, both PayPal options remain available. Weekly subscriptions keep both PayPal options.
-                    </span>
-                  </label>
                   <button class="button button-primary" id="saveCheckoutDisplayButton" type="button">Save checkout choice</button>
                 </div>
               </section>
@@ -352,7 +342,7 @@
             </dialog>
           </form>
         </section>
-        <section class="donation-card minimal-offering" id="support" aria-label="PayPal checkout">
+        <section class="donation-card minimal-offering" id="support" aria-label="Seed checkout">
             <div class="checkout-card-heading">
               <h2 class="seed-checkout-title">Buy a Seed to Sow for the Love You’ve Been Waiting For💓💕</h2>
             </div>
@@ -410,7 +400,7 @@
                     <span class="weekly-seed-switch" aria-hidden="true"></span>
                   </label>
                   <button class="dodo-pay-button paypal-continue-button" id="paypalContinueButton" type="button">Continue To Seed</button>
-              <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="PayPal checkout" hidden>
+              <section class="inline-paypal-checkout" id="inlinePaypalCheckout" aria-label="Payment options" hidden>
                 <p class="payment-status" id="paymentStatus" role="status" aria-live="polite" hidden></p>
                 <div class="paypal-checkout-loader" id="paypalCheckoutLoader" role="status" aria-live="polite" aria-label="Loading secure PayPal checkout" hidden>
                   <span class="paypal-checkout-loader-seed" aria-hidden="true">🌱</span>
@@ -426,8 +416,7 @@
                   <div class="paypal-button-slot" id="paypalCardButtonContainer"></div>
                 </div>
                 <div class="payment-choice card-choice" id="cardButton" hidden>
-                  <span>Choose Card or Paypal</span>
-                  <small class="preferred-payment-label">Preferred</small>
+                  <span>Custom Credit Debit</span>
                   <a
                     class="alternate-card-link"
                     id="alternateCardCheckoutLink"
@@ -436,7 +425,7 @@
                     aria-haspopup="dialog"
                     aria-controls="alternateCheckoutDialog"
                   >Debit or Credit Card</a>
-                  <p class="alternate-card-retry" aria-live="polite">Choose Other Card Option Server is Down</p>
+                  <p class="alternate-card-retry" aria-live="polite">Refresh the page to reopen this checkout.</p>
                 </div>
               </section>
                 </div>
@@ -818,9 +807,6 @@
           allow="payment"
           referrerpolicy="strict-origin-when-cross-origin"
         ></iframe>
-        <p class="alternate-checkout-fallback">
-          <strong>If the server is down try other debit card payment button</strong>
-        </p>
       </div>
     </dialog>
 
@@ -895,7 +881,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=163" defer></script>
+    <script src="src/app.js?v=164" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

@@ -227,24 +227,20 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.doesNotMatch(app, /ui\.paypalCardButton\.hidden = [^;]*alternateCardCheckoutVisible/);
   assert.match(html, /id="paypalPaymentDialog"[\s\S]*id="paymentEmailInput"[\s\S]*id="messageInput"[\s\S]*id="paypalButton"/);
   assert.match(app, /elements\.paypalPaymentDialog\.showModal\(\)/);
-  assert.match(
-    html,
-    /id="alternateCardCheckoutLink"[\s\S]*href="https:\/\/sowseed-receiver-seed-alternate-server\.vercel\.app\/"[\s\S]*aria-haspopup="dialog"[\s\S]*aria-controls="alternateCheckoutDialog"/,
-  );
+  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*aria-haspopup="dialog"[\s\S]*aria-controls="alternateCheckoutDialog"/);
   assert.match(html, /id="alternateCheckoutDialog"[\s\S]*id="alternateCheckoutFrame"[\s\S]*src="about:blank"[\s\S]*allow="payment"/);
-  assert.match(html, /class="alternate-checkout-fallback"[\s\S]*<strong>If the server is down try other debit card payment button<\/strong>/);
+  assert.doesNotMatch(html, /class="alternate-checkout-fallback"/);
   assert.match(html, /id="paypalButton"[\s\S]*id="paypalCardButton"[\s\S]*id="cardButton"[\s\S]*id="alternateCardCheckoutLink"/);
   assert.match(html, /class="preferred-payment-label"[\s\S]*Preferred/);
-  assert.match(html, /id="cardButton"[\s\S]*<span>Choose Card or Paypal<\/span>[\s\S]*id="alternateCardCheckoutLink"[\s\S]*>Debit or Credit Card<\/a>/);
+  assert.match(html, /id="cardButton"[\s\S]*<span>Custom Credit Debit<\/span>[\s\S]*id="alternateCardCheckoutLink"[\s\S]*>Debit or Credit Card<\/a>/);
   assert.doesNotMatch(html, /Server Busy Try Other|id="alternateCardStatus"/);
   assert.doesNotMatch(app, /resetPayPalCardReveal|is-covered|is-fading/);
   assert.match(app, /function openAlternateCheckout\(link\)[\s\S]*alternateCheckoutFrame\.src = checkoutUrl[\s\S]*alternateCheckoutDialog\.showModal\(\)/);
-  assert.match(html, /id="alternateCardCheckoutVisible" type="checkbox"/);
-  assert.match(app, /let cardFirst = !weekly && isCustomCardCheckoutAvailable\(\)/);
-  assert.match(app, /cardFirst\s*\? \[ui\.cardButton, ui\.paypalButton, ui\.paypalCardButton\]/);
+  assert.match(html, /id="homeCustomCreditDebit" type="radio" name="checkoutProvider" value="custom"/);
+  assert.match(app, /if \(isCustomCardCheckoutAvailable\(\)\) \{\s*showCustomCardOnly\(\)/);
   assert.match(app, /const paypalEligible = paypalButtons\.isEligible\(\)/);
   assert.match(app, /ui\.paypalButton\.hidden = !paypalReady/);
-  assert.match(app, /ui\.cardButton\.hidden = !cardFirst/);
+  assert.match(app, /ui\.cardButton\.hidden = false/);
   assert.match(app, /if \(isPayPalCardCheckout\) url\.searchParams\.set\("paymentRoute", pendingDonation\.paymentRoute\)/);
   assert.match(app, /isPayPalCardCheckout && \(pendingDonation\?\.frequency !== "once" \|\| !pendingDonation\?\.paymentRoute\)/);
   assert.match(app, /if \(!openAlternateCheckout\(link\)\) return;[\s\S]*classList\.add\("is-disabled"\)[\s\S]*setAttribute\("aria-disabled", "true"\)/);
@@ -255,7 +251,7 @@ test("one-time custom card checkout and weekly PayPal options stay separate", ()
   assert.match(styles, /\.alternate-card-link\s*\{[^}]*background: var\(--button-gold\)[\s\S]*font-family: Arial, Helvetica, sans-serif[\s\S]*font-weight: 600/s);
   assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-link\s*\{\s*display: none;/);
   assert.match(styles, /\.card-choice\.is-disabled \.alternate-card-retry\s*\{\s*display: block;/);
-  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Choose Other Card Option Server is Down<\/p>/);
+  assert.match(html, /id="alternateCardCheckoutLink"[\s\S]*class="alternate-card-retry"[^>]*>Refresh the page to reopen this checkout\.<\/p>/);
   assert.match(styles, /\.card-choice\.is-disabled \.preferred-payment-label\s*\{[\s\S]*display: none/);
   assert.match(styles, /\.alternate-checkout-dialog\s*\{[\s\S]*height: min\(880px, calc\(100dvh - 24px\)\)/);
   assert.match(styles, /\.alternate-checkout-frame\s*\{[\s\S]*width: 100%[\s\S]*height: 100%/);

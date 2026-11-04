@@ -14,7 +14,7 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
   const webhook = read("supabase/functions/paypal-webhook/index.ts");
   assert.match(html, /id="messageInput"[\s\S]*<strong>Sow Seed Weekly<\/strong>[\s\S]*id="weeklySeedToggle"[\s\S]*id="paypalContinueButton"[^>]*>Continue To Seed<\/button>/);
   assert.doesNotMatch(html, /weeklySeedHint|Pay now, then every Monday|Off: one-time payment/);
-  assert.match(app, /function continueWithPayPal\(\)[\s\S]*frequency: state\.settings\.weeklySeedOptionVisible && elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
+  assert.match(app, /async function continueWithPayPal\(\)[\s\S]*await loadVisitorCountry\(\)[\s\S]*frequency: !isCustomCardCheckoutAvailable\(\) && state\.settings\.weeklySeedOptionVisible && elements\.weeklySeedToggle\.checked \? "weekly" : "once"/);
   assert.match(app, /buildPayPalSubscriptionButtonOptions[\s\S]*createSubscription:/);
   assert.match(app, /subscriptionCardButtons = paypal\.Buttons\(buildPayPalSubscriptionButtonOptions\(paypal, paypal\.FUNDING\.CARD\)\)/);
   assert.match(app, /subscriptionCardButtons\.isEligible\(\)/);
@@ -44,6 +44,7 @@ test("the portal visibility switch controls recurring sowing in both checkouts",
   const context = {
     elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: host, weeklySeedToggle: toggle },
     state: { settings: { homepagePayPalRoute: "standard" } },
+    isCustomCardCheckoutAvailable: () => false,
   };
   const update = () => vm.runInNewContext(`${routeSource}\n${optionSource}\nupdateWeeklySeedOption()`, context);
 
@@ -66,6 +67,11 @@ test("the portal visibility switch controls recurring sowing in both checkouts",
   update();
   assert.equal(option.hidden, false);
   assert.equal(toggle.disabled, false);
+  context.isCustomCardCheckoutAvailable = () => true;
+  update();
+  assert.equal(option.hidden, true);
+  assert.equal(toggle.disabled, true);
+  context.isCustomCardCheckoutAvailable = () => false;
   context.elements.supportCard.parentElement = host;
   update();
   assert.equal(option.hidden, false);

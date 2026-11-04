@@ -848,7 +848,8 @@ function getInitialDonationAmount() {
 }
 
 function isCustomCardCheckoutAvailable() {
-  return state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US";
+  return state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US" &&
+    elements.supportCard?.parentElement !== elements.superAdminCheckoutHost;
 }
 
 function loadVisitorCountry() {
@@ -879,7 +880,7 @@ function loadVisitorCountry() {
 }
 
 async function initializeApp() {
-  void loadVisitorCountry();
+  void loadVisitorCountry().then(updateWeeklySeedOption);
   try {
     await loadBackendData({ mode: "critical" });
     setAmount(getInitialDonationAmount());
@@ -2085,13 +2086,22 @@ function renderSeedComments() {
 
 function renderAdminForm() {
   const settings = state.settings;
+  const customCheckout = Boolean(settings.alternateCardCheckoutVisible);
   const homeSuperAdminPayPal = document.querySelector("#homeSuperAdminPayPal");
-  if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = settings.homepagePayPalRoute === "superadmin";
+  if (homeSuperAdminPayPal) homeSuperAdminPayPal.checked = !customCheckout && settings.homepagePayPalRoute === "superadmin";
   const homeAdminPayPal = document.querySelector("#homeAdminPayPal");
-  if (homeAdminPayPal) homeAdminPayPal.checked = settings.homepagePayPalRoute !== "superadmin";
-  const alternateCardCheckoutVisible = document.querySelector("#alternateCardCheckoutVisible");
-  if (alternateCardCheckoutVisible) alternateCardCheckoutVisible.checked = Boolean(settings.alternateCardCheckoutVisible);
+  if (homeAdminPayPal) homeAdminPayPal.checked = !customCheckout && settings.homepagePayPalRoute !== "superadmin";
+  const homeCustomCreditDebit = document.querySelector("#homeCustomCreditDebit");
+  if (homeCustomCreditDebit) homeCustomCreditDebit.checked = customCheckout;
   if (elements.adminWeeklySeedOptionVisible) elements.adminWeeklySeedOptionVisible.checked = settings.weeklySeedOptionVisible;
+}
+
+function getCheckoutDisplaySelection() {
+  const choice = document.querySelector('input[name="checkoutProvider"]:checked')?.value || "standard";
+  return {
+    homepagePayPalRoute: choice === "standard" ? "standard" : "superadmin",
+    alternateCardCheckoutVisible: choice === "custom",
+  };
 }
 
 function getCheckoutRoute() {
@@ -2101,7 +2111,7 @@ function getCheckoutRoute() {
 }
 
 function updateWeeklySeedOption() {
-  const showWeeklyOption = state.settings.weeklySeedOptionVisible;
+  const showWeeklyOption = state.settings.weeklySeedOptionVisible && !isCustomCardCheckoutAvailable();
   const option = elements.weeklySeedToggle.closest(".weekly-seed-option");
   if (option) option.hidden = !showWeeklyOption;
   elements.weeklySeedToggle.disabled = !showWeeklyOption;
@@ -2587,24 +2597,13 @@ function setPayPalCheckoutLoading(isLoading) {
 
 function updatePayPalVisibility() {
   const ui = getCheckoutUi();
-  const showPayPal = isPayPalConfigured() ||
-    (isCustomCardCheckoutAvailable() && pendingDonation?.frequency === "once");
+  const showPayPal = isPayPalConfigured() || isCustomCardCheckoutAvailable();
 
   ui.paypalButton.hidden = true;
   ui.paypalCardButton.hidden = true;
   ui.cardButton.hidden = true;
 
   return showPayPal;
-}
-
-function orderPayPalPaymentChoices(cardFirst) {
-  const ui = getCheckoutUi();
-  const container = ui.inlinePaypalCheckout;
-  if (!container) return;
-  const choices = cardFirst
-    ? [ui.cardButton, ui.paypalButton, ui.paypalCardButton]
-    : [ui.paypalButton, ui.paypalCardButton, ui.cardButton];
-  choices.forEach((choice) => container.appendChild(choice));
 }
 
 function submitDonation(event) {
@@ -2938,31 +2937,46 @@ function renderPayPalButtons() {
 async function renderFreshPayPalButtons() {
   let namespace = "";
   const ui = getCheckoutUi();
-  const weekly = pendingDonation?.frequency === "weekly";
+  const showCustomCardOnly = () => {
+    resetAllPayPalSdks();
+    if (pendingDonation) pendingDonation = { ...pendingDonation, frequency: "once", paymentRoute: getCheckoutRoute() };
+    elements.weeklySeedToggle.checked = false;
+    updateWeeklySeedOption();
+    ui.paypalButton.hidden = true;
+    ui.paypalCardButton.hidden = true;
+    ui.cardButton.hidden = false;
+    setPaymentStatus("");
+  };
 
   clearPayPalButtons();
   setPaymentStatus("");
   setPayPalCheckoutLoading(true);
   await loadVisitorCountry();
-  let cardFirst = !weekly && isCustomCardCheckoutAvailable();
-  orderPayPalPaymentChoices(cardFirst);
+  updateWeeklySeedOption();
   if (pendingDonation) pendingDonation = { ...pendingDonation, paymentRoute: getCheckoutRoute() };
+  if (isCustomCardCheckoutAvailable()) {
+    showCustomCardOnly();
+    setPayPalCheckoutLoading(false);
+    return;
+  }
 
   if (!isBackendConfigured() || !backendReady) {
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = !cardFirst;
-    setPaymentStatus(cardFirst
-      ? "PayPal debit or credit card is unavailable. You can use the custom card checkout."
-      : "PayPal is currently unavailable.", !cardFirst);
+    ui.cardButton.hidden = true;
+    setPaymentStatus("PayPal is currently unavailable.", true);
     setPayPalCheckoutLoading(false);
     return;
   }
 
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
-    cardFirst = !weekly && isCustomCardCheckoutAvailable();
-    orderPayPalPaymentChoices(cardFirst);
+    updateWeeklySeedOption();
+    if (isCustomCardCheckoutAvailable()) {
+      showCustomCardOnly();
+      return;
+    }
+    const weekly = pendingDonation?.frequency === "weekly";
     const route = getCheckoutRoute();
     namespace = getPayPalSdkNamespace(weekly);
 
@@ -3016,7 +3030,7 @@ async function renderFreshPayPalButtons() {
     const paypalEligible = paypalButtons.isEligible();
     const paypalCardEligible = paypalCardButtons.isEligible();
 
-    if (!cardFirst && !paypalEligible && !paypalCardEligible) {
+    if (!paypalEligible && !paypalCardEligible) {
       throw new Error("PayPal did not return an eligible checkout option.");
     }
 
@@ -3049,32 +3063,26 @@ async function renderFreshPayPalButtons() {
       }
     }
 
-    if (!cardFirst && !paypalReady && !paypalCardReady) {
+    if (!paypalReady && !paypalCardReady) {
       throw new Error("PayPal checkout options could not load. Please try again.");
     }
 
     ui.paypalButton.hidden = !paypalReady;
     ui.paypalCardButton.hidden = !paypalCardReady;
-    ui.cardButton.hidden = !cardFirst;
-    setPaymentStatus(cardFirst
-      ? (paypalReady && paypalCardReady
-        ? ""
-        : "Use any available option below to continue.")
-      : (paypalReady && paypalCardReady
-        ? "Choose Card or Paypal"
-        : paypalReady
-          ? "PayPal debit or credit card is unavailable. Continue with PayPal."
-          : "PayPal is unavailable. Continue with PayPal debit or credit card."),
-    !cardFirst && (!paypalReady || !paypalCardReady));
+    ui.cardButton.hidden = true;
+    setPaymentStatus(paypalReady && paypalCardReady
+      ? ""
+      : paypalReady
+        ? "PayPal debit or credit card is unavailable. Continue with PayPal."
+        : "PayPal is unavailable. Continue with PayPal debit or credit card.",
+    !paypalReady || !paypalCardReady);
   } catch (error) {
     clearPayPalButtons();
     if (namespace) resetPayPalSdk(namespace);
     ui.paypalButton.hidden = true;
     ui.paypalCardButton.hidden = true;
-    ui.cardButton.hidden = !cardFirst;
-    setPaymentStatus(cardFirst
-      ? "PayPal debit or credit card could not load. You can use the custom card checkout."
-      : error?.message || "PayPal could not load. Please try again.", !cardFirst);
+    ui.cardButton.hidden = true;
+    setPaymentStatus(error?.message || "PayPal could not load. Please try again.", true);
   } finally {
     setPayPalCheckoutLoading(false);
   }
@@ -3167,7 +3175,8 @@ function openInlinePayPalCheckout() {
   ui.emailInput.focus();
 }
 
-function continueWithPayPal() {
+async function continueWithPayPal() {
+  if (elements.paypalContinueButton.disabled) return;
   const ui = getCheckoutUi();
   if (!isValidEmailAddress(getPaymentEmail())) {
     ui.emailError.textContent = "Add a valid email.";
@@ -3183,24 +3192,33 @@ function continueWithPayPal() {
   }
   elements.nameError.textContent = "";
 
-  ui.emailError.textContent = "";
-  pendingDonation = {
-    ...pendingDonation,
-    email: getPaymentEmail(),
-    frequency: state.settings.weeklySeedOptionVisible && elements.weeklySeedToggle.checked ? "weekly" : "once",
-    message: ui.messageInput.value.trim(),
-  };
-  elements.paypalContinueButton.hidden = true;
-  const showPayPal = updatePayPalVisibility();
-  ui.inlinePaypalCheckout.hidden = false;
+  elements.paypalContinueButton.disabled = true;
+  try {
+    await loadVisitorCountry();
+    if (!elements.paypalPaymentDialog.open) return;
+    updateWeeklySeedOption();
 
-  if (showPayPal) {
-    setPayPalCheckoutLoading(true);
-    void renderPayPalButtons();
-    return;
+    ui.emailError.textContent = "";
+    pendingDonation = {
+      ...pendingDonation,
+      email: getPaymentEmail(),
+      frequency: !isCustomCardCheckoutAvailable() && state.settings.weeklySeedOptionVisible && elements.weeklySeedToggle.checked ? "weekly" : "once",
+      message: ui.messageInput.value.trim(),
+    };
+    elements.paypalContinueButton.hidden = true;
+    const showPayPal = updatePayPalVisibility();
+    ui.inlinePaypalCheckout.hidden = false;
+
+    if (showPayPal) {
+      setPayPalCheckoutLoading(true);
+      void renderPayPalButtons();
+      return;
+    }
+    setPayPalCheckoutLoading(false);
+    setPaymentStatus("PayPal is currently unavailable.");
+  } finally {
+    elements.paypalContinueButton.disabled = false;
   }
-  setPayPalCheckoutLoading(false);
-  setPaymentStatus("PayPal is currently unavailable.");
 }
 
 function closeInlinePayPalCheckout() {
@@ -3369,7 +3387,7 @@ function closeAlternateCheckout() {
     elements.alternateCheckoutDialog.removeAttribute("open");
   }
   if (elements.alternateCheckoutFrame) elements.alternateCheckoutFrame.src = "about:blank";
-  if (alternateCheckoutSource === "paypal" && elements.paypalPaymentDialog.open) {
+  if (alternateCheckoutSource === "paypal" && elements.paypalPaymentDialog.open && !isCustomCardCheckoutAvailable()) {
     setPaymentStatus("The Server is Down Choose This One ⬇ For Seed");
     elements.paypalCardFallbackArrows.hidden = false;
   }
@@ -4265,23 +4283,18 @@ elements.adminWeeklySeedOptionVisible?.addEventListener("change", async () => {
   renderAdminForm();
 });
 elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
-  const homepagePayPalRoute = document.querySelector("#homeSuperAdminPayPal")?.checked === true
-    ? "superadmin"
-    : "standard";
-  const alternateCardCheckoutVisible = document.querySelector("#alternateCardCheckoutVisible")?.checked === true;
   const nextSettings = normalizeSettings({
     ...state.settings,
-    homepagePayPalRoute,
-    alternateCardCheckoutVisible,
+    ...getCheckoutDisplaySelection(),
   });
 
   await runAdminAction(
     {
       button: elements.saveCheckoutDisplayButton,
       busyText: "Saving...",
-      loadingMessage: "Saving PayPal checkout choice...",
-      successMessage: () => "PayPal checkout choice saved for all public links.",
-      errorMessage: "Could not save the PayPal checkout choice.",
+      loadingMessage: "Saving checkout choice...",
+      successMessage: () => "Checkout choice saved for Home and both shared links.",
+      errorMessage: "Could not save the checkout choice.",
     },
     async () => {
       if (isBackendConfigured() && getAdminAccessToken()) {
@@ -4292,13 +4305,13 @@ elements.saveCheckoutDisplayButton?.addEventListener("click", async () => {
         });
         if (payload.settings?.homepagePayPalRoute !== nextSettings.homepagePayPalRoute ||
             Boolean(payload.settings?.alternateCardCheckoutVisible) !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The server did not save the selected PayPal checkout. Update the admin-settings function.");
+          throw new Error("The server did not save the selected checkout choice. Update the admin-settings function.");
         }
         state.settings = normalizeSettings(payload.settings || nextSettings);
         await loadBackendData({ throwOnError: true });
         if (state.settings.homepagePayPalRoute !== nextSettings.homepagePayPalRoute ||
             state.settings.alternateCardCheckoutVisible !== nextSettings.alternateCardCheckoutVisible) {
-          throw new Error("The selected PayPal checkout did not persist after reloading settings.");
+          throw new Error("The selected checkout choice did not persist after reloading settings.");
         }
       } else {
         state.settings = nextSettings;

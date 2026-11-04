@@ -2480,7 +2480,7 @@ legend::after {
   display: grid;
   width: 100%;
   height: 100%;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -2517,19 +2517,6 @@ legend::after {
   border: 1px solid rgba(148, 163, 184, 0.4);
   border-radius: 16px;
   background: #ffffff;
-}
-
-.alternate-checkout-fallback {
-  margin: 0;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: center;
-}
-
-.alternate-checkout-fallback a {
-  color: #005ea6;
 }
 
 .receipt-dialog {
