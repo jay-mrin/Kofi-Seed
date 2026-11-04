@@ -17,6 +17,7 @@
   const emailInput = document.querySelector("#dodoCustomerEmail");
   const nameInput = document.querySelector("#dodoCustomerName");
   const messageInput = document.querySelector("#dodoCustomerMessage");
+  const quickSeedButtons = [...form.querySelectorAll(".seed-quick-pick")];
   let seedCount = 1;
   let submitting = false;
   const donorTokenKey = "sow-your-seed-dodo-donor-token";
@@ -33,6 +34,9 @@
     }).format(getUnitPrice() * seedCount);
     totalOutput.textContent = formattedTotal;
     totalSeedsOutput.textContent = `(${seedCount} ${seedCount === 1 ? "Seed" : "Seeds"})`;
+    quickSeedButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(Number(button.dataset.seedCount) === seedCount));
+    });
     checkoutButton.textContent = "Sow Your Spiritual Seed Now";
     checkoutButton.setAttribute("aria-label", `Sow Your Spiritual Seed Now ${formattedTotal}`);
   };
@@ -49,6 +53,7 @@
     dodoPayButton.disabled = isLoading;
     directButton.disabled = isLoading;
     closePaymentDialogButton.disabled = isLoading;
+    quickSeedButtons.forEach((button) => { button.disabled = isLoading; });
     paymentPanel.classList.toggle("is-loading", isLoading);
     checkoutLoader.hidden = !isLoading;
     loaderText.textContent = message;
@@ -154,6 +159,13 @@
     if (submitting) return;
     seedCount = Math.min(999, seedCount + 1);
     updateTotal();
+  });
+  quickSeedButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (submitting) return;
+      seedCount = Number(button.dataset.seedCount);
+      updateTotal();
+    });
   });
 
   const startDodoCheckout = async () => {

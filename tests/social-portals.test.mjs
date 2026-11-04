@@ -129,6 +129,50 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   assert.equal((await readPortalMonth(rows, "unknown")).status, 403);
 });
 
+test("changing a recent SuperAdmin order's tag moves it between the two social portals", async () => {
+  const order = {
+    display_name: "Reassigned",
+    social_source: null,
+    amount: 11,
+    created_at: "2026-11-04T12:00:00.000Z",
+    paypal_payer_email: "customer@example.invalid",
+    digital_orders: { contact_email: "customer@example.invalid" },
+    payment_method: "paypal",
+    paypal_status: "COMPLETED",
+    payment_route: "superadmin",
+    visibility_scope: "superadmin_private",
+  };
+  const rows = [order];
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
+  order.social_source = "anshu";
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Reassigned"]);
+  assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions, []);
+  order.social_source = "badal";
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
+  assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions.map((row) => row.name), ["Reassigned"]);
+});
+
+test("SuperAdmin tagging is limited to eligible orders and updates only their portal source", () => {
+  const endpoint = read("supabase/functions/admin-donations/index.ts");
+  const app = read("src/app.js");
+  const update = endpoint.match(/if \(Object\.hasOwn\(body, "socialSource"\)\) \{[\s\S]*?return jsonResponse\(\{ donationId: data\.id, socialSource: data\.social_source \}\);\s*\}/)?.[0];
+  assert.ok(update);
+  assert.match(update, /adminProfile\.role !== "super_admin"/);
+  assert.match(update, /socialSource !== "anshu" && socialSource !== "badal"/);
+  assert.match(update, /\.update\(\{ social_source: socialSource \}\)/);
+  for (const filter of [
+    '.eq("payment_route", "superadmin")',
+    '.eq("visibility_scope", "superadmin_private")',
+    '.eq("payment_method", "paypal")',
+    '.eq("paypal_status", "COMPLETED")',
+    '.gte("created_at", SOCIAL_PORTAL_START)',
+  ]) assert.ok(update.includes(filter), `Missing eligibility filter: ${filter}`);
+  assert.match(endpoint, /socialSource: donation\.social_source \|\| null/);
+  assert.match(app, /allowSocialTagging: state\.adminProfile\?\.role === "super_admin"/);
+  assert.match(app, /data-set-order-social-source="anshu"[\s\S]*data-set-order-social-source="badal"/);
+  assert.match(app, /Date\.parse\(donation\.createdAt \|\| ""\) >= Date\.parse\(SOCIAL_PORTAL_START_ISO\)/);
+});
+
 test("portal authentication binds each account to its database source and rejects admins", async () => {
   const shared = read("supabase/functions/_shared/supabase.ts");
   const extract = (name) => {

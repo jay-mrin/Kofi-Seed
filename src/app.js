@@ -12,6 +12,7 @@ const SEED_DOLLAR_VALUE = 11;
 const MIN_DONATION_AMOUNT = 11;
 const GOAL_SEED_COUNT = 100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
+const SOCIAL_PORTAL_START_ISO = "2026-11-03T18:30:00.000Z";
 const TOP_BRAND_TITLE = "Sow Your Seed Here";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
@@ -1652,6 +1653,46 @@ async function deleteDonationRecord(donationId, button) {
   );
 }
 
+async function setOrderSocialSource(donationId, socialSource, button) {
+  if (state.adminProfile?.role !== "super_admin" || !["anshu", "badal"].includes(socialSource)) return;
+  if (elements.adminPanel?.getAttribute("aria-busy") === "true") return;
+  const donation = getDonationById(donationId);
+  if (!donation) {
+    setAdminStatus("Order record not found. Reload the calendar and try again.", "error", { persist: true });
+    return;
+  }
+
+  const portalName = socialSource === "anshu" ? "AnshuPortal" : "Badal Portal";
+  const accessToken = getAdminAccessToken();
+  await runAdminAction(
+    {
+      panel: elements.adminPanel,
+      statusElement: elements.adminActionStatus,
+      button,
+      busyText: "Saving...",
+      loadingMessage: `Assigning order to ${portalName}...`,
+      successMessage: `Order assigned to ${portalName}.`,
+      errorMessage: "Could not assign this order to a portal.",
+    },
+    async () => {
+      const payload = await callEdge("admin-donations", {
+        admin: true,
+        method: "PUT",
+        body: { donationId, socialSource },
+      });
+      if (String(payload.donationId) !== String(donationId) || payload.socialSource !== socialSource) {
+        throw new Error("The server did not confirm the portal assignment.");
+      }
+      if (state.adminProfile?.role === "super_admin" && getAdminAccessToken() === accessToken) {
+        adminCalendarDonations = adminCalendarDonations.map((item) =>
+          String(item.id) === String(donationId) ? { ...item, socialSource } : item);
+        renderAdminCalendar();
+      }
+      return payload;
+    },
+  );
+}
+
 function toDateKey(date) {
   const safeDate = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
   const year = safeDate.getFullYear();
@@ -2212,6 +2253,15 @@ function renderCalendarDetails(context) {
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", getDonationRawValue(donation, "RedeemedBookTitle", ""));
           const isFulfilled = status === "fulfilled";
+          const canAssignPortal = context.allowSocialTagging &&
+            donation.paymentMethod === "paypal" && donation.status === "COMPLETED" &&
+            donation.paymentRoute === "superadmin" && donation.visibilityScope === "superadmin_private" &&
+            Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
+          const currentPortal = donation.socialSource === "anshu" || donation.socialSource === "badal"
+            ? donation.socialSource : null;
+          const portalLabel = !canAssignPortal ? "Not eligible"
+            : currentPortal === "anshu" ? "AnshuPortal"
+            : currentPortal === "badal" ? "Badal Portal" : "Unassigned";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
           const itemLabel = getAdminOrderItemLabel(itemName, redeemedBookTitle, context.isAdminPortal);
           return `
@@ -2243,6 +2293,14 @@ function renderCalendarDetails(context) {
                     ? `<button class="button button-danger" type="button" data-delete-donation-record="${escapeHtml(donation.id)}">Delete order</button>`
                     : ""
                 }
+                ${context.allowSocialTagging ? `<div class="admin-social-tagging" role="group" aria-label="Assign order to social portal">
+                  <span>Portal: ${portalLabel}</span>
+                  <div class="admin-social-tag-buttons">
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>Anshu</button>
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>Badal</button>
+                  </div>
+                  ${canAssignPortal ? "" : "<small>Available for completed PayPal orders from 4 Nov 2026.</small>"}
+                </div>` : ""}
               </div>`}
             </article>
           `;
@@ -2353,6 +2411,7 @@ function getPrimaryAdminCalendarContext() {
   const donations = isBackendConfigured() ? (loaded ? adminCalendarDonations : []) : state.donations;
   return {
     allowDelete: true,
+    allowSocialTagging: state.adminProfile?.role === "super_admin",
     isAdminPortal: state.adminProfile?.role === "admin",
     cursor: adminCalendarCursor,
     dateAttribute: "data-admin-calendar-date",
@@ -2392,6 +2451,9 @@ function updateCheckoutLabel() {
   elements.checkoutButton.setAttribute("aria-label", `Support this ministry with ${money(amount)}`);
   elements.seedPriceLabel.textContent = String(Math.max(Math.round(seedUnits), 0));
   elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
+  elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
+    button.setAttribute("aria-pressed", String(Math.abs(seedUnits - Number(button.dataset.seedCount)) < 0.001));
+  });
 }
 
 function getCheckoutUi() {
@@ -3738,6 +3800,12 @@ elements.decreaseSeedButton?.addEventListener("click", () => {
 elements.increaseSeedButton?.addEventListener("click", () => {
   stepSeedAmount(1);
 });
+elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
+  button.addEventListener("click", () => {
+    const seedPrice = Math.max(Number.parseFloat(state.settings.seedPrice) || SEED_DOLLAR_VALUE, 1);
+    setAmount(Number(button.dataset.seedCount) * seedPrice);
+  });
+});
 elements.adminCalendarPrev.addEventListener("click", () => {
   adminCalendarCursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth() - 1, 1);
   selectedAdminCalendarDate = toDateKey(adminCalendarCursor);
@@ -3760,6 +3828,12 @@ elements.adminCalendarGrid.addEventListener("click", (event) => {
 });
 
 function handleAdminCalendarDetailClick(event) {
+  const socialTagButton = event.target.closest("[data-set-order-social-source]");
+  if (socialTagButton) {
+    void setOrderSocialSource(socialTagButton.dataset.donationId, socialTagButton.dataset.setOrderSocialSource, socialTagButton);
+    return;
+  }
+
   const proofButton = event.target.closest("[data-download-order-proof]");
   if (proofButton) {
     downloadOrderProofPdf(proofButton.dataset.downloadOrderProof);

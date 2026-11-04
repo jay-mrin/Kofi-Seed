@@ -198,6 +198,57 @@ test("selected-day orders and totals collapse together, preserve expansion on re
   assert.match(details.innerHTML, /0 orders selected day[\s\S]*0 orders this month[\s\S]*<\/details>/);
 });
 
+test("SuperAdmin order cards show only eligible portal assignments and allow switching", () => {
+  const details = { innerHTML: "", querySelector: () => null };
+  const donation = {
+    id: "private-order", name: "Customer", amount: 11,
+    createdAt: "2026-11-04T12:00:00.000Z", paymentMethod: "paypal", status: "COMPLETED",
+    paymentRoute: "superadmin", visibilityScope: "superadmin_private", socialSource: null,
+  };
+  const context = {
+    details, loaded: true, selectedDate: "2026-11-04", cursor: new Date(2026, 10, 1),
+    emptyRecordLabel: "SuperAdmin PayPal orders", donations: [donation],
+    allowDelete: true, allowSocialTagging: true, isAdminPortal: false,
+  };
+  const render = vm.runInNewContext(`${source(app, "getCalendarMonthDonations")}
+    ${source(app, "getCalendarSummaryMarkup")}
+    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
+    SOCIAL_PORTAL_START_ISO: "2026-11-03T18:30:00.000Z",
+    getDonationsByDate: (donations) => ({ "2026-11-04": donations }),
+    fromDateKey: (date) => date,
+    readableDate: (date) => date,
+    readableTime: () => "5:30 PM",
+    formatMonthTitle: () => "November 2026",
+    money: (amount) => `$${amount}`,
+    escapeHtml: (value) => String(value),
+    getDigitalOrder: () => null,
+    getDigitalOrderValue: (_donation, _key, fallback) => fallback,
+    getDonationRawValue: (_donation, _key, fallback) => fallback,
+    getAdminOrderItemLabel: (item) => item,
+    getFulfillmentStatusLabel: () => "Unfulfilled",
+    DIGITAL_ORDER_ITEM_NAME: "Seed",
+  });
+  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal)"[^>]*>/g)]
+    .map((match) => match[0]);
+
+  render(context);
+  assert.match(details.innerHTML, /Delete order<\/button>[\s\S]*Portal: Unassigned/);
+  assert.equal(tagButtons().length, 2);
+  assert.ok(tagButtons().every((button) => !button.includes("disabled")));
+
+  donation.socialSource = "anshu";
+  render(context);
+  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
+  assert.match(tagButtons()[1], /aria-pressed="false"/);
+  assert.doesNotMatch(tagButtons()[1], /disabled/);
+
+  donation.createdAt = "2026-11-03T18:29:59.999Z";
+  render(context);
+  assert.match(details.innerHTML, /Portal: Not eligible/);
+  assert.ok(tagButtons().every((button) => button.includes("disabled")));
+});
+
 test("calendar month ranges include local midnight and daylight saving boundaries", () => {
   const rangeSource = source(endpoint, "getCalendarMonthRange").replace(/: (?:string|number)/g, "");
   const range = vm.runInNewContext(`${rangeSource}; getCalendarMonthRange`);

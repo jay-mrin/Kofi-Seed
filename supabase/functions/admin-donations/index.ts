@@ -9,6 +9,7 @@ import { requireAdmin } from "../_shared/supabase.ts";
 
 type UpdateOrderBody = {
   donationId?: string;
+  socialSource?: string;
   fulfillmentStatus?: string;
   fulfillmentNote?: string;
   fulfilledAt?: string | null;
@@ -18,6 +19,9 @@ type UpdateOrderBody = {
   toDate?: string;
   includePublicComments?: boolean;
 };
+
+// 4 November 2026, 00:00 Asia/Kolkata. Earlier orders stay outside social portals.
+const SOCIAL_PORTAL_START = "2026-11-03T18:30:00.000Z";
 
 type DeleteDonationBody = {
   donationId?: string;
@@ -155,6 +159,30 @@ Deno.serve(withCors(async (request) => {
 
     if (request.method === "PUT") {
       const body = await readJson<UpdateOrderBody>(request);
+      if (Object.hasOwn(body, "socialSource")) {
+        if (adminProfile.role !== "super_admin") {
+          return errorResponse("Only SuperAdmin can assign an order to a social portal.", 403);
+        }
+        const donationId = String(body.donationId || "").trim();
+        const socialSource = body.socialSource;
+        if (!donationId || (socialSource !== "anshu" && socialSource !== "badal")) {
+          return errorResponse("Choose an order and either Anshu or Badal.", 422);
+        }
+
+        const { data, error } = await supabase.from("donations")
+          .update({ social_source: socialSource })
+          .eq("id", donationId)
+          .eq("payment_route", "superadmin")
+          .eq("visibility_scope", "superadmin_private")
+          .eq("payment_method", "paypal")
+          .eq("paypal_status", "COMPLETED")
+          .gte("created_at", SOCIAL_PORTAL_START)
+          .select("id, social_source")
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return errorResponse("This order cannot be assigned to a social portal.", 404);
+        return jsonResponse({ donationId: data.id, socialSource: data.social_source });
+      }
       if (body.purgeAll) {
         if (adminProfile.role !== "super_admin") {
           return errorResponse(
@@ -445,6 +473,7 @@ Deno.serve(withCors(async (request) => {
           "dodo_payment_id",
           "payment_route",
           "visibility_scope",
+          "social_source",
           "fortune_message",
           "raw_payment",
           "created_at",
@@ -488,6 +517,7 @@ Deno.serve(withCors(async (request) => {
         payerEmail: donation.paypal_payer_email,
         paymentRoute: donation.payment_route || "standard",
         visibilityScope: donation.visibility_scope || "public",
+        socialSource: donation.social_source || null,
         fortuneMessage: donation.fortune_message,
         rawPayment: donation.raw_payment,
         digitalOrder: mapDigitalOrder(donation.digital_orders),
