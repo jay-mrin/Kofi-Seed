@@ -1663,7 +1663,8 @@ async function deleteDonationRecord(donationId, button) {
 }
 
 async function setOrderSocialSource(donationId, socialSource, button) {
-  if (state.adminProfile?.role !== "super_admin" || !["anshu", "badal"].includes(socialSource)) return;
+  const role = state.adminProfile?.role;
+  if (!["admin", "super_admin"].includes(role) || !["anshu", "badal"].includes(socialSource)) return;
   if (elements.adminPanel?.getAttribute("aria-busy") === "true") return;
   const donation = getDonationById(donationId);
   if (!donation) {
@@ -1692,7 +1693,7 @@ async function setOrderSocialSource(donationId, socialSource, button) {
       if (String(payload.donationId) !== String(donationId) || payload.socialSource !== socialSource) {
         throw new Error("The server did not confirm the portal assignment.");
       }
-      if (state.adminProfile?.role === "super_admin" && getAdminAccessToken() === accessToken) {
+      if (state.adminProfile?.role === role && getAdminAccessToken() === accessToken) {
         adminCalendarDonations = adminCalendarDonations.map((item) =>
           String(item.id) === String(donationId) ? { ...item, socialSource } : item);
         renderAdminCalendar();
@@ -2273,7 +2274,8 @@ function renderCalendarDetails(context) {
           const isFulfilled = status === "fulfilled";
           const canAssignPortal = context.allowSocialTagging &&
             donation.paymentMethod === "paypal" && donation.status === "COMPLETED" &&
-            donation.paymentRoute === "superadmin" && donation.visibilityScope === "superadmin_private" &&
+            donation.paymentRoute === (context.isAdminPortal ? "standard" : "superadmin") &&
+            donation.visibilityScope === (context.isAdminPortal ? "public" : "superadmin_private") &&
             Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
           const currentPortal = donation.socialSource === "anshu" || donation.socialSource === "badal"
             ? donation.socialSource : null;
@@ -2429,7 +2431,7 @@ function getPrimaryAdminCalendarContext() {
   const donations = isBackendConfigured() ? (loaded ? adminCalendarDonations : []) : state.donations;
   return {
     allowDelete: true,
-    allowSocialTagging: state.adminProfile?.role === "super_admin",
+    allowSocialTagging: ["admin", "super_admin"].includes(state.adminProfile?.role),
     isAdminPortal: state.adminProfile?.role === "admin",
     cursor: adminCalendarCursor,
     dateAttribute: "data-admin-calendar-date",

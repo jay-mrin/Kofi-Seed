@@ -166,25 +166,68 @@ test("social order cards show paid amount without credited details", () => {
   assert.doesNotMatch(styles, /social-order-amounts/);
 });
 
-test("SuperAdmin tagging is limited to eligible orders and updates only their portal source", () => {
+test("Admin and SuperAdmin tagging stays within each role's completed PayPal orders", async () => {
   const endpoint = read("supabase/functions/admin-donations/index.ts");
   const app = read("src/app.js");
   const update = endpoint.match(/if \(Object\.hasOwn\(body, "socialSource"\)\) \{[\s\S]*?return jsonResponse\(\{ donationId: data\.id, socialSource: data\.social_source \}\);\s*\}/)?.[0];
   assert.ok(update);
-  assert.match(update, /adminProfile\.role !== "super_admin"/);
+  assert.match(update, /adminProfile\.role !== "admin" && adminProfile\.role !== "super_admin"/);
   assert.match(update, /socialSource !== "anshu" && socialSource !== "badal"/);
   assert.match(update, /\.update\(\{ social_source: socialSource \}\)/);
   for (const filter of [
-    '.eq("payment_route", "superadmin")',
-    '.eq("visibility_scope", "superadmin_private")',
+    '.eq("payment_route", paymentRoute)',
+    '.eq("visibility_scope", visibilityScope)',
     '.eq("payment_method", "paypal")',
     '.eq("paypal_status", "COMPLETED")',
     '.gte("created_at", SOCIAL_PORTAL_START)',
   ]) assert.ok(update.includes(filter), `Missing eligibility filter: ${filter}`);
+  assert.match(update, /adminProfile\.role === "admin" \? "standard" : "superadmin"/);
+  assert.match(update, /adminProfile\.role === "admin" \? "public" : "superadmin_private"/);
   assert.match(endpoint, /socialSource: donation\.social_source \|\| null/);
-  assert.match(app, /allowSocialTagging: state\.adminProfile\?\.role === "super_admin"/);
+  assert.match(app, /allowSocialTagging: \["admin", "super_admin"\]\.includes\(state\.adminProfile\?\.role\)/);
   assert.match(app, /data-set-order-social-source="anshu"[\s\S]*data-set-order-social-source="badal"/);
   assert.match(app, /Date\.parse\(donation\.createdAt \|\| ""\) >= Date\.parse\(SOCIAL_PORTAL_START_ISO\)/);
+
+  const rows = [
+    { id: "admin-new", payment_route: "standard", visibility_scope: "public", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-04T00:00:00.000Z", social_source: null },
+    { id: "super-new", payment_route: "superadmin", visibility_scope: "superadmin_private", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-04T00:00:00.000Z", social_source: null },
+    { id: "admin-old", payment_route: "standard", visibility_scope: "public", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-03T18:29:59.999Z", social_source: null },
+    { id: "admin-dodo", payment_route: "standard", visibility_scope: "public", payment_method: "dodo", paypal_status: "COMPLETED", created_at: "2026-11-04T00:00:00.000Z", social_source: null },
+  ];
+  const supabase = { from(table) {
+    assert.equal(table, "donations");
+    let filters = [];
+    let change;
+    const query = {
+      update(value) { change = value; return query; },
+      eq(key, value) { filters.push((row) => row[key] === value); return query; },
+      gte(key, value) { filters.push((row) => row[key] >= value); return query; },
+      select() { return query; },
+      async maybeSingle() {
+        const row = rows.find((item) => filters.every((filter) => filter(item)));
+        if (row) Object.assign(row, change);
+        return { data: row ? { id: row.id, social_source: row.social_source } : null, error: null };
+      },
+    };
+    return query;
+  } };
+  const assign = vm.runInNewContext(`(async (body, adminProfile) => { ${update} })`, {
+    supabase,
+    SOCIAL_PORTAL_START: "2026-11-03T18:30:00.000Z",
+    errorResponse: (message, status) => ({ error: message, status }),
+    jsonResponse: (value) => ({ ...value, status: 200 }),
+  });
+  assert.equal((await assign({ donationId: "super-new", socialSource: "anshu" }, { role: "admin" })).status, 404);
+  assert.equal(rows[1].social_source, null);
+  assert.equal((await assign({ donationId: "admin-old", socialSource: "anshu" }, { role: "admin" })).status, 404);
+  assert.equal((await assign({ donationId: "admin-dodo", socialSource: "anshu" }, { role: "admin" })).status, 404);
+  assert.equal((await assign({ donationId: "admin-new", socialSource: "anshu" }, { role: "admin" })).status, 200);
+  assert.equal(rows[0].social_source, "anshu");
+  assert.equal((await assign({ donationId: "admin-new", socialSource: "badal" }, { role: "admin" })).status, 200);
+  assert.equal(rows[0].social_source, "badal");
+  assert.equal((await assign({ donationId: "admin-new", socialSource: "anshu" }, { role: "super_admin" })).status, 404);
+  assert.equal((await assign({ donationId: "super-new", socialSource: "anshu" }, { role: "super_admin" })).status, 200);
+  assert.equal(rows[1].social_source, "anshu");
 });
 
 test("portal authentication binds each account to its database source and rejects admins", async () => {

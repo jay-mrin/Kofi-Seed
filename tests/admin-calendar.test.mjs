@@ -198,7 +198,7 @@ test("selected-day orders and totals collapse together, preserve expansion on re
   assert.match(details.innerHTML, /0 orders selected day[\s\S]*0 orders this month[\s\S]*<\/details>/);
 });
 
-test("SuperAdmin order cards show only eligible portal assignments and allow switching", () => {
+test("Admin and SuperAdmin order cards show only eligible portal assignments and allow switching", () => {
   const details = { innerHTML: "", querySelector: () => null };
   const donation = {
     id: "private-order", name: "Customer", amount: 11,
@@ -244,6 +244,32 @@ test("SuperAdmin order cards show only eligible portal assignments and allow swi
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
   donation.createdAt = "2026-11-03T18:29:59.999Z";
+  render(context);
+  assert.match(details.innerHTML, /Portal: Not eligible/);
+  assert.ok(tagButtons().every((button) => button.includes("disabled")));
+
+  const adminDonation = {
+    ...donation,
+    id: "admin-order",
+    createdAt: "2026-11-04T12:00:00.000Z",
+    paymentRoute: "standard",
+    visibilityScope: "public",
+    socialSource: null,
+  };
+  context.isAdminPortal = true;
+  context.allowDelete = false;
+  context.donations = [adminDonation];
+  render(context);
+  assert.match(details.innerHTML, /Portal: Unassigned/);
+  assert.ok(tagButtons().every((button) => !button.includes("disabled")));
+
+  adminDonation.socialSource = "anshu";
+  render(context);
+  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
+  assert.doesNotMatch(tagButtons()[1], /disabled/);
+
+  adminDonation.paymentMethod = "dodo";
   render(context);
   assert.match(details.innerHTML, /Portal: Not eligible/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));

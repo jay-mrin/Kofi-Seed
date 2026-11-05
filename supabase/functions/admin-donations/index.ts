@@ -160,8 +160,8 @@ Deno.serve(withCors(async (request) => {
     if (request.method === "PUT") {
       const body = await readJson<UpdateOrderBody>(request);
       if (Object.hasOwn(body, "socialSource")) {
-        if (adminProfile.role !== "super_admin") {
-          return errorResponse("Only SuperAdmin can assign an order to a social portal.", 403);
+        if (adminProfile.role !== "admin" && adminProfile.role !== "super_admin") {
+          return errorResponse("This account cannot assign an order to a social portal.", 403);
         }
         const donationId = String(body.donationId || "").trim();
         const socialSource = body.socialSource;
@@ -169,11 +169,13 @@ Deno.serve(withCors(async (request) => {
           return errorResponse("Choose an order and either Anshu or Badal.", 422);
         }
 
+        const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
+        const visibilityScope = adminProfile.role === "admin" ? "public" : "superadmin_private";
         const { data, error } = await supabase.from("donations")
           .update({ social_source: socialSource })
           .eq("id", donationId)
-          .eq("payment_route", "superadmin")
-          .eq("visibility_scope", "superadmin_private")
+          .eq("payment_route", paymentRoute)
+          .eq("visibility_scope", visibilityScope)
           .eq("payment_method", "paypal")
           .eq("paypal_status", "COMPLETED")
           .gte("created_at", SOCIAL_PORTAL_START)
