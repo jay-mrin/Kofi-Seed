@@ -1216,6 +1216,7 @@ const FULFILLED_PDF_NOTE =
 
 const PDF_PAGE_WIDTH = 595.2756;
 const PDF_PAGE_HEIGHT = 841.8898;
+const ADMIN_RECEIPT_START_ISO = "2026-11-04T18:30:00.000Z";
 
 function pdfRgb(hex) {
   const normalized = String(hex).replace("#", "");
@@ -1431,6 +1432,157 @@ function buildPremiumOrderPdf(donation) {
   return buildPdfDocument(pages);
 }
 
+function receiptTextLines(value, maxCharacters) {
+  const words = normalizePdfText(value).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    if (line && `${line} ${word}`.length > maxCharacters) {
+      lines.push(line);
+      line = "";
+    }
+    if (word.length > maxCharacters) {
+      if (line) lines.push(line);
+      for (let start = 0; start < word.length; start += maxCharacters) {
+        const part = word.slice(start, start + maxCharacters);
+        if (part.length === maxCharacters) lines.push(part);
+        else line = part;
+      }
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : ["Not available"];
+}
+
+function receiptRule(commands, y) {
+  commands.push(`${pdfRgb("#dfe5ec")} RG`, "0.8 w", `43 ${y.toFixed(4)} m 552.2756 ${y.toFixed(4)} l S`);
+}
+
+function drawReceiptField(commands, overflow, label, value, x, labelY, options = {}) {
+  const { maxCharacters = 42, maxLines = 1, size = 10, lineHeight = 12 } = options;
+  pdfText(commands, label.toUpperCase(), x, labelY, 8, "F2", "#66758a");
+  const lines = receiptTextLines(value, maxCharacters);
+  const visible = lines.slice(0, maxLines);
+  if (lines.length > maxLines) {
+    overflow.push({ label, value: normalizePdfText(value) });
+    visible[maxLines - 1] = `${visible[maxLines - 1].slice(0, maxCharacters - 3).trimEnd()}...`;
+  }
+  visible.forEach((line, index) => {
+    pdfText(commands, line, x, labelY - 18 - index * lineHeight, size, "F1", "#18212e");
+  });
+}
+
+function drawReceiptContinuationPages(overflow) {
+  const pages = [];
+  let commands = [];
+  let y = 690;
+  const newPage = () => {
+    if (commands.length) pages.push(commands);
+    commands = [];
+    commands.push(`${pdfRgb("#ffffff")} rg`, `0 0 ${PDF_PAGE_WIDTH} ${PDF_PAGE_HEIGHT} re f`);
+    commands.push(`${pdfRgb("#102b56")} rg`, `0 736.8898 ${PDF_PAGE_WIDTH} 105 re f`);
+    pdfText(commands, "SOWSEEDWRITING", 43, 788.8898, 20, "F2", "#ffffff");
+    pdfText(commands, "ORDER RECEIPT", 43, 763.8898, 10, "F2", "#ddeafb");
+    commands.push(`${pdfRgb("#1769b2")} rg`, `0 732.8898 ${PDF_PAGE_WIDTH} 4 re f`);
+    pdfText(commands, "ORDER DETAILS CONTINUED", 43, 696.8898, 16, "F2", "#18212e");
+    receiptRule(commands, 68);
+    pdfText(commands, "SOWSEEDWRITING", 43, 48, 9, "F2", "#102b56");
+    pdfText(commands, "Merchant-issued order receipt", 446.0196, 48, 8, "F1", "#66758a");
+    y = 665;
+  };
+  newPage();
+  for (const { label, value } of overflow) {
+    const lines = receiptTextLines(value, 95);
+    if (y - 28 - lines.length * 15 < 92) newPage();
+    pdfText(commands, label.toUpperCase(), 43, y, 9, "F2", "#1769b2");
+    y -= 23;
+    for (const line of lines) {
+      if (y < 92) newPage();
+      pdfText(commands, line, 43, y, 9.4, "F1", "#18212e");
+      y -= 15;
+    }
+    y -= 18;
+  }
+  pages.push(commands);
+  return pages;
+}
+
+function buildSowseedWritingOrderPdf(donation) {
+  const data = getProofPdfData(donation);
+  const itemName = data.itemName.startsWith("Digital Book - ")
+    ? data.itemName.slice("Digital Book - ".length)
+    : data.itemName;
+  const isBook = data.itemName.startsWith("Digital Book - ");
+  const purchaseType = isBook ? "Digital edition" : "Personalised digital writing";
+  const purchaseFrequency = data.frequency === "Weekly" ? "Weekly purchase" : "One-time purchase";
+  const fulfillmentNote = getDigitalOrderValue(donation, "fulfillmentNote", "") ||
+    (isBook
+      ? `${itemName} was made available for instant download immediately after purchase and was also sent to the customer email.`
+      : FULFILLED_PDF_NOTE);
+  const commands = [
+    `${pdfRgb("#ffffff")} rg`, `0 0 ${PDF_PAGE_WIDTH} ${PDF_PAGE_HEIGHT} re f`,
+    `${pdfRgb("#102b56")} rg`, `0 736.8898 ${PDF_PAGE_WIDTH} 105 re f`,
+  ];
+  const overflow = [];
+  pdfText(commands, "SOWSEEDWRITING", 43, 788.8898, 20, "F2", "#ffffff");
+  pdfText(commands, "ORDER RECEIPT", 43, 763.8898, 10, "F2", "#ddeafb");
+  commands.push(`${pdfRgb("#1769b2")} rg`, `0 732.8898 ${PDF_PAGE_WIDTH} 4 re f`);
+  pdfText(commands, "Thank you for your purchase.", 43, 696.8898, 16, "F2", "#18212e");
+  pdfText(commands, "Your order has been fulfilled.", 43, 674.8898, 10, "F1", "#66758a");
+
+  pdfText(commands, "ORDER STATUS", 43, 635.8898, 8, "F2", "#66758a");
+  pdfText(commands, "Fulfilled", 43, 616.8898, 11, "F2", "#18212e");
+  pdfText(commands, "TOTAL PAID", 340, 635.8898, 8, "F2", "#66758a");
+  pdfText(commands, `$${formatFixedAmount(data.amount)} ${data.currency}`, 340, 616.8898, 14, "F2", "#102b56");
+  receiptRule(commands, 596.8898);
+
+  pdfText(commands, "PURCHASED ITEM", 43, 566.8898, 9, "F2", "#1769b2");
+  const itemLines = receiptTextLines(itemName, 70);
+  const itemLabel = itemLines.length > 1 ? `${itemLines[0].slice(0, 67).trimEnd()}...` : itemLines[0];
+  pdfText(commands, itemLabel, 43, 541.8898, 13, "F2", "#18212e");
+  if (itemLines.length > 1) overflow.push({ label: "Purchased item", value: itemName });
+  pdfText(commands, `${purchaseType}  |  ${purchaseFrequency}`, 43, 522.8898, 9, "F1", "#66758a");
+  receiptRule(commands, 505.8898);
+
+  pdfText(commands, "ORDER INFORMATION", 43, 478.8898, 9, "F2", "#1769b2");
+  drawReceiptField(commands, overflow, "Customer", data.customerName, 43, 450.8898, { maxCharacters: 48 });
+  drawReceiptField(commands, overflow, "Order date", readableIndiaDateTime(data.createdAt), 318, 450.8898);
+  drawReceiptField(commands, overflow, "Order ID", data.orderNumber, 43, 400.8898);
+  drawReceiptField(commands, overflow, "Transaction ID", data.transactionId, 318, 400.8898);
+  drawReceiptField(commands, overflow, "Contact email", data.contactEmail, 43, 350.8898, { maxCharacters: 42, maxLines: 2 });
+  drawReceiptField(commands, overflow, "Buyer email", data.payerEmail, 318, 350.8898, { maxCharacters: 42, maxLines: 2 });
+  receiptRule(commands, 314.8898);
+
+  pdfText(commands, "PAYMENT DETAILS", 43, 290.8898, 9, "F2", "#1769b2");
+  drawReceiptField(commands, overflow, "Payment status", data.paymentStatus, 43, 262.8898);
+  drawReceiptField(commands, overflow, "Payment provider", data.provider, 318, 262.8898);
+  drawReceiptField(commands, overflow, "Provider order ID", data.providerOrderId, 43, 212.8898);
+  drawReceiptField(commands, overflow, "Fulfilled at", data.fulfilledAt ? readableIndiaDateTime(data.fulfilledAt) : "Not available", 318, 212.8898);
+  receiptRule(commands, 177.8898);
+
+  pdfText(commands, "FULFILLMENT NOTE", 43, 153.8898, 9, "F2", "#1769b2");
+  const noteLines = receiptTextLines(fulfillmentNote, 80);
+  const visibleNote = noteLines.slice(0, 3);
+  if (noteLines.length > 3) visibleNote[2] = `${visibleNote[2].slice(0, 77).trimEnd()}...`;
+  visibleNote.forEach((line, index) => {
+    pdfText(commands, line, 43, 130.8898 - index * 16, 9.4, "F1", "#18212e");
+  });
+  if (noteLines.length > 3) overflow.push({ label: "Fulfillment note", value: fulfillmentNote });
+  receiptRule(commands, 68);
+  pdfText(commands, "SOWSEEDWRITING", 43, 48, 9, "F2", "#102b56");
+  pdfText(commands, "Merchant-issued order receipt", 446.0196, 48, 8, "F1", "#66758a");
+
+  return buildPdfDocument([commands, ...overflow.length ? drawReceiptContinuationPages(overflow) : []]);
+}
+
+function shouldUseSowseedWritingReceipt(donation, role) {
+  const orderTime = Date.parse(donation.createdAt || "");
+  return role === "admin" && Number.isFinite(orderTime) &&
+    orderTime >= Date.parse(ADMIN_RECEIPT_START_ISO);
+}
+
 function buildPdfDocument(pageContents) {
   const pageCount = pageContents.length;
   const fontNormalId = 3 + pageCount * 2;
@@ -1506,7 +1658,9 @@ function downloadOrderProofPdf(donationId) {
     return;
   }
 
-  const pdf = buildPremiumOrderPdf(donation);
+  const pdf = shouldUseSowseedWritingReceipt(donation, state.adminProfile?.role)
+    ? buildSowseedWritingOrderPdf(donation)
+    : buildPremiumOrderPdf(donation);
   downloadBlobFile(getOrderProofFilename(donation), new Blob([pdf], { type: "application/pdf" }));
   setAdminStatus("Downloaded the fulfilled custom-order PDF.", "success", { statusElement });
 }
