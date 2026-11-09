@@ -172,7 +172,7 @@ Deno.serve(withCors(async (request) => {
         const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
         const visibilityScope = adminProfile.role === "admin" ? "public" : "superadmin_private";
         const { data, error } = await supabase.from("donations")
-          .update({ social_source: socialSource })
+          .update({ social_source: socialSource, social_source_manually_assigned: true })
           .eq("id", donationId)
           .eq("payment_route", paymentRoute)
           .eq("visibility_scope", visibilityScope)
@@ -476,6 +476,7 @@ Deno.serve(withCors(async (request) => {
           "payment_route",
           "visibility_scope",
           "social_source",
+          "social_source_manually_assigned",
           "fortune_message",
           "raw_payment",
           "created_at",
@@ -520,6 +521,7 @@ Deno.serve(withCors(async (request) => {
         paymentRoute: donation.payment_route || "standard",
         visibilityScope: donation.visibility_scope || "public",
         socialSource: donation.social_source || null,
+        socialSourceManuallyAssigned: donation.social_source_manually_assigned === true,
         fortuneMessage: donation.fortune_message,
         rawPayment: donation.raw_payment,
         digitalOrder: mapDigitalOrder(donation.digital_orders),

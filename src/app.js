@@ -214,6 +214,8 @@ const elements = {
   adminCalendarTitle: document.querySelector("#adminCalendarTitle"),
   adminDonationHeading: document.querySelector("#adminDonationHeading"),
   adminEmailInput: document.querySelector("#adminEmailInput"),
+  sendAdminMagicLinkButton: document.querySelector("#sendAdminMagicLinkButton"),
+  adminMagicLinkStatus: document.querySelector("#adminMagicLinkStatus"),
   adminLoginDialog: document.querySelector("#adminLoginDialog"),
   adminLoginForm: document.querySelector("#adminLoginForm"),
   enterPortalButton: document.querySelector("#enterPortalButton"),
@@ -332,6 +334,7 @@ let visitorCountryPromise = null;
 let paymentConfig = {
   adminPayPalClientId: "",
   homepagePayPalClientId: "",
+  highValuePayPalClientId: "",
   superAdminPayPalClientId: "",
   currency: PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
 };
@@ -752,6 +755,97 @@ async function signInAdmin(email, password) {
   return payload;
 }
 
+async function sendAdminMagicLink(email) {
+  if (!isBackendConfigured()) throw new Error("Passwordless sign-in is unavailable in demo mode.");
+
+  const endpoint = new URL(`${PUBLIC_CONFIG.supabaseUrl.replace(/\/$/, "")}/auth/v1/otp`);
+  const redirectUrl = new URL("/#admin", window.location.origin);
+  endpoint.searchParams.set("redirect_to", redirectUrl.toString());
+
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: PUBLIC_CONFIG.supabaseAnonKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, create_user: false }),
+    });
+  } catch {
+    throw new Error("Could not send a sign-in link. Check your connection and try again.");
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    if (payload.code === "over_email_send_rate_limit") {
+      throw new Error("Please wait before requesting another sign-in link.");
+    }
+    if (payload.code === "redirect_to_not_allowed") {
+      throw new Error("This site's return address is not allowed in Supabase Auth settings.");
+    }
+    throw new Error("Could not send a sign-in link. Check the email address and try again.");
+  }
+}
+
+function consumeAdminMagicLinkCallback() {
+  const fragment = new URLSearchParams(window.location.hash.slice(1));
+  const query = new URLSearchParams(window.location.search);
+  const authKeys = ["access_token", "error", "error_code", "error_description"];
+  const hasAuthResponse = authKeys.some((key) => fragment.has(key) || query.has(key));
+  if (!hasAuthResponse) return null;
+
+  const getParam = (key) => fragment.get(key) || query.get(key) || "";
+  const accessToken = getParam("access_token");
+  const errorCode = getParam("error_code");
+  const authError = getParam("error");
+  const type = getParam("type");
+  const cleanUrl = new URL(window.location.href);
+  for (const key of authKeys) cleanUrl.searchParams.delete(key);
+  cleanUrl.hash = "admin";
+  window.history.replaceState(window.history.state, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+
+  if (authError || errorCode) {
+    return { error: errorCode === "otp_expired"
+      ? "This sign-in link has expired or was already used. Request a new link."
+      : "This sign-in link could not be verified. Request a new one." };
+  }
+  if (type !== "magiclink" || !accessToken) {
+    return { error: "This sign-in link is invalid. Request a new one." };
+  }
+
+  const expiresIn = Number(getParam("expires_in")) || 3600;
+  setAdminSession({
+    access_token: accessToken,
+    refresh_token: getParam("refresh_token"),
+    token_type: getParam("token_type") || "bearer",
+    expires_in: expiresIn,
+    expires_at: Number(getParam("expires_at")) || Math.floor(Date.now() / 1000) + expiresIn,
+  });
+  return { authenticated: true };
+}
+
+function setAdminMagicLinkStatus(message, isError = false) {
+  if (!elements.adminMagicLinkStatus) return;
+  elements.adminMagicLinkStatus.textContent = message;
+  elements.adminMagicLinkStatus.classList.toggle("is-error", isError);
+}
+
+async function openPortalForCurrentSession() {
+  await loadAdminProfile();
+  closeAdminLogin();
+  if (state.adminProfile?.role === "social_partner") {
+    openSocialPanel();
+    await loadSocialTransactions();
+  } else {
+    openAdminPanel();
+    await Promise.all([
+      loadAdminDonations({ announce: true }),
+      loadAdminAnalytics({ announce: true }),
+    ]);
+  }
+}
+
 async function loadAdminProfile() {
   const payload = await callEdge("admin-profile", {
     admin: true,
@@ -790,6 +884,7 @@ function applyBootstrap(payload) {
     paymentConfig = {
       adminPayPalClientId: payload.payment.adminPayPalClientId || "",
       homepagePayPalClientId: payload.payment.homepagePayPalClientId || "",
+      highValuePayPalClientId: payload.payment.highValuePayPalClientId || "",
       superAdminPayPalClientId: paymentConfig.superAdminPayPalClientId,
       currency: payload.payment.currency || PUBLIC_CONFIG.paypalCurrency || CONFIG.currency,
     };
@@ -848,7 +943,8 @@ function getInitialDonationAmount() {
 }
 
 function isCustomCardCheckoutAvailable() {
-  return state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US" &&
+  return Math.round((Number(elements.amountInput?.value) || 0) * 100) < 5500 &&
+    state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US" &&
     elements.supportCard?.parentElement !== elements.superAdminCheckoutHost;
 }
 
@@ -880,6 +976,7 @@ function loadVisitorCountry() {
 }
 
 async function initializeApp() {
+  const magicLinkCallback = consumeAdminMagicLinkCallback();
   void loadVisitorCountry().then(updateWeeklySeedOption);
   try {
     await loadBackendData({ mode: "critical" });
@@ -908,7 +1005,18 @@ async function initializeApp() {
       openRitualPaymentFailure({ preview: true });
     }
 
-    if (window.location.hash === "#admin") {
+    if (magicLinkCallback?.authenticated) {
+      try {
+        await openPortalForCurrentSession();
+      } catch (error) {
+        clearAdminSession();
+        openAdminLogin();
+        setAdminMagicLinkStatus(error.message || "This account cannot access the portal.", true);
+      }
+    } else if (magicLinkCallback?.error) {
+      openAdminLogin();
+      setAdminMagicLinkStatus(magicLinkCallback.error, true);
+    } else if (window.location.hash === "#admin") {
       openAdminLogin();
     }
 
@@ -1849,7 +1957,7 @@ async function setOrderSocialSource(donationId, socialSource, button) {
       }
       if (state.adminProfile?.role === role && getAdminAccessToken() === accessToken) {
         adminCalendarDonations = adminCalendarDonations.map((item) =>
-          String(item.id) === String(donationId) ? { ...item, socialSource } : item);
+          String(item.id) === String(donationId) ? { ...item, socialSource, socialSourceManuallyAssigned: true } : item);
         renderAdminCalendar();
       }
       return payload;
@@ -2259,8 +2367,9 @@ function getCheckoutDisplaySelection() {
   };
 }
 
-function getCheckoutRoute() {
-  return elements.supportCard?.parentElement === elements.superAdminCheckoutHost
+function getCheckoutRoute(amount = elements.amountInput?.value) {
+  return elements.supportCard?.parentElement === elements.superAdminCheckoutHost ||
+    Math.round((Number(amount) || 0) * 100) >= 5500
     ? "superadmin"
     : state.settings.homepagePayPalRoute;
 }
@@ -2431,9 +2540,11 @@ function renderCalendarDetails(context) {
             donation.paymentRoute === (context.isAdminPortal ? "standard" : "superadmin") &&
             donation.visibilityScope === (context.isAdminPortal ? "public" : "superadmin_private") &&
             Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
-          const currentPortal = donation.socialSource === "anshu" || donation.socialSource === "badal"
+          const needsManualAssignment = Math.round(amount * 100) >= 5500 && donation.socialSourceManuallyAssigned !== true;
+          const currentPortal = !needsManualAssignment && (donation.socialSource === "anshu" || donation.socialSource === "badal")
             ? donation.socialSource : null;
           const portalLabel = !canAssignPortal ? "Not eligible"
+            : needsManualAssignment ? "Manual review required"
             : currentPortal === "anshu" ? "AnshuPortal"
             : currentPortal === "badal" ? "Badal Portal" : "Unassigned";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
@@ -2473,7 +2584,9 @@ function renderCalendarDetails(context) {
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>Anshu</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>Badal</button>
                   </div>
-                  ${canAssignPortal ? "" : "<small>Available for completed PayPal orders from 4 Nov 2026.</small>"}
+                  ${canAssignPortal
+                    ? needsManualAssignment ? "<small>Orders of $55 or more stay private until you verify and assign them.</small>" : ""
+                    : "<small>Available for completed PayPal orders from 4 Nov 2026.</small>"}
                 </div>` : ""}
               </div>`}
             </article>
@@ -2660,16 +2773,21 @@ function getPaymentEmail() {
   return String(getCheckoutUi().emailInput?.value || "").trim();
 }
 
-function getPayPalClientId() {
+function getPayPalClientId(amount = elements.amountInput?.value) {
   if (elements.supportCard?.parentElement === elements.superAdminCheckoutHost) {
     return paymentConfig.superAdminPayPalClientId;
+  }
+  if (getCheckoutRoute(amount) === "superadmin") {
+    return state.settings.homepagePayPalRoute === "superadmin"
+      ? paymentConfig.homepagePayPalClientId || paymentConfig.highValuePayPalClientId
+      : paymentConfig.highValuePayPalClientId;
   }
   return paymentConfig.homepagePayPalClientId ||
     (getCheckoutRoute() === "standard" ? paymentConfig.adminPayPalClientId : "");
 }
 
-function isPayPalConfigured() {
-  return Boolean(getPayPalClientId());
+function isPayPalConfigured(amount = elements.amountInput?.value) {
+  return Boolean(getPayPalClientId(amount));
 }
 
 function isValidEmailAddress(value) {
@@ -2813,8 +2931,8 @@ function waitForPayPalSdk(namespace, timeoutMs = 5000) {
   });
 }
 
-function getPayPalSdkNamespace(weekly = elements.weeklySeedToggle.checked) {
-  const route = getCheckoutRoute();
+function getPayPalSdkNamespace(weekly = elements.weeklySeedToggle.checked, amount = elements.amountInput?.value) {
+  const route = getCheckoutRoute(amount);
   return `paypalSys${route === "superadmin" ? "SuperAdmin" : "Admin"}${weekly ? "Weekly" : "Once"}`;
 }
 
@@ -2839,15 +2957,15 @@ function resetAllPayPalSdks() {
   resetPayPalSdk(getPayPalSdkNamespace(true));
 }
 
-function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked) {
-  const clientId = getPayPalClientId();
-  const route = getCheckoutRoute();
+function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked, amount = elements.amountInput?.value) {
+  const clientId = getPayPalClientId(amount);
+  const route = getCheckoutRoute(amount);
   const sdkKey = `${route}:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
-  const namespace = getPayPalSdkNamespace(weekly);
+  const namespace = getPayPalSdkNamespace(weekly, amount);
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
-    return Promise.reject(new Error(getCheckoutRoute() === "superadmin"
+    return Promise.reject(new Error(route === "superadmin"
       ? "Missing SuperAdmin PayPal client id."
       : "Missing Admin PayPal Business client id."));
   }
@@ -3040,6 +3158,7 @@ function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
         },
       });
       checkoutToken = prepared.checkoutToken;
+      pendingDonation.paymentRoute = prepared.paymentRoute;
       await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
       return actions.subscription.create({
         plan_id: prepared.planId,
@@ -3567,12 +3686,16 @@ function returnToSowYourSeed() {
 function openAdminLogin() {
   clearAdminSession();
   setPortalLoginBusy(false);
+  if (elements.sendAdminMagicLinkButton) {
+    elements.sendAdminMagicLinkButton.hidden = !isBackendConfigured();
+  }
   if (elements.adminEmailInput) {
     elements.adminEmailInput.value = "";
     elements.adminEmailInput.required = isBackendConfigured();
   }
   elements.adminPasswordInput.value = "";
   elements.adminPasswordError.textContent = "";
+  setAdminMagicLinkStatus("");
 
   if (typeof elements.adminLoginDialog.showModal === "function") {
     elements.adminLoginDialog.showModal();
@@ -4180,6 +4303,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
   const status = document.querySelector("#ritualPaymentStatus");
   const selectedRitual = ritualOptions[selectedRitualIndex];
   const ritualTier = selectedRitual.querySelector(".ritual-option-price").textContent.slice(1);
+  const ritualAmount = Number(ritualTier);
   const name = nameInput.value;
   setRitualButtonLoading(button, true);
   closeButton.disabled = true;
@@ -4189,8 +4313,8 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
     if (state.settings.paypalCheckoutVisible) {
       if (!isBackendConfigured() || !backendReady) throw new Error("PayPal checkout is currently unavailable.");
       await loadBackendData({ mode: "critical", throwOnError: true });
-      if (!isPayPalConfigured()) throw new Error("PayPal checkout is currently unavailable.");
-      const paypal = await loadPayPalSdk(false);
+      if (!isPayPalConfigured(ritualAmount)) throw new Error("PayPal checkout is currently unavailable.");
+      const paypal = await loadPayPalSdk(false, ritualAmount);
       const container = document.querySelector("#ritualPaypalButtons");
       const details = {
         ritualTier,
@@ -4204,7 +4328,7 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
         createOrder: async () => {
           status.textContent = "Opening secure PayPal checkout…";
           const order = await callEdge("create-paypal-order", {
-            body: { ...details, productType: "ritual", paymentRoute: getCheckoutRoute(), sourceTag: readSocialSourceTag() },
+            body: { ...details, productType: "ritual", paymentRoute: getCheckoutRoute(ritualAmount), sourceTag: readSocialSourceTag() },
           });
           return order.id;
         },
@@ -4367,18 +4491,7 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
     setPortalLoginBusy(true);
     try {
       await signInAdmin(email, password);
-      await loadAdminProfile();
-      closeAdminLogin();
-      if (state.adminProfile?.role === "social_partner") {
-        openSocialPanel();
-        await loadSocialTransactions();
-      } else {
-        openAdminPanel();
-        await Promise.all([
-          loadAdminDonations({ announce: true }),
-          loadAdminAnalytics({ announce: true }),
-        ]);
-      }
+      await openPortalForCurrentSession();
     } catch (error) {
       elements.adminPasswordError.textContent = error.message || "Could not sign in.";
       elements.adminPasswordInput.select();
@@ -4398,10 +4511,27 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
   closeAdminLogin();
   openAdminPanel();
 });
+elements.sendAdminMagicLinkButton?.addEventListener("click", async () => {
+  if (!isBackendConfigured()) return;
+  if (!elements.adminEmailInput.reportValidity()) return;
+
+  const email = elements.adminEmailInput.value.trim();
+  setAdminMagicLinkStatus("");
+  setButtonBusy(elements.sendAdminMagicLinkButton, true, "Sending link...");
+  try {
+    await sendAdminMagicLink(email);
+    setAdminMagicLinkStatus("If that email belongs to a portal account, a one-time sign-in link has been sent.");
+  } catch (error) {
+    setAdminMagicLinkStatus(error.message || "Could not send a sign-in link. Try again.", true);
+  } finally {
+    setButtonBusy(elements.sendAdminMagicLinkButton, false);
+  }
+});
 elements.cancelAdminLoginButton.addEventListener("click", closeAdminLogin);
 elements.adminLoginDialog.addEventListener("close", () => {
   elements.adminLoginDialog.classList.remove("is-open");
   elements.adminPasswordError.textContent = "";
+  setAdminMagicLinkStatus("");
 });
 elements.closeAdminButton.addEventListener("click", closeAdminPanel);
 elements.closeSocialButton.addEventListener("click", closeAdminPanel);

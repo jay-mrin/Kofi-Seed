@@ -243,6 +243,17 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   assert.match(tagButtons()[1], /aria-pressed="false"/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
+  donation.amount = 55;
+  donation.socialSourceManuallyAssigned = false;
+  render(context);
+  assert.match(details.innerHTML, /Portal: Manual review required/);
+  assert.ok(tagButtons().every((button) => !button.includes("disabled")));
+  donation.socialSourceManuallyAssigned = true;
+  render(context);
+  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
+  donation.amount = 11;
+
   donation.createdAt = "2026-11-03T18:29:59.999Z";
   render(context);
   assert.match(details.innerHTML, /Portal: Not eligible/);

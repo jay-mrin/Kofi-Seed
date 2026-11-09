@@ -95,6 +95,8 @@ The portal is opened from the header and requires a signed in Supabase user with
 
 Admin and SuperAdmin analytics include page visits, checkout starts, completed payments, and payment attempt details. They share the total page visit count but keep payment activity scoped to their own collection route. Each portal has its own analytics reset point.
 
+From the $55 review rule, new orders and weekly subscription signups of $55 or more always use SuperAdmin PayPal and require manual assignment before appearing in AnshuPortal or Badal Portal. Lower tagged orders retain automatic attribution. Current social portal assignments, including higher amounts, remain assigned. Existing payment routes and subscription accounts remain intact. SuperAdmin can verify each new higher order and use the existing Anshu/Badal buttons to assign it or the existing delete control to remove it manually.
+
 ## 6. Data and system architecture
 
 ```mermaid

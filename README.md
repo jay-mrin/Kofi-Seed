@@ -16,6 +16,12 @@ When `src/config.js` has `backendEnabled: false`, the app stays in local demo mo
 
 Admin and SuperAdmin retain separate calendars and payment records. Historical Admin Dodo and PayPal orders remain visible alongside new Admin PayPal Business orders. SuperAdmin payments continue using their separate PayPal account and private calendar. Admin and SuperAdmin each use their own analytics reset timestamp. The database value `payment_route = 'standard'` still identifies Admin orders.
 
+## Portal Passwordless Sign-In
+
+Open `https://www.seedgarden.space/#admin`, enter the email address for an existing portal account, and choose **Email me a sign-in link**. Supabase sends a one-time email link; opening it returns to the site and opens the account's portal after the server confirms its role. New Auth accounts are not created by this flow. The existing password login remains available.
+
+In Supabase Auth, allow `https://www.seedgarden.space/` as a redirect URL (and `http://127.0.0.1:5173/` when using the local server). The Magic Link email template must use `{{ .ConfirmationURL }}`. Magic links expire according to the project's Email OTP Expiration setting; Supabase's default is one hour.
+
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
 ## Files
@@ -35,7 +41,7 @@ The payment column includes a Blessing Wall loaded from `seed_comments`. Initial
    - `supabaseAnonKey`
    - `backendEnabled: true`
 
-   The Admin client ID comes from public bootstrap; the SuperAdmin client ID is returned only after SuperAdmin authentication. Do not put PayPal client secrets in browser configuration.
+   Public bootstrap provides the browser-safe PayPal client IDs for the selected checkout and the SuperAdmin account used for orders of $55 or more. PayPal client secrets stay on the server.
 
 2. Copy `.env.example` to `.env` for your local notes only. Do not commit real secrets.
 
@@ -109,7 +115,11 @@ New Admin checkout uses `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_
 
 ## Social source portals
 
-Share `https://www.seedgarden.space/sowseed` for Anshu's account and `https://www.seedgarden.space/seed` for Badal's account. Home and both shared links use the SuperAdmin Checkout display choice. SuperAdmin PayPal and Admin PayPal selections route PayPal payments to their respective accounts. The Custom Credit Debit selection shows only the custom card checkout to detected US visitors; other visitors receive the normal PayPal and eligible PayPal card buttons through SuperAdmin PayPal. Custom card checkout does not create an order in this site's backend; PayPal checkout does. Only PayPal checkout started on a tagged path is attributed to Anshu or Badal. Checkout on the normal site path `/` has no social tag, even after a visitor previously opened a tagged path. Existing and untagged orders remain unassigned.
+Share `https://www.seedgarden.space/sowseed` for Anshu's account and `https://www.seedgarden.space/seed` for Badal's account. For amounts below $55, Home and both shared links use the SuperAdmin Checkout display choice. The Custom Credit Debit selection shows the custom card checkout to detected US visitors for these lower amounts. Custom card checkout does not create an order in this site's backend; PayPal checkout does. Only PayPal checkout below $55 started on a tagged path is automatically attributed to Anshu or Badal. Checkout on the normal site path `/` has no automatic social tag, even after a visitor previously opened a tagged path.
+
+New one-time checkouts and weekly subscription signups of **$55 or more, including exactly $55**, always use **SuperAdmin PayPal**, overriding Admin PayPal and Custom Credit Debit selections. They appear in SuperAdmin with **Manual review required** and remain absent from both social portals until manually assigned using Anshu or Badal. Each new recurring charge of $55 or more also requires its own assignment. Existing assigned orders keep their portal, including orders of $55 or more; previous payment routes and subscription accounts are preserved. This feature never deletes orders automatically.
+
+Apply `202611100001_high_value_social_review.sql` before deploying the updated functions and frontend. The migration preserves existing source tags and marks current $55+ assignments as retained; it adds an insert guard for future high-value orders. Deploy `public-bootstrap`, `create-paypal-order`, `prepare-paypal-subscription`, `create-dodo-checkout`, `admin-donations`, and `social-portal-transactions` with this frontend. Legacy Dodo checkout creation rejects new $55+ checkouts; confirmation of existing Dodo payments remains available.
 
 AnshuPortal and Badal Portal use the same calendar layout. Each account sees only its own tagged PayPal orders from 4 November 2026 at 00:00 Asia/Kolkata onward, with name, amount, email, and order date. Both Admin (`standard`) and SuperAdmin PayPal routes are included under the user-authorized exception in `doc.work/Strictinstructions.md`. Existing Admin and SuperAdmin order records and visibility remain unchanged.
 

@@ -14,7 +14,7 @@ import {
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
-import { parseSocialSource } from "../_shared/social-source.ts";
+import { getAutomaticSocialSource, SOCIAL_AUTO_ASSIGN_LIMIT_CENTS } from "../_shared/social-source.ts";
 
 type PrepareBody = {
   amount?: number;
@@ -150,7 +150,7 @@ Deno.serve(withCors(async (request) => {
     }
     const seedCount = Math.max(1, Math.round(amountCents / seedPriceCents));
 
-    const paymentRoute = body.paymentRoute === "superadmin"
+    const paymentRoute = amountCents >= SOCIAL_AUTO_ASSIGN_LIMIT_CENTS || body.paymentRoute === "superadmin"
       ? "superadmin"
       : body.paymentRoute === "standard"
       ? "standard"
@@ -180,7 +180,7 @@ Deno.serve(withCors(async (request) => {
         product_type: "personalized_seed_writing_subscription",
         product_id: plan.paypal_plan_id,
         payment_route: paymentRoute,
-        social_source: parseSocialSource(body.sourceTag),
+        social_source: getAutomaticSocialSource(body.sourceTag, amountCents),
         status: "started",
         raw_payment: { billingAnchor: billingAnchor.toISOString() },
       })
@@ -196,7 +196,7 @@ Deno.serve(withCors(async (request) => {
         amount: centsToMoney(amountCents),
         currency: getPayPalCurrency(),
         payment_route: paymentRoute,
-        social_source: parseSocialSource(body.sourceTag),
+        social_source: getAutomaticSocialSource(body.sourceTag, amountCents),
         paypal_plan_id: plan.paypal_plan_id,
         status: "pending",
         frequency: "weekly",

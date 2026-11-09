@@ -3,6 +3,7 @@ import { createDodoCheckoutSession, getDodoCurrency, getDodoProductId } from "..
 import { getRandomOrderRequest } from "../_shared/order-requests.ts";
 import { getRitual } from "../_shared/rituals.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
+import { SOCIAL_AUTO_ASSIGN_LIMIT_CENTS } from "../_shared/social-source.ts";
 
 type CreateDodoBody = {
   seedCount?: number;
@@ -53,6 +54,9 @@ Deno.serve(withCors(async (request) => {
       amountCents = Math.round(unitPrice * seedCount * 100);
     }
     if (amountCents < 1100) return errorResponse("Amount must be at least $11.", 422);
+    if (amountCents >= SOCIAL_AUTO_ASSIGN_LIMIT_CENTS) {
+      return errorResponse("Orders of $55 or more must use the PayPal checkout on the seed form.", 409);
+    }
 
     attemptId = crypto.randomUUID();
     const productId = ritual?.productId || getDodoProductId();

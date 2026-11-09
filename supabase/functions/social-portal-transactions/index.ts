@@ -27,6 +27,7 @@ Deno.serve(withCors(async (request) => {
       const { data, error } = await supabase.from("donations")
         .select("display_name, amount, created_at, paypal_payer_email, digital_orders(contact_email)")
         .eq("social_source", socialSource)
+        .or("amount.lt.55,social_source_manually_assigned.eq.true")
         .eq("payment_method", "paypal")
         .eq("paypal_status", "COMPLETED")
         .in("payment_route", ["standard", "superadmin"])

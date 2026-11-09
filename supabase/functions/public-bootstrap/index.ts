@@ -72,6 +72,7 @@ async function loadCriticalData(
     payment: {
       adminPayPalClientId: getPayPalClientId("standard"),
       homepagePayPalClientId: getPayPalClientId(homepageRoute),
+      highValuePayPalClientId: getPayPalClientId("superadmin"),
       currency: Deno.env.get("PAYPAL_CURRENCY") || "USD",
     },
   };

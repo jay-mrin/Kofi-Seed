@@ -15,7 +15,7 @@ test("Admin and SuperAdmin PayPal orders and weekly plans use separate routes", 
   const profile = read("supabase/functions/admin-profile/index.ts");
   const paypal = read("supabase/functions/_shared/paypal.ts");
 
-  assert.match(app, /function getCheckoutRoute\(\)[\s\S]*elements\.supportCard\?\.parentElement === elements\.superAdminCheckoutHost/);
+  assert.match(app, /function getCheckoutRoute\([^)]*\)[\s\S]*elements\.supportCard\?\.parentElement === elements\.superAdminCheckoutHost/);
   assert.match(order, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
   assert.match(weekly, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
   assert.match(bootstrap, /adminPayPalClientId: getPayPalClientId\("standard"\)/);

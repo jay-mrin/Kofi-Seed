@@ -11,8 +11,8 @@ const read = (file) => readFileSync(path.join(root, file), "utf8");
 test("Home and both tagged links use the selected PayPal account while the portal uses SuperAdmin", () => {
   const html = read("index.html");
   const app = read("src/app.js");
-  const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
-  const clientSource = app.match(/function getPayPalClientId\(\) \{[\s\S]*?\n\}/)?.[0];
+  const routeSource = app.match(/function getCheckoutRoute\([^)]*\) \{[\s\S]*?\n\}/)?.[0];
+  const clientSource = app.match(/function getPayPalClientId\([^)]*\) \{[\s\S]*?\n\}/)?.[0];
   assert.ok(routeSource && clientSource);
   assert.match(html, /id="homeSuperAdminPayPal"[^>]*value="superadmin"[\s\S]*<strong>SuperAdmin PayPal<\/strong>/);
   assert.match(html, /id="homeAdminPayPal"[^>]*value="standard"[\s\S]*<strong>Admin PayPal<\/strong>/);
@@ -24,12 +24,13 @@ test("Home and both tagged links use the selected PayPal account while the porta
   const supportCard = { parentElement: {} };
   const context = {
     window: { location: { pathname: "/" } },
-    elements: { supportCard, superAdminCheckoutHost: host },
+    elements: { supportCard, superAdminCheckoutHost: host, amountInput: { value: "11" } },
     state: { settings: { homepagePayPalRoute: "standard" } },
     paymentConfig: {
       adminPayPalClientId: "admin-client",
       homepagePayPalClientId: "admin-client",
       superAdminPayPalClientId: "private-superadmin-client",
+      highValuePayPalClientId: "high-value-superadmin-client",
     },
   };
   const readRoute = () => vm.runInNewContext(
@@ -38,6 +39,17 @@ test("Home and both tagged links use the selected PayPal account while the porta
   );
 
   assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
+  for (const amount of ["55", "55.01", "110"]) {
+    context.elements.amountInput.value = amount;
+    assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "high-value-superadmin-client" });
+  }
+  context.elements.amountInput.value = "54.99";
+  assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
+  context.elements.amountInput.value = "11";
+  const explicitRitualRoute = vm.runInNewContext(
+    `${routeSource}\n${clientSource}\n({ route: getCheckoutRoute(199), clientId: getPayPalClientId(199) })`, context,
+  );
+  assert.deepEqual({ ...explicitRitualRoute }, { route: "superadmin", clientId: "high-value-superadmin-client" });
   context.window.location.pathname = "/sowseed";
   assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
   context.window.location.pathname = "/seed";

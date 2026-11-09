@@ -54,6 +54,11 @@ async function readPortalMonth(rows, token, month = "2026-11") {
           return query;
         },
         eq(key, value) { filters.push((row) => row[key] === value); return query; },
+        or(value) {
+          assert.equal(value, "amount.lt.55,social_source_manually_assigned.eq.true");
+          filters.push((row) => Number(row.amount) < 55 || row.social_source_manually_assigned === true);
+          return query;
+        },
         in(key, values) { filters.push((row) => values.includes(row[key])); return query; },
         gte(key, value) { filters.push((row) => row[key] >= value); return query; },
         lt(key, value) { filters.push((row) => row[key] < value); return query; },
@@ -111,6 +116,10 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
       payment_route: "superadmin", visibility_scope: "superadmin_private",
     }),
     order("BadalFirst", "badal", "2026-11-04T13:00:00.000Z"),
+    order("BelowLimit", "anshu", "2026-11-04T13:10:00.000Z", { amount: 54.99 }),
+    order("AtLimit", "anshu", "2026-11-04T13:20:00.000Z", { amount: 55 }),
+    order("OverLimit", "badal", "2026-11-04T13:30:00.000Z", { amount: 110 }),
+    order("ApprovedHigh", "anshu", "2026-11-04T13:40:00.000Z", { amount: 55, social_source_manually_assigned: true }),
     order("Failed", "anshu", "2026-11-04T14:00:00.000Z", { paypal_status: "FAILED" }),
     order("Dodo", "anshu", "2026-11-04T15:00:00.000Z", { payment_method: "dodo" }),
     order("Untagged", null, "2026-11-04T16:00:00.000Z"),
@@ -120,7 +129,7 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   ];
   const anshu = await readPortalMonth(rows, "anshu");
   assert.equal(anshu.status, 200);
-  assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper"]);
+  assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper", "BelowLimit", "ApprovedHigh"]);
   for (const row of anshu.body.transactions) {
     assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
     assert.match(row.email, /-order@example\.invalid$/);
@@ -134,11 +143,12 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   assert.equal((await readPortalMonth(rows, "unknown")).status, 403);
 });
 
-test("changing a recent SuperAdmin order's tag moves it between the two social portals", async () => {
+test("a $55 SuperAdmin order needs manual approval before assignment can expose it", async () => {
   const order = {
     display_name: "Reassigned",
     social_source: null,
-    amount: 11,
+    amount: 55,
+    social_source_manually_assigned: false,
     created_at: "2026-11-04T12:00:00.000Z",
     paypal_payer_email: "customer@example.invalid",
     digital_orders: { contact_email: "customer@example.invalid" },
@@ -150,6 +160,8 @@ test("changing a recent SuperAdmin order's tag moves it between the two social p
   const rows = [order];
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
   order.social_source = "anshu";
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
+  order.social_source_manually_assigned = true;
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Reassigned"]);
   assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions, []);
   order.social_source = "badal";
@@ -173,7 +185,7 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
   assert.ok(update);
   assert.match(update, /adminProfile\.role !== "admin" && adminProfile\.role !== "super_admin"/);
   assert.match(update, /socialSource !== "anshu" && socialSource !== "badal"/);
-  assert.match(update, /\.update\(\{ social_source: socialSource \}\)/);
+  assert.match(update, /\.update\(\{ social_source: socialSource, social_source_manually_assigned: true \}\)/);
   for (const filter of [
     '.eq("payment_route", paymentRoute)',
     '.eq("visibility_scope", visibilityScope)',
@@ -228,6 +240,7 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
   assert.equal((await assign({ donationId: "admin-new", socialSource: "anshu" }, { role: "super_admin" })).status, 404);
   assert.equal((await assign({ donationId: "super-new", socialSource: "anshu" }, { role: "super_admin" })).status, 200);
   assert.equal(rows[1].social_source, "anshu");
+  assert.equal(rows[1].social_source_manually_assigned, true);
 });
 
 test("portal authentication binds each account to its database source and rejects admins", async () => {
@@ -317,8 +330,8 @@ test("social accounts cannot inherit admin privileges and attribution leaves old
   assert.match(migration, /new\.membership_id is not null[\s\S]*select social_source into new\.social_source/);
   assert.doesNotMatch(migration, /update public\.(?:donations|payment_attempts|memberships)|delete from public\.(?:donations|payment_attempts|memberships)/i);
   assert.match(profile, /\.from\("social_portal_profiles"\)[\s\S]*\.eq\("user_id", data\.user\.id\)/);
-  assert.match(create, /social_source: parseSocialSource\(body\.sourceTag\)/);
-  assert.match(prepare, /social_source: parseSocialSource\(body\.sourceTag\)/);
+  assert.match(create, /social_source: getAutomaticSocialSource\(body\.sourceTag, amountCents\)/);
+  assert.match(prepare, /social_source: getAutomaticSocialSource\(body\.sourceTag, amountCents\)/);
   assert.match(capture, /social_source: paymentAttempt\.social_source \|\| null/);
   assert.match(app, /function renderSocialCalendar\(\)[\s\S]*email\.textContent = transaction\.email/);
 });

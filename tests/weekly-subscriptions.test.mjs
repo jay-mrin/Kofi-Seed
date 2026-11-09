@@ -27,7 +27,7 @@ test("PayPal checkout offers a weekly toggle and preserves one-time payments", (
 test("the portal visibility switch controls recurring sowing in both checkouts", () => {
   const app = read("src/app.js");
   const html = read("index.html");
-  const routeSource = app.match(/function getCheckoutRoute\(\) \{[\s\S]*?\n\}/)?.[0];
+  const routeSource = app.match(/function getCheckoutRoute\([^)]*\) \{[\s\S]*?\n\}/)?.[0];
   const optionSource = app.match(/function updateWeeklySeedOption\(\) \{[\s\S]*?\n\}/)?.[0];
   assert.ok(routeSource && optionSource);
   assert.match(html, /class="weekly-seed-option"[^>]*hidden/);
