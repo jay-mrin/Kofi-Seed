@@ -325,13 +325,6 @@ a {
   line-height: 1.1;
 }
 
-.admin-login-copy {
-  margin: 8px 0 0;
-  color: #777582;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
 .admin-login-card label {
   display: grid;
   gap: 8px;
@@ -369,21 +362,6 @@ a {
 
 .admin-login-submit.is-loading::after {
   flex: 0 0 14px;
-}
-
-.admin-login-magic-link {
-  width: 100%;
-}
-
-.admin-login-status {
-  min-height: 1em;
-  color: #32715f;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.admin-login-status.is-error {
-  color: #a13d34;
 }
 
 .fulfillment-dialog {

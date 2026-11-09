@@ -16,11 +16,9 @@ When `src/config.js` has `backendEnabled: false`, the app stays in local demo mo
 
 Admin and SuperAdmin retain separate calendars and payment records. Historical Admin Dodo and PayPal orders remain visible alongside new Admin PayPal Business orders. SuperAdmin payments continue using their separate PayPal account and private calendar. Admin and SuperAdmin each use their own analytics reset timestamp. The database value `payment_route = 'standard'` still identifies Admin orders.
 
-## Portal Passwordless Sign-In
+## Portal Sign-In
 
-Open `https://www.seedgarden.space/#admin`, enter the email address for an existing portal account, and choose **Email me a sign-in link**. Supabase sends a one-time email link; opening it returns to the site and opens the account's portal after the server confirms its role. New Auth accounts are not created by this flow. The existing password login remains available.
-
-In Supabase Auth, allow `https://www.seedgarden.space/` as a redirect URL (and `http://127.0.0.1:5173/` when using the local server). The Magic Link email template must use `{{ .ConfirmationURL }}`. Magic links expire according to the project's Email OTP Expiration setting; Supabase's default is one hour.
+Open `https://www.seedgarden.space/#admin` and sign in with the email address and password for an existing portal account. The server checks the account role before opening its portal.
 
 The payment column includes a Blessing Wall loaded from `seed_comments`. Initial comments and completed public Admin-routed orders from the earlier checkout remain in the historical data.
 
