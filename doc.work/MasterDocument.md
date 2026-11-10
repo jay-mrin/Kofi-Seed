@@ -95,9 +95,7 @@ The portal is opened from the header and requires a signed in Supabase user with
 
 Admin and SuperAdmin analytics include page visits, checkout starts, completed payments, and payment attempt details. They share the total page visit count but keep payment activity scoped to their own collection route. Each portal has its own analytics reset point.
 
-From the $55 review rule, new orders and weekly subscription signups of $55 or more always use SuperAdmin PayPal and require manual assignment before appearing in AnshuPortal or Badal Portal. Lower tagged orders retain automatic attribution. Current social portal assignments, including higher amounts, remain assigned. Existing payment routes and subscription accounts remain intact. SuperAdmin can verify each new higher order and use the existing Anshu/Badal buttons to assign it or the existing delete control to remove it manually.
-
-The preserved-assignment exception is bounded at the original rule commit, 10 November 2026 at 00:38:45 Asia/Kolkata. For orders created from that point, $55+ visibility requires the SuperAdmin assignment's recorded actor and timestamp; the old assignment boolean alone does not grant access. Earlier preserved assignments stay visible. New portal clients suppress high amounts from backends that do not confirm enforcement of this verification policy.
+From 10 November 2026 at 21:30:40 Asia/Kolkata, orders created for $55 or more stay exclusively in SuperAdmin and cannot appear in AnshuPortal or Badal Portal, including through manual verification or assignment. Earlier orders and assignments retain their previous behavior. New high-value checkouts use SuperAdmin PayPal. Existing collecting accounts, payment records and linked digital orders stay intact. API, frontend and database guards enforce the same fixed prospective cutoff.
 
 ## 6. Data and system architecture
 

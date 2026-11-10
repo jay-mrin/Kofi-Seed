@@ -6,7 +6,7 @@ import {
   readJson,
 } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
-import { isSocialAssignmentApproved } from "../_shared/social-source.ts";
+import { isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START } from "../_shared/social-source.ts";
 
 type UpdateOrderBody = {
   donationId?: string;
@@ -172,22 +172,20 @@ Deno.serve(withCors(async (request) => {
 
         const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
         const visibilityScope = adminProfile.role === "admin" ? "public" : "superadmin_private";
-        let assignment = supabase.from("donations")
+        const assignment = supabase.from("donations")
           .update({
             social_source: socialSource,
             social_source_manually_assigned: true,
-            social_source_verified_at: adminProfile.role === "super_admin" ? new Date().toISOString() : null,
-            social_source_verified_by: adminProfile.role === "super_admin" ? adminProfile.userId : null,
           })
           .eq("id", donationId)
           .eq("payment_route", paymentRoute)
           .eq("visibility_scope", visibilityScope)
           .eq("payment_method", "paypal")
           .eq("paypal_status", "COMPLETED")
-          .gte("created_at", SOCIAL_PORTAL_START);
-        if (adminProfile.role === "admin") assignment = assignment.lt("amount", 55);
+          .gte("created_at", SOCIAL_PORTAL_START)
+          .or(`amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
         const { data, error } = await assignment
-          .select("id, amount, created_at, social_source, social_source_manually_assigned, social_source_verified_at, social_source_verified_by")
+          .select("id, amount, created_at, social_source, social_source_manually_assigned")
           .maybeSingle();
         if (error) throw error;
         if (!data) return errorResponse("This order cannot be assigned to a social portal.", 404);
@@ -485,8 +483,6 @@ Deno.serve(withCors(async (request) => {
           "visibility_scope",
           "social_source",
           "social_source_manually_assigned",
-          "social_source_verified_at",
-          "social_source_verified_by",
           "fortune_message",
           "raw_payment",
           "created_at",

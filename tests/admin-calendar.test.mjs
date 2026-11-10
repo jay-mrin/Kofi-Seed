@@ -214,6 +214,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     ${source(app, "getCalendarSummaryMarkup")}
     ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
     SOCIAL_PORTAL_START_ISO: "2026-11-03T18:30:00.000Z",
+    SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: "2026-11-10T16:00:40.000Z",
     getDonationsByDate: (donations) => ({ "2026-11-04": donations }),
     fromDateKey: (date) => date,
     readableDate: (date) => date,
@@ -246,13 +247,12 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   donation.amount = 55;
   donation.socialSourceManuallyAssigned = false;
   render(context);
-  assert.match(details.innerHTML, /Portal: Manual review required/);
-  assert.ok(tagButtons().every((button) => !button.includes("disabled")));
-  donation.socialSourceManuallyAssigned = true;
+  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  donation.createdAt = "2026-11-10T16:00:40.000Z";
   donation.socialAssignmentApproved = true;
   render(context);
-  assert.match(details.innerHTML, /Portal: AnshuPortal/);
-  assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
+  assert.match(details.innerHTML, /Portal: SuperAdmin only/);
+  assert.ok(tagButtons().every((button) => button.includes("disabled")));
   donation.amount = 11;
 
   donation.createdAt = "2026-11-03T18:29:59.999Z";

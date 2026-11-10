@@ -11,8 +11,8 @@ const socialRules = read("supabase/functions/_shared/social-source.ts")
   .replace(/^export type .*;\n/gm, "").replaceAll("export ", "")
   .replaceAll("value: unknown", "value").replaceAll("amountCents: number", "amountCents")
   .replaceAll("donation: any", "donation").replaceAll(": SocialSource | null", "");
-const { isSocialAssignmentApproved, SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF } = vm.runInNewContext(
-  `${socialRules}; ({ isSocialAssignmentApproved, SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF })`,
+const { isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START } = vm.runInNewContext(
+  `${socialRules}; ({ isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START })`,
 );
 
 test("only the current tagged path attributes PayPal checkout", () => {
@@ -62,9 +62,8 @@ async function readPortalMonth(rows, token, month = "2026-11") {
         },
         eq(key, value) { filters.push((row) => row[key] === value); return query; },
         or(value) {
-          assert.equal(value, `amount.lt.55,and(social_source_manually_assigned.eq.true,created_at.lt.${SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF}),and(social_source_manually_assigned.eq.true,social_source_verified_at.not.is.null,social_source_verified_by.not.is.null)`);
-          filters.push((row) => Number(row.amount) < 55 || (row.social_source_manually_assigned === true &&
-            (row.created_at < SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF || (row.social_source_verified_at != null && row.social_source_verified_by != null))));
+          assert.equal(value, `amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
+          filters.push((row) => Number(row.amount) < 55 || row.created_at < SOCIAL_HIGH_VALUE_EXCLUSION_START);
           return query;
         },
         in(key, values) { filters.push((row) => values.includes(row[key])); return query; },
@@ -92,7 +91,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
     jsonResponse: (body) => new globalThis.Response(JSON.stringify(body)),
     errorResponse: (message, status) => new globalThis.Response(message, { status }),
     URL, Response: globalThis.Response,
-    isSocialAssignmentApproved, SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF,
+    isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START,
   });
   const request = new globalThis.Request(`https://local.invalid/social-portal-transactions?month=${month}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -138,7 +137,7 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   ];
   const anshu = await readPortalMonth(rows, "anshu");
   assert.equal(anshu.status, 200);
-  assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper", "BelowLimit", "ApprovedHigh"]);
+  assert.deepEqual(anshu.body.transactions.map((row) => row.name), ["AnshuFirst", "AnshuSuper", "BelowLimit", "AtLimit", "ApprovedHigh"]);
   for (const row of anshu.body.transactions) {
     assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
     assert.match(row.email, /-order@example\.invalid$/);
@@ -146,19 +145,19 @@ test("each social portal sees only its own successful PayPal orders from 4 Novem
   assert.doesNotMatch(JSON.stringify(anshu.body), /unrelatedPrivateValue|must not appear|raw_payment/);
 
   const badal = await readPortalMonth(rows, "badal");
-  assert.deepEqual(badal.body.transactions.map((row) => row.name), ["BadalFirst"]);
+  assert.deepEqual(badal.body.transactions.map((row) => row.name), ["BadalFirst", "OverLimit"]);
   assert.deepEqual(Object.keys(badal.body.transactions[0]).sort(), ["amount", "createdAt", "email", "name"]);
   assert.deepEqual((await readPortalMonth(rows, "anshu", "2026-10")).body.transactions, []);
   assert.equal((await readPortalMonth(rows, "unknown")).status, 403);
 });
 
-test("a $55 SuperAdmin order needs manual approval before assignment can expose it", async () => {
+test("a new $55 SuperAdmin order stays private even with manual verification", async () => {
   const order = {
     display_name: "Reassigned",
     social_source: null,
     amount: 55,
     social_source_manually_assigned: false,
-    created_at: "2026-11-10T06:03:00.000Z",
+    created_at: "2026-11-10T16:01:00.000Z",
     paypal_payer_email: "customer@example.invalid",
     digital_orders: { contact_email: "customer@example.invalid" },
     payment_method: "paypal",
@@ -174,11 +173,11 @@ test("a $55 SuperAdmin order needs manual approval before assignment can expose 
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
   order.social_source_verified_at = "2026-11-10T06:10:00.000Z";
   order.social_source_verified_by = "superadmin-user";
-  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Reassigned"]);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
   assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions, []);
   order.social_source = "badal";
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
-  assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions.map((row) => row.name), ["Reassigned"]);
+  assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions, []);
 });
 
 test("social order cards show paid amount without credited details", () => {
@@ -190,51 +189,54 @@ test("social order cards show paid amount without credited details", () => {
   assert.doesNotMatch(styles, /social-order-amounts/);
 });
 
-test("a new $121 order with only the old grandfather flag stays private", async () => {
+test("the prospective cutoff preserves every earlier assignment and excludes new $55+ orders", async () => {
   const base = {
-    display_name: "Unverified121", amount: 121, social_source: "anshu",
-    created_at: "2026-11-10T06:03:00.000Z", social_source_manually_assigned: true,
+    display_name: "Future121", amount: 121, social_source: "anshu",
+    created_at: "2026-11-10T16:01:00.000Z", social_source_manually_assigned: true,
+    social_source_verified_at: "2026-11-10T16:10:00.000Z", social_source_verified_by: "superadmin-user",
     payment_method: "paypal", paypal_status: "COMPLETED",
     payment_route: "superadmin", visibility_scope: "superadmin_private",
     paypal_payer_email: "customer@example.invalid",
   };
   const rows = [
     base,
-    { ...base, display_name: "Legacy121", created_at: "2026-11-09T19:08:44.999Z" },
-    { ...base, display_name: "AtCutoff55", amount: 55, created_at: SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF },
-    { ...base, display_name: "MissingActor", social_source_verified_at: "2026-11-10T06:10:00.000Z" },
-    { ...base, display_name: "MissingTimestamp", social_source_verified_by: "superadmin-user" },
+    { ...base, display_name: "Earlier1133", created_at: "2026-11-10T06:03:00.000Z", social_source_manually_assigned: false },
+    { ...base, display_name: "BeforeCutoff121", created_at: "2026-11-10T16:00:39.999Z" },
+    { ...base, display_name: "AtCutoff55", amount: 55, created_at: SOCIAL_HIGH_VALUE_EXCLUSION_START },
+    { ...base, display_name: "FutureLow", amount: 54.99 },
   ];
-  const before = await readPortalMonth(rows, "anshu");
-  assert.equal(before.body.socialAssignmentPolicy, "verified-v2");
-  assert.deepEqual(before.body.transactions.map((row) => row.name), ["Legacy121"]);
+  const result = await readPortalMonth(rows, "anshu");
+  assert.equal(result.body.socialAssignmentPolicy, "prospective-superadmin-only-v3");
+  assert.deepEqual(result.body.transactions.map((row) => row.name), ["Earlier1133", "BeforeCutoff121", "FutureLow"]);
   assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions, []);
-
-  base.social_source_verified_at = "2026-11-10T06:10:00.000Z";
-  base.social_source_verified_by = "superadmin-user";
-  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Unverified121", "Legacy121"]);
-  for (const row of (await readPortalMonth(rows, "anshu")).body.transactions) {
+  for (const row of result.body.transactions) {
     assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
   }
 });
 
-test("a portal using an older backend hides high amounts until verification enforcement is confirmed", async () => {
+test("the frontend preserves earlier high amounts but rejects future high amounts from any backend", async () => {
   const app = read("src/app.js");
   const source = app.match(/async function loadSocialTransactions\(\) \{[\s\S]*?\n\}/)[0];
-  let payload = { transactions: [{ name: "Low", amount: 54.99 }, { name: "High", amount: 121 }] };
+  let payload = { transactions: [
+    { name: "Low", amount: 54.99, createdAt: "2026-11-10T16:01:00.000Z" },
+    { name: "Earlier", amount: 121, createdAt: "2026-11-10T06:03:00.000Z" },
+    { name: "FutureHigh", amount: 121, createdAt: "2026-11-10T16:01:00.000Z" },
+    { name: "Boundary", amount: 55, createdAt: SOCIAL_HIGH_VALUE_EXCLUSION_START },
+  ] };
   const context = vm.createContext({
     socialCalendarCursor: new Date(), socialTransactions: [],
+    SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: SOCIAL_HIGH_VALUE_EXCLUSION_START,
     state: { adminProfile: { role: "social_partner", socialSource: "anshu" } },
     elements: { socialCalendarPrev: {}, socialCalendarNext: {}, socialCalendarDetails: {} },
     getMonthKey: () => "2026-11", getAdminAccessToken: () => "session",
     callEdge: async () => payload, renderSocialCalendar() {},
   });
   vm.runInContext(source, context);
-  await context.loadSocialTransactions();
-  assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low"]);
-  payload = { ...payload, socialAssignmentPolicy: "verified-v2" };
-  await context.loadSocialTransactions();
-  assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low", "High"]);
+  for (const policy of [undefined, "verified-v2", "prospective-superadmin-only-v3"]) {
+    payload = { ...payload, socialAssignmentPolicy: policy };
+    await context.loadSocialTransactions();
+    assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low", "Earlier"]);
+  }
 });
 
 test("the correction adds verification evidence without rewriting existing orders", () => {
@@ -245,35 +247,36 @@ test("the correction adds verification evidence without rewriting existing order
   assert.doesNotMatch(sql, /update public\.|delete from|truncate/i);
 });
 
-test("$121 assignment requires the user's verification confirmation and the server's approval", async () => {
+test("the prospective database guard changes only high-value social assignments from the fixed cutoff", () => {
+  const sql = read("supabase/migrations/202611100003_future_high_value_superadmin_only.sql");
+  const updates = sql.match(/update public\.donations[\s\S]*?;/g) || [];
+  assert.equal(updates.length, 1);
+  assert.match(updates[0], /where amount >= 55 and created_at >= timestamptz '2026-11-10 16:00:40\+00';/);
+  assert.doesNotMatch(updates[0], /\b(?:payment_route|visibility_scope|amount|created_at)\s*=/i);
+  assert.doesNotMatch(sql, /delete from|truncate/i);
+  assert.match(sql, /before insert or update of amount, created_at, social_source/);
+  assert.match(sql, /if new\.amount >= 55 and new\.created_at >= timestamptz '2026-11-10 16:00:40\+00' then/);
+});
+
+test("the client blocks assignment of future $121 orders and leaves earlier assignment controls available", async () => {
   const source = read("src/app.js").match(/async function setOrderSocialSource\([^]*?\n\}/)[0];
-  let confirmed = false;
-  let serverApproved = false;
   let calls = 0;
-  const row = { id: "high-order", amount: 121, socialSource: null };
+  const row = { id: "high-order", amount: 121, createdAt: SOCIAL_HIGH_VALUE_EXCLUSION_START, socialSource: null };
   const context = vm.createContext({
-    state: { adminProfile: { role: "super_admin" } },
-    adminCalendarDonations: [row],
+    SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: SOCIAL_HIGH_VALUE_EXCLUSION_START,
+    state: { adminProfile: { role: "super_admin" } }, adminCalendarDonations: [row],
     elements: { adminPanel: { getAttribute: () => "false" } },
     getDonationById: () => row, getAdminAccessToken: () => "session",
-    window: { confirm: () => confirmed }, money: (amount) => `$${amount}`,
-    runAdminAction: async (_options, action) => action(), renderAdminCalendar() {},
-    setAdminStatus() {},
-    callEdge: async () => {
-      calls += 1;
-      return { donationId: row.id, socialSource: "anshu", socialAssignmentApproved: serverApproved };
-    },
+    runAdminAction: async (_options, action) => action(), renderAdminCalendar() {}, setAdminStatus() {},
+    callEdge: async () => { calls += 1; return { donationId: row.id, socialSource: "anshu", socialAssignmentApproved: true }; },
   });
   vm.runInContext(source, context);
   await context.setOrderSocialSource(row.id, "anshu", {});
   assert.equal(calls, 0);
-  confirmed = true;
-  await assert.rejects(context.setOrderSocialSource(row.id, "anshu", {}), /did not confirm SuperAdmin verification/);
-  assert.equal(context.adminCalendarDonations[0].socialSource, null);
-  serverApproved = true;
+  row.createdAt = "2026-11-10T06:03:00.000Z";
   await context.setOrderSocialSource(row.id, "anshu", {});
+  assert.equal(calls, 1);
   assert.equal(context.adminCalendarDonations[0].socialSource, "anshu");
-  assert.equal(context.adminCalendarDonations[0].socialAssignmentApproved, true);
 });
 
 test("Admin and SuperAdmin tagging stays within each role's completed PayPal orders", async () => {
@@ -284,7 +287,7 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
   assert.match(update, /adminProfile\.role !== "admin" && adminProfile\.role !== "super_admin"/);
   assert.match(update, /socialSource !== "anshu" && socialSource !== "badal"/);
   assert.match(update, /social_source: socialSource,[\s\S]*social_source_manually_assigned: true/);
-  assert.match(update, /social_source_verified_by: adminProfile\.role === "super_admin" \? adminProfile\.userId : null/);
+  assert.match(update, /\.or\(`amount.lt.55,created_at.lt.\$\{SOCIAL_HIGH_VALUE_EXCLUSION_START\}`\)/);
   for (const filter of [
     '.eq("payment_route", paymentRoute)',
     '.eq("visibility_scope", visibilityScope)',
@@ -304,7 +307,8 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
     { id: "super-new", amount: 121, payment_route: "superadmin", visibility_scope: "superadmin_private", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-10T06:03:00.000Z", social_source: null },
     { id: "admin-old", payment_route: "standard", visibility_scope: "public", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-03T18:29:59.999Z", social_source: null },
     { id: "admin-dodo", payment_route: "standard", visibility_scope: "public", payment_method: "dodo", paypal_status: "COMPLETED", created_at: "2026-11-04T00:00:00.000Z", social_source: null },
-    { id: "admin-high", amount: 121, payment_route: "standard", visibility_scope: "public", payment_method: "paypal", paypal_status: "COMPLETED", created_at: "2026-11-10T06:03:00.000Z", social_source: null },
+    { id: "admin-high", amount: 121, payment_route: "standard", visibility_scope: "public", payment_method: "paypal", paypal_status: "COMPLETED", created_at: SOCIAL_HIGH_VALUE_EXCLUSION_START, social_source: null },
+    { id: "super-high", amount: 121, payment_route: "superadmin", visibility_scope: "superadmin_private", payment_method: "paypal", paypal_status: "COMPLETED", created_at: SOCIAL_HIGH_VALUE_EXCLUSION_START, social_source: null },
   ];
   const supabase = { from(table) {
     assert.equal(table, "donations");
@@ -315,6 +319,7 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
       eq(key, value) { filters.push((row) => row[key] === value); return query; },
       gte(key, value) { filters.push((row) => row[key] >= value); return query; },
       lt(key, value) { filters.push((row) => row[key] < value); return query; },
+      or() { filters.push((row) => row.amount < 55 || row.created_at < SOCIAL_HIGH_VALUE_EXCLUSION_START); return query; },
       select() { return query; },
       async maybeSingle() {
         const row = rows.find((item) => filters.every((filter) => filter(item)));
@@ -329,7 +334,7 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
     SOCIAL_PORTAL_START: "2026-11-03T18:30:00.000Z",
     errorResponse: (message, status) => ({ error: message, status }),
     jsonResponse: (value) => ({ ...value, status: 200 }),
-    isSocialAssignmentApproved,
+    isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START,
   });
   assert.equal((await assign({ donationId: "super-new", socialSource: "anshu" }, { role: "admin" })).status, 404);
   assert.equal(rows[1].social_source, null);
@@ -347,8 +352,8 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
   assert.equal(approval.socialAssignmentApproved, true);
   assert.equal(rows[1].social_source, "anshu");
   assert.equal(rows[1].social_source_manually_assigned, true);
-  assert.equal(rows[1].social_source_verified_by, "superadmin-user");
-  assert.ok(Number.isFinite(Date.parse(rows[1].social_source_verified_at)));
+  assert.equal((await assign({ donationId: "super-high", socialSource: "anshu" }, { role: "super_admin", userId: "superadmin-user" })).status, 404);
+  assert.equal(rows[5].social_source, null);
 });
 
 test("portal authentication binds each account to its database source and rejects admins", async () => {

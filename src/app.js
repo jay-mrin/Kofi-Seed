@@ -13,6 +13,7 @@ const MIN_DONATION_AMOUNT = 11;
 const GOAL_SEED_COUNT = 100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
 const SOCIAL_PORTAL_START_ISO = "2026-11-03T18:30:00.000Z";
+const SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO = "2026-11-10T16:00:40.000Z";
 const TOP_BRAND_TITLE = "Sow Your Seed Here";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
@@ -1845,9 +1846,10 @@ async function setOrderSocialSource(donationId, socialSource, button) {
   }
 
   const portalName = socialSource === "anshu" ? "AnshuPortal" : "Badal Portal";
-  if (Math.round(Number(donation.amount) * 100) >= 5500) {
-    if (role !== "super_admin") return;
-    if (!window.confirm(`Have you verified this ${money(donation.amount)} payment? Select OK to confirm verification and assign it to ${portalName}.`)) return;
+  if (Math.round(Number(donation.amount) * 100) >= 5500 &&
+      !(Date.parse(donation.createdAt || "") < Date.parse(SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO))) {
+    setAdminStatus("Orders of $55 or more from 10 November 2026, 21:30:40 IST stay exclusively in SuperAdmin and cannot be assigned to Anshu or Badal.", "error", { persist: true });
+    return;
   }
   const accessToken = getAdminAccessToken();
   await runAdminAction(
@@ -1868,9 +1870,6 @@ async function setOrderSocialSource(donationId, socialSource, button) {
       });
       if (String(payload.donationId) !== String(donationId) || payload.socialSource !== socialSource) {
         throw new Error("The server did not confirm the portal assignment.");
-      }
-      if (Number(donation.amount) >= 55 && payload.socialAssignmentApproved !== true) {
-        throw new Error("The server did not confirm SuperAdmin verification. Reload and verify this order again.");
       }
       if (state.adminProfile?.role === role && getAdminAccessToken() === accessToken) {
         adminCalendarDonations = adminCalendarDonations.map((item) =>
@@ -2453,17 +2452,18 @@ function renderCalendarDetails(context) {
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", getDonationRawValue(donation, "RedeemedBookTitle", ""));
           const isFulfilled = status === "fulfilled";
+          const isSuperAdminOnly = Math.round(amount * 100) >= 5500 &&
+            !(Date.parse(donation.createdAt || "") < Date.parse(SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO));
           const canAssignPortal = context.allowSocialTagging &&
-            (!context.isAdminPortal || Math.round(amount * 100) < 5500) &&
+            !isSuperAdminOnly &&
             donation.paymentMethod === "paypal" && donation.status === "COMPLETED" &&
             donation.paymentRoute === (context.isAdminPortal ? "standard" : "superadmin") &&
             donation.visibilityScope === (context.isAdminPortal ? "public" : "superadmin_private") &&
             Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
-          const needsManualAssignment = Math.round(amount * 100) >= 5500 && donation.socialAssignmentApproved !== true;
-          const currentPortal = !needsManualAssignment && (donation.socialSource === "anshu" || donation.socialSource === "badal")
+          const currentPortal = !isSuperAdminOnly && (donation.socialSource === "anshu" || donation.socialSource === "badal")
             ? donation.socialSource : null;
-          const portalLabel = !canAssignPortal ? "Not eligible"
-            : needsManualAssignment ? "Manual review required"
+          const portalLabel = isSuperAdminOnly ? "SuperAdmin only"
+            : !canAssignPortal ? "Not eligible"
             : currentPortal === "anshu" ? "AnshuPortal"
             : currentPortal === "badal" ? "Badal Portal" : "Unassigned";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
@@ -2500,11 +2500,11 @@ function renderCalendarDetails(context) {
                 ${context.allowSocialTagging ? `<div class="admin-social-tagging" role="group" aria-label="Assign order to social portal">
                   <span>Portal: ${portalLabel}</span>
                   <div class="admin-social-tag-buttons">
-                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>${needsManualAssignment ? "Verify &amp; assign Anshu" : "Anshu"}</button>
-                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>${needsManualAssignment ? "Verify &amp; assign Badal" : "Badal"}</button>
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>Anshu</button>
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>Badal</button>
                   </div>
-                  ${canAssignPortal
-                    ? needsManualAssignment ? "<small>Orders of $55 or more stay private until you verify and assign them.</small>" : ""
+                  ${isSuperAdminOnly ? "<small>This order stays exclusively in SuperAdmin and cannot be assigned to a social portal.</small>" : canAssignPortal
+                    ? ""
                     : "<small>Available for completed PayPal orders from 4 Nov 2026.</small>"}
                 </div>` : ""}
               </div>`}
@@ -3760,7 +3760,7 @@ async function loadSocialTransactions() {
       ? payload.transactions.filter((transaction) => {
         const amountCents = Math.round(Number(transaction.amount) * 100);
         return Number.isFinite(amountCents) && amountCents > 0 &&
-          (amountCents < 5500 || payload.socialAssignmentPolicy === "verified-v2");
+          (amountCents < 5500 || Date.parse(transaction.createdAt || "") < Date.parse(SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO));
       })
       : [];
     renderSocialCalendar();
