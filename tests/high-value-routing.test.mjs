@@ -12,6 +12,7 @@ const socialRules = read("supabase/functions/_shared/social-source.ts")
   .replaceAll("export ", "")
   .replaceAll("value: unknown", "value")
   .replaceAll("amountCents: number", "amountCents")
+  .replaceAll("donation: any", "donation")
   .replaceAll(": SocialSource | null", "");
 const moneyParser = read("supabase/functions/_shared/paypal.ts")
   .match(/export function parseMoneyToCents[\s\S]*?\n\}/)[0]
@@ -86,7 +87,7 @@ test("starting checkout preserves expired attempt history for delayed payment re
 
 for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
   test(`${functionName} enforces the $55 account and assignment boundary on the server`, async () => {
-    for (const amount of [54.99, 55, 55.01, 110]) {
+    for (const amount of [54.99, 55, 55.01, 110, 121]) {
       const { response, writes, paypalOrders } = await checkout(functionName, {
         amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag: "anshu",
       });

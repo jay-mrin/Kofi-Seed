@@ -1,5 +1,6 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireSocialPortal } from "../_shared/supabase.ts";
+import { isSocialAssignmentApproved, SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF } from "../_shared/social-source.ts";
 
 // 4 November 2026, 00:00 Asia/Kolkata. Existing orders stay unchanged.
 const SOCIAL_PORTAL_START = "2026-11-03T18:30:00.000Z";
@@ -20,14 +21,14 @@ Deno.serve(withCors(async (request) => {
     const [year, monthNumber] = month.split("-").map(Number);
     const start = new Date(Date.UTC(year, monthNumber - 1, 1) - IST_OFFSET_MS).toISOString();
     const end = new Date(Date.UTC(year, monthNumber, 1) - IST_OFFSET_MS).toISOString();
-    if (end <= SOCIAL_PORTAL_START) return jsonResponse({ transactions: [] });
+    if (end <= SOCIAL_PORTAL_START) return jsonResponse({ transactions: [], socialAssignmentPolicy: "verified-v2" });
 
     const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];
     for (let offset = 0;; offset += 500) {
       const { data, error } = await supabase.from("donations")
-        .select("display_name, amount, created_at, paypal_payer_email, digital_orders(contact_email)")
+        .select("display_name, amount, created_at, social_source, social_source_manually_assigned, social_source_verified_at, social_source_verified_by, paypal_payer_email, digital_orders(contact_email)")
         .eq("social_source", socialSource)
-        .or("amount.lt.55,social_source_manually_assigned.eq.true")
+        .or(`amount.lt.55,and(social_source_manually_assigned.eq.true,created_at.lt.${SOCIAL_LEGACY_ASSIGNMENTS_CUTOFF}),and(social_source_manually_assigned.eq.true,social_source_verified_at.not.is.null,social_source_verified_by.not.is.null)`)
         .eq("payment_method", "paypal")
         .eq("paypal_status", "COMPLETED")
         .in("payment_route", ["standard", "superadmin"])
@@ -41,6 +42,7 @@ Deno.serve(withCors(async (request) => {
       if (error) throw error;
 
       for (const row of data || []) {
+        if (!isSocialAssignmentApproved(row)) continue;
         const order = Array.isArray(row.digital_orders)
           ? row.digital_orders[0]
           : row.digital_orders;
@@ -54,7 +56,7 @@ Deno.serve(withCors(async (request) => {
       if (!data || data.length < 500) break;
     }
 
-    return jsonResponse({ transactions });
+    return jsonResponse({ transactions, socialAssignmentPolicy: "verified-v2" });
   } catch (error) {
     if (error instanceof Response) return error;
     return errorResponse("Could not load social portal orders.", 500, String(error));

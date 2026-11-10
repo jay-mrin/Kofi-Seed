@@ -6,6 +6,7 @@ import {
   readJson,
 } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
+import { isSocialAssignmentApproved } from "../_shared/social-source.ts";
 
 type UpdateOrderBody = {
   donationId?: string;
@@ -171,19 +172,26 @@ Deno.serve(withCors(async (request) => {
 
         const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
         const visibilityScope = adminProfile.role === "admin" ? "public" : "superadmin_private";
-        const { data, error } = await supabase.from("donations")
-          .update({ social_source: socialSource, social_source_manually_assigned: true })
+        let assignment = supabase.from("donations")
+          .update({
+            social_source: socialSource,
+            social_source_manually_assigned: true,
+            social_source_verified_at: adminProfile.role === "super_admin" ? new Date().toISOString() : null,
+            social_source_verified_by: adminProfile.role === "super_admin" ? adminProfile.userId : null,
+          })
           .eq("id", donationId)
           .eq("payment_route", paymentRoute)
           .eq("visibility_scope", visibilityScope)
           .eq("payment_method", "paypal")
           .eq("paypal_status", "COMPLETED")
-          .gte("created_at", SOCIAL_PORTAL_START)
-          .select("id, social_source")
+          .gte("created_at", SOCIAL_PORTAL_START);
+        if (adminProfile.role === "admin") assignment = assignment.lt("amount", 55);
+        const { data, error } = await assignment
+          .select("id, amount, created_at, social_source, social_source_manually_assigned, social_source_verified_at, social_source_verified_by")
           .maybeSingle();
         if (error) throw error;
         if (!data) return errorResponse("This order cannot be assigned to a social portal.", 404);
-        return jsonResponse({ donationId: data.id, socialSource: data.social_source });
+        return jsonResponse({ donationId: data.id, socialSource: data.social_source, socialAssignmentApproved: isSocialAssignmentApproved(data) });
       }
       if (body.purgeAll) {
         if (adminProfile.role !== "super_admin") {
@@ -477,6 +485,8 @@ Deno.serve(withCors(async (request) => {
           "visibility_scope",
           "social_source",
           "social_source_manually_assigned",
+          "social_source_verified_at",
+          "social_source_verified_by",
           "fortune_message",
           "raw_payment",
           "created_at",
@@ -522,6 +532,7 @@ Deno.serve(withCors(async (request) => {
         visibilityScope: donation.visibility_scope || "public",
         socialSource: donation.social_source || null,
         socialSourceManuallyAssigned: donation.social_source_manually_assigned === true,
+        socialAssignmentApproved: isSocialAssignmentApproved(donation),
         fortuneMessage: donation.fortune_message,
         rawPayment: donation.raw_payment,
         digitalOrder: mapDigitalOrder(donation.digital_orders),

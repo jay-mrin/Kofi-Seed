@@ -249,6 +249,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   assert.match(details.innerHTML, /Portal: Manual review required/);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
   donation.socialSourceManuallyAssigned = true;
+  donation.socialAssignmentApproved = true;
   render(context);
   assert.match(details.innerHTML, /Portal: AnshuPortal/);
   assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
