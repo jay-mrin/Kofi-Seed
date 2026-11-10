@@ -3,6 +3,23 @@ import { requireAdmin } from "../_shared/supabase.ts";
 
 type PaymentRoute = "standard" | "superadmin";
 
+function getPaymentFailureReason(attempt: any) {
+  if (attempt.status === "confirmed") return null;
+  if (typeof attempt.failure_reason === "string" && attempt.failure_reason.trim()) {
+    return attempt.failure_reason.trim().slice(0, 240);
+  }
+  // Older attempts may have a provider response without failure_reason populated.
+  // Only inspect projected technical codes; never return the raw payment payload.
+  for (const value of [attempt.capture_error_issue, attempt.capture_webhook_reason, attempt.capture_error_name]) {
+    if (typeof value === "string" && /^[A-Z0-9_]{3,80}$/.test(value)) return value;
+  }
+  const captureStatus = String(attempt.capture_webhook_status || "").toUpperCase();
+  if (["DECLINED", "DENIED", "FAILED"].includes(captureStatus)) {
+    return `PAYMENT_CAPTURE_${captureStatus}`;
+  }
+  return attempt.status === "failed" ? "NO_PROVIDER_REASON_RECORDED" : null;
+}
+
 function createEmptyAnalytics(
   generatedAt: string,
   resetAt: string,
@@ -112,7 +129,13 @@ Deno.serve(withCors(async (request) => {
 
     const attemptFields =
       "id, display_name, contact_email, amount, currency, payment_route, status, created_at, confirmed_at" +
-      (paymentRoute === "superadmin" ? ", failure_reason" : "");
+      (paymentRoute === "superadmin" ? [
+        ", failure_reason",
+        "capture_error_issue:raw_payment->lastCaptureError->details->0->>issue",
+        "capture_error_name:raw_payment->lastCaptureError->>name",
+        "capture_webhook_reason:raw_payment->lastCaptureWebhook->resource->status_details->>reason",
+        "capture_webhook_status:raw_payment->lastCaptureWebhook->resource->>status",
+      ].join(",") : "");
     const { data: attemptData, error: attemptError } = await supabase
       .from("payment_attempts")
       .select(attemptFields)
@@ -149,7 +172,7 @@ Deno.serve(withCors(async (request) => {
           ? "failed"
           : "not_completed",
         ...(paymentRoute === "superadmin" && attempt.status !== "confirmed"
-          ? { failureReason: attempt.failure_reason || null }
+          ? { failureReason: getPaymentFailureReason(attempt) }
           : {}),
         startedAt: attempt.created_at,
         completedAt: attempt.confirmed_at,

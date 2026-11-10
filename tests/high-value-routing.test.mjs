@@ -20,6 +20,7 @@ const moneyParser = read("supabase/functions/_shared/paypal.ts")
 async function checkout(functionName, body) {
   const writes = [];
   const paypalOrders = [];
+  const deletions = [];
   let handler;
   const supabase = {
     from(table) {
@@ -30,7 +31,7 @@ async function checkout(functionName, body) {
         in() { return query; },
         lt() { return query; },
         limit() { return query; },
-        delete() { return query; },
+        delete() { deletions.push(table); return query; },
         insert(value) { inserted = value; writes.push({ table, value }); return query; },
         async maybeSingle() {
           return { data: table === "site_settings"
@@ -72,8 +73,16 @@ async function checkout(functionName, body) {
     createPayPalWeeklyPlan: async () => { throw new Error("Unexpected plan creation"); },
   });
   vm.runInContext(`${socialRules}\n${moneyParser}\n${source}`, context);
-  return { response: await handler({ method: "POST" }), writes, paypalOrders };
+  return { response: await handler({ method: "POST" }), writes, paypalOrders, deletions };
 }
+
+test("starting checkout preserves expired attempt history for delayed payment recovery", async () => {
+  const { response, deletions } = await checkout("create-paypal-order", {
+    amount: 11, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard",
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(deletions, []);
+});
 
 for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
   test(`${functionName} enforces the $55 account and assignment boundary on the server`, async () => {

@@ -81,7 +81,7 @@ test("declined PayPal instruments remain retryable across API, browser, and webh
   assert.match(capture, /captures\.at\(-1\)/);
   assert.match(app, /onApprove: async \(data\)/);
   assert.match(app, /error\?\.code === "INSTRUMENT_DECLINED"/);
-  assert.match(app, /INSTRUMENT_DECLINED[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
+  assert.match(app, /INSTRUMENT_DECLINED[\s\S]*return actions\.restart\(\)/);
   assert.match(webhook, /eventType !== "PAYMENT\.CAPTURE\.COMPLETED"/);
   assert.match(webhook, /lastCaptureWebhook: event/);
   assert.match(webhook, /resource\.status_details\?\.reason/);
@@ -130,8 +130,8 @@ test("checkout analytics keep Admin views scoped while isolating payment records
   assert.doesNotMatch(analytics, /oppositeRoute|oppositeCompleted/);
   assert.match(analytics, /\.from\("checkout_analytics_state"\)/);
   assert.match(analytics, /contact_email/);
-  assert.match(analytics, /paymentRoute === "superadmin" \? ", failure_reason" : ""/);
-  assert.match(analytics, /paymentRoute === "superadmin" && attempt\.status !== "confirmed"[\s\S]*failureReason: attempt\.failure_reason/);
+  assert.match(analytics, /paymentRoute === "superadmin" \? \[[\s\S]*", failure_reason"[\s\S]*\]\.join\(","\) : ""/);
+  assert.match(analytics, /paymentRoute === "superadmin" && attempt\.status !== "confirmed"[\s\S]*failureReason: getPaymentFailureReason\(attempt\)/);
   assert.match(app, /isSuperAdmin && !isCompleted[\s\S]*admin-payment-attempt-reason/);
   assert.match(analytics, /paymentStartsLast24h: attempts\.length/);
   assert.match(analytics, /Only SuperAdmin can subtract page views/);

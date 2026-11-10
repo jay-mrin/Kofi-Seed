@@ -94,14 +94,8 @@ Deno.serve(withCors(async (request) => {
       itemName: ritual?.itemName,
     });
 
-    const now = new Date().toISOString();
-    const { error: cleanupError } = await supabase
-      .from("payment_attempts")
-      .delete()
-      .in("status", ["started", "failed"])
-      .lt("expires_at", now);
-    if (cleanupError) throw cleanupError;
-
+    // Keep expired attempts so delayed completed payments can still be verified
+    // from their pinned amount, route and customer details.
     const { error: attemptError } = await supabase.from("payment_attempts")
       .insert({
         display_name: displayName,

@@ -2303,6 +2303,7 @@ function formatPaymentFailureReason(reason) {
     MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: "PayPal's payment attempt limit was reached.",
     REDIRECT_PAYER_FOR_ALTERNATE_FUNDING: "PayPal requested a different payment method.",
     PAYPAL_CAPTURE_ERROR: "PayPal could not process the payment capture.",
+    NO_PROVIDER_REASON_RECORDED: "This attempt was marked failed, but no provider error code was saved. Its exact cause is unknown.",
   };
   const description = Object.hasOwn(descriptions, reason) ? descriptions[reason] : null;
   return description ? `${description} (${reason})` : reason;
@@ -2999,7 +3000,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
       await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
       return payload.id;
     },
-    onApprove: async (data) => {
+    onApprove: async (data, actions) => {
       setPaymentStatus("Confirming your custom order with PayPal...");
       try {
         const payload = await callEdge("capture-paypal-order", {
@@ -3012,8 +3013,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
             "That payment method was declined. Please choose another PayPal payment method.",
             true,
           );
-          closeInlinePayPalCheckout();
-          openPaymentFailure("paypal");
+          if (typeof actions?.restart === "function") return actions.restart();
           return;
         }
 
@@ -4238,13 +4238,19 @@ document.querySelector("#ritualContinueButton")?.addEventListener("click", async
           });
           return order.id;
         },
-        onApprove: async (data) => {
+        onApprove: async (data, actions) => {
           try {
             status.textContent = "Confirming your ritual payment…";
             const payload = await callEdge("capture-paypal-order", { body: { orderId: data.orderID } });
             document.querySelector("#ritualPaymentDialog").close();
             await finishVerifiedDonation(payload);
           } catch (error) {
+            if (error?.code === "INSTRUMENT_DECLINED") {
+              status.textContent = "That payment method was declined. Please choose another PayPal payment method.";
+              status.classList.add("is-error");
+              if (typeof actions?.restart === "function") return actions.restart();
+              return;
+            }
             status.textContent = error?.message || "Ritual payment could not be confirmed. Please try again.";
             status.classList.add("is-error");
           }
