@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=206" />
+    <link rel="stylesheet" href="src/styles.css?v=207" />
   </head>
   <body class="app-loading">
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
@@ -356,14 +356,12 @@
                   </div>
                   <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
                 </div>
-                <label class="compact-amount-field">
-                  <span>Total Amount</span>
-                  <span class="paypal-total-value">
-                    <span aria-hidden="true">$</span>
-                    <input id="amountInput" type="number" min="7" step="0.01" value="7.00" inputmode="decimal" aria-label="Total amount in US dollars" aria-describedby="amountError" />
-                  </span>
+                <div class="compact-amount-field" role="group" aria-labelledby="paypalTotalAmountLabel">
+                  <span id="paypalTotalAmountLabel">Total Amount</span>
+                  <output class="paypal-total-value" id="paypalTotalAmount" for="amountInput" aria-live="polite" aria-atomic="true">$11.00</output>
+                  <input id="amountInput" type="hidden" value="11.00" />
                   <small id="paypalTotalSeeds">(1 Seed)</small>
-                </label>
+                </div>
                 <div class="seed-quick-picks" role="group" aria-label="Quick seed quantity choices">
                   <button class="seed-quick-pick" type="button" data-seed-count="3" aria-label="Select 3 seeds" aria-pressed="false"><strong>3 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
                   <button class="seed-quick-pick" type="button" data-seed-count="5" aria-label="Select 5 seeds" aria-pressed="false"><strong>5 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
@@ -882,7 +880,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=170" defer></script>
+    <script src="src/app.js?v=171" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

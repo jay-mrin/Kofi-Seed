@@ -243,6 +243,7 @@ const elements = {
   adminPaymentsCompletedLabel: document.querySelector("#adminPaymentsCompletedLabel"),
   resetAdminAnalyticsButton: document.querySelector("#resetAdminAnalyticsButton"),
   amountError: document.querySelector("#amountError"),
+  paypalTotalAmount: document.querySelector("#paypalTotalAmount"),
   amountInput: document.querySelector("#amountInput"),
   paypalTotalSeeds: document.querySelector("#paypalTotalSeeds"),
   weeklySeedToggle: document.querySelector("#weeklySeedToggle"),
@@ -2656,7 +2657,9 @@ function updateCheckoutLabel() {
   elements.checkoutLabel.textContent = "Sow Your Spiritual Seed Now";
   elements.checkoutButton.setAttribute("aria-label", `Support this ministry with ${money(amount)}`);
   elements.seedPriceLabel.textContent = String(Math.max(Math.round(seedUnits), 0));
+  elements.paypalTotalAmount.textContent = `$${formatFixedAmount(amount)}`;
   elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
+  if (elements.decreaseSeedButton) elements.decreaseSeedButton.disabled = seedUnits <= 1;
   elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
     button.setAttribute("aria-pressed", String(Math.abs(seedUnits - Number(button.dataset.seedCount)) < 0.001));
   });
@@ -4027,15 +4030,6 @@ function renderApp() {
   updateCheckoutLabel();
 }
 
-elements.amountInput.addEventListener("input", () => {
-  elements.amountError.textContent = "";
-  updateCheckoutLabel();
-});
-elements.amountInput.addEventListener("blur", () => {
-  if (getAmount() < MIN_DONATION_AMOUNT) {
-    setAmount(MIN_DONATION_AMOUNT);
-  }
-});
 elements.decreaseSeedButton?.addEventListener("click", () => {
   stepSeedAmount(-1);
 });
