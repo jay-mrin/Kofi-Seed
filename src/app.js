@@ -14,7 +14,7 @@ const GOAL_SEED_COUNT = 100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
 const SOCIAL_PORTAL_START_ISO = "2026-11-03T18:30:00.000Z";
 const SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO = "2026-11-10T16:00:40.000Z";
-const TOP_BRAND_TITLE = "Sow Your Seed Here";
+const TOP_BRAND_TITLE = "Seed Garden";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
   "Choose a Seed Writing from the Seed Garden 🌱💗",
@@ -306,6 +306,7 @@ const elements = {
   seedCommentsList: document.querySelector("#seedCommentsList"),
   seedCommentsPanel: document.querySelector("#seedCommentsPanel"),
   seedPriceLabel: document.querySelector("#seedPriceLabel"),
+  seedQuantityNoun: document.querySelector("#seedQuantityNoun"),
   closePaymentFailureButton: document.querySelector("#closePaymentFailureButton"),
   sectionViews: document.querySelectorAll("[data-section-view]"),
   showMoreButtons: document.querySelectorAll("[data-toggle-target]"),
@@ -2657,11 +2658,14 @@ function updateCheckoutLabel() {
   elements.checkoutLabel.textContent = "Sow Your Spiritual Seed Now";
   elements.checkoutButton.setAttribute("aria-label", `Support this ministry with ${money(amount)}`);
   elements.seedPriceLabel.textContent = String(Math.max(Math.round(seedUnits), 0));
+  elements.seedQuantityNoun.textContent = Math.round(seedUnits) === 1 ? "Seed" : "Seeds";
   elements.paypalTotalAmount.textContent = `$${formatFixedAmount(amount)}`;
   elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
   if (elements.decreaseSeedButton) elements.decreaseSeedButton.disabled = seedUnits <= 1;
   elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
     button.setAttribute("aria-pressed", String(Math.abs(seedUnits - Number(button.dataset.seedCount)) < 0.001));
+    const priceLabel = button.querySelector("[data-seed-option-price]");
+    if (priceLabel) priceLabel.textContent = money(Number(button.dataset.seedCount) * state.settings.seedPrice);
   });
 }
 

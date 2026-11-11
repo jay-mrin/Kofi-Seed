@@ -7,7 +7,7 @@
       name="description"
       content="Support Sow Your Seed Here and help faith-filled writing reach more hearts."
     />
-    <title>Sow Your Seed Here | Support the Ministry</title>
+    <title>Seed Garden | Support the Ministry</title>
     <link rel="icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="shortcut icon" type="image/svg+xml" href="assets/seed-favicon.svg?v=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,12 +15,24 @@
     <link rel="preconnect" href="https://www.paypal.com" />
     <link rel="preconnect" href="https://www.paypalobjects.com" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=207" />
+    <link rel="stylesheet" href="src/styles.css?v=208" />
   </head>
-  <body class="app-loading">
+  <body class="app-loading seed-garden-design">
+    <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
+      <defs>
+        <g id="seedArtSoil"><path d="M10 109c8-1 10-5 19-5 5-8 11-6 17-8 4-6 13-5 18-2 8-1 14 3 19 5 13-1 13 5 27 10Z" fill="#805330"/><path d="M28 105c13-3 22-5 33-6 13 0 20 4 31 6" fill="none" stroke="#a07848" stroke-width="1.4"/></g>
+        <path id="seedArtLeafLeft" d="M0 0C-22-2-31-17-33-32-13-31-1-21 0 0Z" fill="#9f8727"/>
+        <path id="seedArtLeafRight" d="M0 0C3-20 15-30 34-32 32-13 19-2 0 0Z" fill="#81852a"/>
+        <symbol id="seedArt1" viewBox="0 0 120 120"><use href="#seedArtSoil"/><path d="M59 99c0-16-2-23-4-32m4 21c3-11 5-14 10-20" fill="none" stroke="#897132" stroke-width="2.2"/><use href="#seedArtLeafLeft" transform="translate(56 76) scale(.65)"/><use href="#seedArtLeafRight" transform="translate(61 78) scale(.68)"/></symbol>
+        <symbol id="seedArt3" viewBox="0 0 120 120"><use href="#seedArtSoil"/><path d="M59 100c3-25 0-42-3-63m5 46 19-20m-21 5-16-16" fill="none" stroke="#857138" stroke-width="2.4"/><use href="#seedArtLeafLeft" transform="translate(59 64) scale(.8)"/><use href="#seedArtLeafRight" transform="translate(59 47) scale(.9)"/><use href="#seedArtLeafRight" transform="translate(65 85) scale(.65)"/></symbol>
+        <symbol id="seedArt5" viewBox="0 0 120 120"><use href="#seedArtSoil"/><path d="M60 100c2-37 1-56-1-80m1 61L37 60m24 9 21-24" fill="none" stroke="#807136" stroke-width="2.5"/><use href="#seedArtLeafLeft" transform="translate(60 80) scale(.93)"/><use href="#seedArtLeafRight" transform="translate(61 68) scale(.88)"/><use href="#seedArtLeafLeft" transform="translate(58 53) scale(.82)"/><use href="#seedArtLeafRight" transform="translate(59 34) scale(.85)"/></symbol>
+        <symbol id="seedArt11" viewBox="0 0 120 120"><use href="#seedArtSoil"/><path d="M59 100c6-39 3-62 2-83m-1 69L32 61m31 8 25-24m-27 9L42 30" fill="none" stroke="#7c6c32" stroke-width="2.8"/><use href="#seedArtLeafLeft" transform="translate(59 88) scale(1.08)"/><use href="#seedArtLeafRight" transform="translate(62 78) scale(1.05)"/><use href="#seedArtLeafLeft" transform="translate(62 61) scale(.98)"/><use href="#seedArtLeafRight" transform="translate(64 48) scale(.94)"/><use href="#seedArtLeafLeft" transform="translate(60 38) scale(.78)"/><use href="#seedArtLeafRight" transform="translate(62 24) scale(.7)"/></symbol>
+        <symbol id="seedLeafMark" viewBox="0 0 48 40"><path d="M24 36c0-15-7-27-20-30 0 16 7 23 20 25M24 36C24 18 34 9 45 5c-1 16-8 24-21 27" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 28C10 26 6 19 5 8c10 5 14 11 16 20m6 0c2-9 7-16 16-21-2 13-6 18-16 21" fill="currentColor"/></symbol>
+      </defs>
+    </svg>
     <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Loading Sow Your Seed Here">
       <div class="app-loader-card">
         <div class="app-loader-seed" aria-hidden="true">🌱</div>
@@ -34,7 +46,7 @@
             <path d="M10 2h4v8h7v4h-7v12h-4V14H3v-4h7z" />
           </svg>
         </span>
-        <span class="brand-title" id="brandTitle">Sow Your Seed Here</span>
+        <span class="brand-title" id="brandTitle">Seed Garden</span><svg class="seed-brand-leaf" viewBox="0 0 48 40" aria-hidden="true"><use href="#seedLeafMark" /></svg>
       </a>
       <button class="menu-button" id="adminMenuButton" type="button" aria-label="Open portal login" aria-controls="adminLoginDialog" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -343,17 +355,46 @@
             </dialog>
           </form>
         </section>
-        <section class="donation-card minimal-offering" id="support" aria-label="Seed checkout">
-            <div class="checkout-card-heading">
-              <h2 class="seed-checkout-title">Buy a Seed to Sow for the Love You’ve Been Waiting For💓💕</h2>
+        <section class="donation-card minimal-offering seed-garden-checkout" id="support" aria-labelledby="seedGardenTitle">
+            <div class="seed-garden-hero">
+              <div class="seed-hero-sun" aria-hidden="true"></div>
+              <svg class="seed-hero-hills" viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true"><path d="M0 150 180 112 290 145 470 80 620 133 780 90 1000 140V180H0Z" fill="#ecc8d4"/><path d="M0 155 210 145 390 160 600 119 810 148 1000 122V180H0Z" fill="#f7dfe7"/></svg>
+              <img class="seed-garden-jesus" src="assets/seed-garden/jesus-welcome.png" width="733" height="1100" alt="Jesus looking upward and extending an open hand in welcome" fetchpriority="high" decoding="async" />
+              <div class="seed-garden-message">
+                <h2 class="seed-checkout-title" id="seedGardenTitle">Sow a Seed for the Love You’ve Been Waiting For</h2>
+                <div class="seed-garden-ornament" aria-hidden="true"><span></span><svg viewBox="0 0 48 40"><use href="#seedLeafMark" /></svg><span></span></div>
+                <p>Your seed helps keep these sacred messages and guidance flowing<br class="seed-copy-break" /> to you and thousands around the world.</p>
+              </div>
             </div>
             <form class="minimal-offering-form" id="supportForm" novalidate>
+              <h3 class="seed-choice-heading"><svg viewBox="0 0 48 40" aria-hidden="true"><use href="#seedLeafMark" /></svg><span>Choose Your Seed</span><svg viewBox="0 0 48 40" aria-hidden="true"><use href="#seedLeafMark" /></svg></h3>
               <div class="seed-quantity-row" aria-label="Seed quantity and amount">
+                <div class="seed-quick-picks" role="group" aria-label="Quick seed quantity choices">
+                  <button class="seed-quick-pick seed-option-card" type="button" data-seed-count="1" aria-label="Select 1 seed" aria-pressed="true">
+                    <svg class="seed-option-art" viewBox="0 0 120 120" aria-hidden="true"><use href="#seedArt1" /></svg>
+                    <strong class="seed-option-name">1 Seed</strong>
+                    <span class="seed-option-price" data-seed-option-price>$11</span>
+                  </button>
+                  <button class="seed-quick-pick seed-option-card" type="button" data-seed-count="3" aria-label="Select 3 seeds" aria-pressed="false">
+                    <svg class="seed-option-art" viewBox="0 0 120 120" aria-hidden="true"><use href="#seedArt3" /></svg>
+                    <strong class="seed-option-name">3 Seeds</strong>
+                    <span class="seed-option-price" data-seed-option-price>$33</span>
+                  </button>
+                  <button class="seed-quick-pick seed-option-card" type="button" data-seed-count="5" aria-label="Select 5 seeds" aria-pressed="false">
+                    <svg class="seed-option-art" viewBox="0 0 120 120" aria-hidden="true"><use href="#seedArt5" /></svg>
+                    <strong class="seed-option-name">5 Seeds</strong>
+                    <span class="seed-option-price" data-seed-option-price>$55</span>
+                  </button>
+                  <button class="seed-quick-pick seed-option-card" type="button" data-seed-count="11" aria-label="Select 11 seeds" aria-pressed="false">
+                    <svg class="seed-option-art" viewBox="0 0 120 120" aria-hidden="true"><use href="#seedArt11" /></svg>
+                    <strong class="seed-option-name">11 Seeds</strong>
+                    <span class="seed-option-price" data-seed-option-price>$121</span>
+                  </button>
+                </div>
+                <div class="seed-quantity-divider"><span>Or Sow a Custom Seed</span></div>
                 <div class="paypal-quantity-control">
                   <button class="seed-stepper-button" id="decreaseSeedButton" type="button" aria-label="Decrease seed quantity">−</button>
-                  <div class="seed-price">
-                    <strong><span id="seedPriceLabel">1</span> <span>🌱 Seeds</span></strong>
-                  </div>
+                  <div class="seed-price"><strong><span id="seedPriceLabel">1</span> <span id="seedQuantityNoun">Seed</span></strong></div>
                   <button class="seed-stepper-button seed-stepper-button-plus" id="increaseSeedButton" type="button" aria-label="Increase seed quantity">+</button>
                 </div>
                 <div class="compact-amount-field" role="group" aria-labelledby="paypalTotalAmountLabel">
@@ -361,12 +402,6 @@
                   <output class="paypal-total-value" id="paypalTotalAmount" for="amountInput" aria-live="polite" aria-atomic="true">$11.00</output>
                   <input id="amountInput" type="hidden" value="11.00" />
                   <small id="paypalTotalSeeds">(1 Seed)</small>
-                </div>
-                <div class="seed-quick-picks" role="group" aria-label="Quick seed quantity choices">
-                  <button class="seed-quick-pick" type="button" data-seed-count="3" aria-label="Select 3 seeds" aria-pressed="false"><strong>3 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
-                  <button class="seed-quick-pick" type="button" data-seed-count="5" aria-label="Select 5 seeds" aria-pressed="false"><strong>5 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
-                  <button class="seed-quick-pick" type="button" data-seed-count="7" aria-label="Select 7 seeds" aria-pressed="false"><strong>7 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
-                  <button class="seed-quick-pick" type="button" data-seed-count="11" aria-label="Select 11 seeds" aria-pressed="false"><strong>11 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
                 </div>
                 <label class="field minimal-text-field paypal-name-field">
                   <span class="visually-hidden">Display name</span>
@@ -376,8 +411,15 @@
               </div>
               <small id="amountError" class="error-message compact-amount-error"></small>
               <button class="button button-primary checkout-button" id="checkoutButton" type="submit" aria-haspopup="dialog" aria-expanded="false" aria-controls="paypalPaymentDialog">
+                <svg class="seed-checkout-leaf" viewBox="0 0 48 40" aria-hidden="true"><use href="#seedLeafMark" /></svg>
                 <span id="checkoutLabel">Sow Your Spiritual Seed Now</span>
+                <svg class="seed-checkout-arrow" viewBox="0 0 32 24" aria-hidden="true"><path d="M2 12h27m-8-8 8 8-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </button>
+              <div class="seed-trust-strip" aria-label="Support with confidence">
+                <div><svg viewBox="0 0 32 36" aria-hidden="true"><rect x="6" y="15" width="21" height="18" rx="4"/><path d="M11 15V9a6 6 0 0 1 12 0v6"/></svg><span>Secure &amp; Private<br />Payment</span></div>
+                <div><svg viewBox="0 0 32 36" aria-hidden="true"><path d="m18 2-13 19h11l-2 13 14-21H17Z"/></svg><span>Instant &amp;<br />Easy Support</span></div>
+                <div><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 31 5 18C-5 6 10-1 18 9 26-1 41 6 31 18Z"/></svg><span>A Real Impact<br />on This Work</span></div>
+              </div>
               <dialog class="seed-payment-dialog" id="paypalPaymentDialog" aria-labelledby="paypalPaymentTitle">
                 <div class="seed-payment-dialog-card">
                   <div class="seed-payment-dialog-heading">
@@ -880,7 +922,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=171" defer></script>
+    <script src="src/app.js?v=172" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
