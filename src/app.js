@@ -2664,8 +2664,6 @@ function updateCheckoutLabel() {
   if (elements.decreaseSeedButton) elements.decreaseSeedButton.disabled = seedUnits <= 1;
   elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
     button.setAttribute("aria-pressed", String(Math.abs(seedUnits - Number(button.dataset.seedCount)) < 0.001));
-    const priceLabel = button.querySelector("[data-seed-option-price]");
-    if (priceLabel) priceLabel.textContent = money(Number(button.dataset.seedCount) * state.settings.seedPrice);
   });
 }
 
