@@ -27,6 +27,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.equal(context.readSocialSourceTag(), "anshu");
   window.location.pathname = "/seed";
   assert.equal(context.readSocialSourceTag(), "badal");
+  window.location.pathname = "/garden";
+  assert.equal(context.readSocialSourceTag(), "rohit");
+  window.location.pathname = "/garden/";
+  assert.equal(context.readSocialSourceTag(), "rohit");
   window.location.pathname = "/";
   assert.equal(context.readSocialSourceTag(), null);
   window.location.search = "?campaign=unknown";
@@ -35,10 +39,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.doesNotMatch(source, /sessionStorage|localStorage/);
   const routing = JSON.parse(read("vercel.json"));
   assert.deepEqual(routing.rewrites.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed", "/index.html"], ["/seed", "/index.html"],
+    ["/sowseed", "/index.html"], ["/seed", "/index.html"], ["/garden", "/index.html"],
   ]);
   assert.deepEqual(routing.redirects.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"],
+    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"], ["/garden/", "/garden"],
   ]);
   assert.equal(new URL("src/app.js", "https://example.invalid/sowseed").pathname, "/src/app.js");
 });
@@ -83,7 +87,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
     handleOptions: () => null,
     requireSocialPortal: async (request) => {
       const bearer = request.headers.get("Authorization");
-      if (bearer !== "Bearer anshu" && bearer !== "Bearer badal") {
+      if (!["Bearer anshu", "Bearer badal", "Bearer rohit"].includes(bearer)) {
         throw new globalThis.Response("Forbidden", { status: 403 });
       }
       return { supabase, socialSource: bearer.slice(7) };
@@ -237,6 +241,9 @@ test("the frontend preserves earlier high amounts but rejects future high amount
     await context.loadSocialTransactions();
     assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low", "Earlier"]);
   }
+  context.state.adminProfile.socialSource = "rohit";
+  await context.loadSocialTransactions();
+  assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low"]);
 });
 
 test("the correction adds verification evidence without rewriting existing orders", () => {
@@ -354,6 +361,44 @@ test("Admin and SuperAdmin tagging stays within each role's completed PayPal ord
   assert.equal(rows[1].social_source_manually_assigned, true);
   assert.equal((await assign({ donationId: "super-high", socialSource: "anshu" }, { role: "super_admin", userId: "superadmin-user" })).status, 404);
   assert.equal(rows[5].social_source, null);
+  assert.equal((await assign({ donationId: "admin-new", socialSource: "rohit" }, { role: "admin" })).status, 200);
+  assert.equal(rows[0].social_source, "rohit");
+  assert.equal((await assign({ donationId: "super-new", socialSource: "rohit" }, { role: "super_admin" })).status, 404);
+  assert.equal(rows[1].social_source, "anshu");
+  assert.equal((await assign({ donationId: "super-high", socialSource: "rohit" }, { role: "super_admin" })).status, 404);
+});
+
+test("Rohit sees only his successful sub-$55 PayPal orders and no other portal records", async () => {
+  const base = {
+    social_source: "rohit", amount: 54.99, created_at: "2026-11-12T10:00:00.000Z",
+    paypal_payer_email: "customer@example.invalid", payment_method: "paypal", paypal_status: "COMPLETED",
+    payment_route: "superadmin", visibility_scope: "superadmin_private",
+  };
+  const rows = [
+    { ...base, display_name: "RohitLow" },
+    { ...base, display_name: "AdminLow", payment_route: "standard", visibility_scope: "public" },
+    { ...base, display_name: "Boundary", amount: 55 },
+    { ...base, display_name: "High", amount: 121, social_source_manually_assigned: true },
+    { ...base, display_name: "EarlierHigh", amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
+    { ...base, display_name: "Anshu", social_source: "anshu" },
+    { ...base, display_name: "Badal", social_source: "badal" },
+    { ...base, display_name: "Untagged", social_source: null },
+    { ...base, display_name: "Failed", paypal_status: "FAILED" },
+  ];
+  const result = await readPortalMonth(rows, "rohit");
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.transactions.map((row) => row.name), ["RohitLow", "AdminLow"]);
+  for (const row of result.body.transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
+  assert.equal(isSocialAssignmentApproved(rows[4]), false);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Anshu"]);
+  assert.deepEqual((await readPortalMonth(rows, "badal")).body.transactions.map((row) => row.name), ["Badal"]);
+});
+
+test("Rohit's migration extends source constraints without modifying order history", () => {
+  const sql = read("supabase/migrations/202611120001_rohit_social_portal.sql");
+  assert.match(sql, /social_source is distinct from 'rohit' or amount < 55/);
+  assert.doesNotMatch(sql, /(?:update|delete from|truncate) public\./i);
+  assert.doesNotMatch(sql, /insert into public\.admin_profiles/i);
 });
 
 test("portal authentication binds each account to its database source and rejects admins", async () => {
@@ -370,6 +415,7 @@ test("portal authentication binds each account to its database source and reject
   const users = {
     anshu: { id: "user-a", email: "anshu@example.invalid" },
     badal: { id: "user-b", email: "badal@example.invalid" },
+    rohit: { id: "user-r", email: "rohit@example.invalid" },
     admin: { id: "user-admin", email: "admin@example.invalid" },
     standard: { id: "user-standard", email: "standard@example.invalid" },
     unknown: { id: "user-unknown", email: "unknown@example.invalid" },
@@ -382,6 +428,7 @@ test("portal authentication binds each account to its database source and reject
     social_portal_profiles: [
       { user_id: "user-a", email: users.anshu.email, display_name: "AnshuPortal", social_source: "anshu" },
       { user_id: "user-b", email: users.badal.email, display_name: "Badal Portal", social_source: "badal" },
+      { user_id: "user-r", email: users.rohit.email, display_name: "Rohit Portal", social_source: "rohit" },
     ],
   };
   const supabase = {
@@ -402,6 +449,7 @@ test("portal authentication binds each account to its database source and reject
   const request = (token) => ({ headers: new globalThis.Headers({ Authorization: `Bearer ${token}` }) });
   assert.equal((await context.requireSocialPortal(request("anshu"))).socialSource, "anshu");
   assert.equal((await context.requireSocialPortal(request("badal"))).socialSource, "badal");
+  assert.equal((await context.requireSocialPortal(request("rohit"))).socialSource, "rohit");
   await assert.rejects(context.requireSocialPortal(request("admin")), (error) => error.status === 403);
   await assert.rejects(context.getPortalProfile(request("standard")), (error) => error.status === 403);
   await assert.rejects(context.requireSocialPortal(request("unknown")), (error) => error.status === 403);

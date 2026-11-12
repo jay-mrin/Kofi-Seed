@@ -87,6 +87,10 @@ Verified payments create a digital service order for personalised writing. The r
 
 ## 5. Staff portal behavior
 
+**12 November 2026 update — Rohit Portal:** `/garden` attributes PayPal checkouts below $55 to Rohit. The `rohit@gmail.com` Auth account uses a separate `social_portal_profiles` entry with source `rohit`, with no Admin privileges. Its calendar shows only its own successful PayPal orders' names, amounts, emails, and order dates. Orders of exactly $55 or more use SuperAdmin and cannot appear in Rohit Portal, including through manual assignment or older-order exceptions. Anshu and Badal behavior and existing order records are preserved. Deployment requires migration `202611120001_rohit_social_portal.sql`, updated Edge Functions and frontend routing, and private Auth/profile provisioning; no password belongs in repository files.
+
+Rohit's production migration includes additive audit columns and future-write guards because the older `202611100001`–`202611100003` data migrations remain unapplied. Historical source tags are preserved; server and frontend filters enforce the high-value exclusion. See the rollout safeguard in `Strictinstructions.md` before any later database push.
+
 The portal is opened from the header and requires a signed in Supabase user with a supported role.
 
 - **Admin:** order calendar, order details, fulfillment action, proof PDF download, seed price, Blessing Wall visibility, and Admin checkout analytics. The calendar retains older Admin PayPal orders alongside Admin Dodo orders.

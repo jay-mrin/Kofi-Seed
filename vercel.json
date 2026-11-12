@@ -1,10 +1,12 @@
 {
   "redirects": [
     { "source": "/sowseed/", "destination": "/sowseed", "permanent": true },
-    { "source": "/seed/", "destination": "/seed", "permanent": true }
+    { "source": "/seed/", "destination": "/seed", "permanent": true },
+    { "source": "/garden/", "destination": "/garden", "permanent": true }
   ],
   "rewrites": [
     { "source": "/sowseed", "destination": "/index.html" },
-    { "source": "/seed", "destination": "/index.html" }
+    { "source": "/seed", "destination": "/index.html" },
+    { "source": "/garden", "destination": "/index.html" }
   ]
 }

@@ -25,7 +25,7 @@ Deno.serve(withCors(async (request) => {
 
     const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];
     for (let offset = 0;; offset += 500) {
-      const { data, error } = await supabase.from("donations")
+      const query = supabase.from("donations")
         .select("display_name, amount, created_at, social_source, paypal_payer_email, digital_orders(contact_email)")
         .eq("social_source", socialSource)
         .or(`amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`)
@@ -37,8 +37,9 @@ Deno.serve(withCors(async (request) => {
         .gte("created_at", start)
         .lt("created_at", end)
         .order("created_at", { ascending: true })
-        .order("id", { ascending: true })
-        .range(offset, offset + 499);
+        .order("id", { ascending: true });
+      if (socialSource === "rohit") query.lt("amount", 55);
+      const { data, error } = await query.range(offset, offset + 499);
       if (error) throw error;
 
       for (const row of data || []) {

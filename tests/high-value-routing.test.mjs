@@ -87,20 +87,22 @@ test("starting checkout preserves expired attempt history for delayed payment re
 
 for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
   test(`${functionName} enforces the $55 account and assignment boundary on the server`, async () => {
-    for (const amount of [54.99, 55, 55.01, 110, 121]) {
-      const { response, writes, paypalOrders } = await checkout(functionName, {
-        amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag: "anshu",
-      });
-      assert.equal(response.status, 200, JSON.stringify(response.body));
-      const high = amount >= 55;
-      assert.equal(response.body.paymentRoute, high ? "superadmin" : "standard");
-      assert.ok(writes.length);
-      for (const { value } of writes) {
-        assert.equal(value.payment_route, high ? "superadmin" : "standard");
-        assert.equal(value.social_source, high ? null : "anshu");
-        assert.equal(value.amount, amount);
+    for (const sourceTag of ["anshu", "badal", "rohit"]) {
+      for (const amount of [54.99, 55, 55.01, 110, 121]) {
+        const { response, writes, paypalOrders } = await checkout(functionName, {
+          amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag,
+        });
+        assert.equal(response.status, 200, JSON.stringify(response.body));
+        const high = amount >= 55;
+        assert.equal(response.body.paymentRoute, high ? "superadmin" : "standard");
+        assert.ok(writes.length);
+        for (const { value } of writes) {
+          assert.equal(value.payment_route, high ? "superadmin" : "standard");
+          assert.equal(value.social_source, high ? null : sourceTag);
+          assert.equal(value.amount, amount);
+        }
+        for (const order of paypalOrders) assert.equal(order.paymentRoute, high ? "superadmin" : "standard");
       }
-      for (const order of paypalOrders) assert.equal(order.paymentRoute, high ? "superadmin" : "standard");
     }
   });
 }
