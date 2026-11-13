@@ -229,12 +229,13 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     getFulfillmentStatusLabel: () => "Unfulfilled",
     DIGITAL_ORDER_ITEM_NAME: "Seed",
   });
-  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal)"[^>]*>/g)]
+  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal|rohit|alok)"[^>]*>/g)]
     .map((match) => match[0]);
 
   render(context);
   assert.match(details.innerHTML, /Delete order<\/button>[\s\S]*Portal: Unassigned/);
-  assert.equal(tagButtons().length, 2);
+  assert.equal(tagButtons().length, 4);
+  assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok"]);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
 
   donation.socialSource = "anshu";
@@ -244,10 +245,22 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   assert.match(tagButtons()[1], /aria-pressed="false"/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
+  for (const [portal, label] of [["badal", "Badal Portal"], ["rohit", "Rohit Portal"], ["alok", "Alok Portal"], ["anshu", "AnshuPortal"]]) {
+    donation.socialSource = portal;
+    render(context);
+    assert.ok(details.innerHTML.includes(`Portal: ${label}`));
+    const selected = tagButtons().filter((button) => button.includes('aria-pressed="true"'));
+    assert.equal(selected.length, 1);
+    assert.ok(selected[0].includes(`data-set-order-social-source="${portal}"`));
+    assert.ok(selected[0].includes("disabled"));
+    assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 3);
+  }
+
   donation.amount = 55;
   donation.socialSourceManuallyAssigned = false;
   render(context);
   assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.ok(tagButtons().slice(2).every((button) => button.includes("disabled")));
   donation.createdAt = "2026-11-10T16:00:40.000Z";
   donation.socialAssignmentApproved = true;
   render(context);
@@ -280,6 +293,12 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   assert.match(details.innerHTML, /Portal: AnshuPortal/);
   assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
+
+  adminDonation.socialSource = "alok";
+  render(context);
+  assert.match(details.innerHTML, /Portal: Alok Portal/);
+  assert.match(tagButtons()[3], /aria-pressed="true" disabled/);
+  assert.ok(tagButtons().slice(0, 3).every((button) => !button.includes("disabled")));
 
   adminDonation.paymentMethod = "dodo";
   render(context);
