@@ -166,8 +166,8 @@ Deno.serve(withCors(async (request) => {
         }
         const donationId = String(body.donationId || "").trim();
         const socialSource = body.socialSource;
-        if (!donationId || (socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit")) {
-          return errorResponse("Choose an order and Anshu, Badal, or Rohit.", 422);
+        if (!donationId || (socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok")) {
+          return errorResponse("Choose an order and Anshu, Badal, Rohit, or Alok.", 422);
         }
 
         const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
@@ -184,7 +184,7 @@ Deno.serve(withCors(async (request) => {
           .eq("paypal_status", "COMPLETED")
           .gte("created_at", SOCIAL_PORTAL_START)
           .or(`amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
-        if (socialSource === "rohit") assignment.lt("amount", 55);
+        if (socialSource === "rohit" || socialSource === "alok") assignment.lt("amount", 55);
         const { data, error } = await assignment
           .select("id, amount, created_at, social_source, social_source_manually_assigned")
           .maybeSingle();

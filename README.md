@@ -113,6 +113,10 @@ New Admin checkout uses `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_
 
 ## Social source portals
 
+Alok Portal uses `https://www.seedgarden.space/sownow` and the same calendar and sign-in flow, scoped to `social_source = 'alok'`. Only its own successful paid PayPal orders below $55 appear, showing name, amount, email, and order date. Exactly $55 and higher stay exclusively in SuperAdmin, including manual assignments and older orders. Existing portal histories remain unchanged.
+
+Apply only `202611130001_alok_social_portal.sql` after the Rohit migration, deploy the updated Edge Functions and frontend (including the `/sownow` rewrite), then provision `alok@gmail.com` privately with display name `Alok Portal` and source `alok` in `social_portal_profiles`. Confirm it has no `admin_profiles` entry. Use the supplied password only through Supabase Auth; never commit it. This additive migration does not update existing order rows. Leave the pending `202611100001`–`202611100003` migrations untouched.
+
 Rohit Portal uses `https://www.seedgarden.space/garden`. It shares the Anshu/Badal calendar and sign-in flow, scoped to `social_source = 'rohit'`. Only successful tagged PayPal orders below $55 are visible, with name, amount, email, and order date. Exactly $55 and all higher amounts stay exclusively in SuperAdmin, with no historical or manual-assignment exception for Rohit. Existing Anshu/Badal records remain unchanged. The normal `/` path remains untagged.
 
 Apply `202611120001_rohit_social_portal.sql`, deploy the updated Edge Functions (shared profile/source code is used across functions), and deploy the frontend including the `/garden` rewrite. Create/confirm `rohit@gmail.com` in Supabase Auth using the privately supplied password, check that it has no `admin_profiles` entry, then attach it in `social_portal_profiles` with display name `Rohit Portal` and source `rohit`. Never store the password in source or documentation. The migration adds columns, constraints, and write guards; it does not update any existing orders, payment attempts, memberships, or collecting routes.

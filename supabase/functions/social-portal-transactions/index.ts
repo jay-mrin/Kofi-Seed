@@ -38,7 +38,7 @@ Deno.serve(withCors(async (request) => {
         .lt("created_at", end)
         .order("created_at", { ascending: true })
         .order("id", { ascending: true });
-      if (socialSource === "rohit") query.lt("amount", 55);
+      if (socialSource === "rohit" || socialSource === "alok") query.lt("amount", 55);
       const { data, error } = await query.range(offset, offset + 499);
       if (error) throw error;
 
