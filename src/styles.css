@@ -5927,18 +5927,34 @@ body:has(dialog[open]) {
 .home-checkout-view .seed-garden-checkout .seed-quantity-row .paypal-name-field { grid-column: 1 / -1; grid-row: 4; margin-top: 0; }
 .home-checkout-view .seed-garden-checkout .paypal-name-field input { min-height: 60px; border-color: #e4c3d1; border-radius: 19px; color: var(--garden-ink); background: #fff9fc; font-family: Inter, "Segoe UI", sans-serif; font-size: 23px; font-weight: 700; }
 .home-checkout-view .seed-garden-checkout .paypal-name-field input::placeholder { color: #825568; opacity: 1; }
-.home-checkout-view .seed-garden-checkout .checkout-button { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; gap: clamp(10px, 2vw, 22px); min-height: clamp(64px, 9vw, 95px); margin-top: 24px; padding: 14px 25px; border-radius: 999px; background: var(--support-pink); color: #fff; box-shadow: 0 12px 27px #ed389a16; font: 800 clamp(16px, 2.8vw, 29px)/1.25 Inter, "Segoe UI", sans-serif; }
-/* A diffused halo breathes independently so the label stays crisp and still. */
+.home-checkout-view .seed-garden-checkout .checkout-button {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 22px);
+  min-height: clamp(64px, 9vw, 95px);
+  margin-top: 24px;
+  padding: 14px 25px;
+  border: 1px solid #ffffffb3;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff49b3, #ff2fa4 55%, #f82596);
+  color: #fff;
+  box-shadow: inset 0 1px 0 #ffffff40, 0 8px 24px #e72a8d33;
+  font: 800 clamp(16px, 2.8vw, 29px)/1.25 Inter, "Segoe UI", sans-serif;
+}
+/* Layered light follows the pill edge and fades into a broad pink halo. */
 .home-checkout-view .seed-garden-checkout .checkout-button::before {
   content: "";
   position: absolute;
   z-index: -1;
   inset: 0;
   border-radius: inherit;
-  box-shadow: 0 0 16px 4px #ff3cac66, 0 0 34px 10px #ff3cac38, 0 12px 40px 5px #ed389a2e;
-  opacity: .55;
+  box-shadow: 0 0 10px 2px #ff53b480, 0 0 26px 8px #ff46ab66, 0 0 50px 17px #ff71bd3d;
+  opacity: .8;
   pointer-events: none;
-  animation: seed-checkout-glow 3.6s ease-in-out infinite;
+  animation: seed-checkout-glow 4.2s ease-in-out infinite;
 }
 .home-checkout-view .seed-garden-checkout .checkout-button:focus-visible {
   outline: 3px solid var(--garden-ink);
@@ -5949,11 +5965,11 @@ body:has(dialog[open]) {
   opacity: .25;
 }
 @keyframes seed-checkout-glow {
-  0%, 100% { opacity: .4; transform: scale(1); }
-  50% { opacity: .8; transform: scale(1.015, 1.07); }
+  0%, 100% { opacity: .65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.012, 1.04); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .home-checkout-view .seed-garden-checkout .checkout-button::before { animation: none; opacity: .55; }
+  .home-checkout-view .seed-garden-checkout .checkout-button::before { animation: none; opacity: .8; }
 }
 .seed-checkout-leaf { width: clamp(27px, 4.5vw, 48px); height: 42px; flex: 0 0 auto; }
 .seed-checkout-arrow { width: clamp(22px, 3.5vw, 36px); height: 28px; flex: 0 0 auto; }
