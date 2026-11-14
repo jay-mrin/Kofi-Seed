@@ -496,6 +496,77 @@ a {
   box-shadow: var(--shadow);
 }
 
+.unified-payment-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: min(760px, 100%);
+  margin: 0 auto 18px;
+}
+
+.unified-payment-views[hidden],
+.unified-demo-payments[hidden],
+.social-portal[hidden] {
+  display: none;
+}
+
+.unified-payment-views button[aria-pressed="true"] {
+  border-color: #98671a;
+  background: #fff1d5;
+  color: #573709;
+}
+
+.unified-demo-notice {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 2px solid #bc842a;
+  border-radius: 12px;
+  background: #fff3d9;
+  color: #573709;
+}
+
+.unified-demo-notice h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.unified-demo-notice p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.unified-demo-dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 10px;
+}
+
+.unified-demo-date {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #d8c5a5;
+  border-radius: 12px;
+  background: #fffbf2;
+  color: #573709;
+  text-align: left;
+  cursor: pointer;
+}
+
+.unified-demo-date[aria-pressed="true"] {
+  border: 2px solid #98671a;
+  background: #fff1d5;
+}
+
+.unified-demo-date strong {
+  font-size: 19px;
+}
+
+.unified-demo-date small {
+  line-height: 1.4;
+}
+
 .social-panel-header {
   display: flex;
   align-items: flex-start;
