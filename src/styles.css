@@ -4649,13 +4649,17 @@ main {
   display: flex;
   gap: 14px;
   overflow-x: auto;
-  padding: 2px 2px 8px;
+  margin-inline: -14px;
+  padding: 16px 16px 20px;
+  scroll-padding-inline: 16px;
   scroll-snap-type: x mandatory;
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .support-ritual-card .ritual-option {
+  position: relative;
+  isolation: isolate;
   display: grid;
   flex: 0 0 min(92%, 640px);
   grid-template-columns: minmax(0, 1fr);
@@ -4670,6 +4674,28 @@ main {
 
 .support-ritual-card .ritual-option.is-selected {
   border-color: var(--support-pink);
+  background: #fff2f8;
+}
+
+.support-ritual-card .ritual-option.is-selected::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 0 8px 1px #ff53b466, 0 0 20px 4px #ff46ab40;
+  opacity: .8;
+  pointer-events: none;
+  animation: ritual-selection-glow 4.2s ease-in-out infinite;
+}
+
+@keyframes ritual-selection-glow {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .support-ritual-card .ritual-option.is-selected::before { animation: none; opacity: .8; }
 }
 
 .support-ritual-card .ritual-option-name {
@@ -5335,7 +5361,7 @@ main {
   }
 
   .ritual-options {
-    padding-bottom: 4px;
+    padding-bottom: 18px;
   }
 
   .support-ritual-card .ritual-option {
