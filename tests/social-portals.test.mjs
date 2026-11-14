@@ -52,10 +52,11 @@ test("only the current tagged path attributes PayPal checkout", () => {
 });
 
 async function readPortalMonth(rows, token, month = "2026-11") {
-  const source = read("supabase/functions/social-portal-transactions/index.ts")
+  const unified = token === "unified";
+  const source = read(`supabase/functions/${unified ? "unified-portal-transactions" : "social-portal-transactions"}/index.ts`)
     .replace(/^import .*;\n/gm, "")
     .replace(
-      "const transactions: Array<{ name: string; amount: number; email: string; createdAt: string }> = [];",
+      /const transactions: Array<.*> = \[\];/,
       "const transactions = [];",
     );
   let handler;
@@ -70,8 +71,11 @@ async function readPortalMonth(rows, token, month = "2026-11") {
         },
         eq(key, value) { filters.push((row) => row[key] === value); return query; },
         or(value) {
-          assert.equal(value, `amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
-          filters.push((row) => Number(row.amount) < 55 || row.created_at < SOCIAL_HIGH_VALUE_EXCLUSION_START);
+          assert.equal(value, unified
+            ? `amount.lt.55,and(social_source.in.(anshu,badal),created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START})`
+            : `amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
+          filters.push((row) => Number(row.amount) < 55 ||
+            ((!unified || ["anshu", "badal"].includes(row.social_source)) && row.created_at < SOCIAL_HIGH_VALUE_EXCLUSION_START));
           return query;
         },
         in(key, values) { filters.push((row) => values.includes(row[key])); return query; },
@@ -95,6 +99,10 @@ async function readPortalMonth(rows, token, month = "2026-11") {
         throw new globalThis.Response("Forbidden", { status: 403 });
       }
       return { supabase, socialSource: bearer.slice(7) };
+    },
+    requireUnifiedPaymentPortal: async (request) => {
+      if (request.headers.get("Authorization") !== "Bearer unified") throw new globalThis.Response("Forbidden", { status: 403 });
+      return { supabase };
     },
     jsonResponse: (body) => new globalThis.Response(JSON.stringify(body)),
     errorResponse: (message, status) => new globalThis.Response(message, { status }),
@@ -462,6 +470,7 @@ test("portal authentication binds each account to its database source and reject
     badal: { id: "user-b", email: "badal@example.invalid" },
     rohit: { id: "user-r", email: "rohit@example.invalid" },
     alok: { id: "user-al", email: "alok@example.invalid" },
+    unified: { id: "user-u", email: "unified@example.invalid" },
     admin: { id: "user-admin", email: "admin@example.invalid" },
     standard: { id: "user-standard", email: "standard@example.invalid" },
     unknown: { id: "user-unknown", email: "unknown@example.invalid" },
@@ -470,6 +479,9 @@ test("portal authentication binds each account to its database source and reject
     admin_profiles: [
       { user_id: "user-admin", email: users.admin.email, display_name: "Admin", role: "admin" },
       { user_id: "user-standard", email: users.standard.email, display_name: "Old Portal", role: "standard" },
+    ],
+    unified_payment_portal_profiles: [
+      { user_id: "user-u", email: users.unified.email, display_name: "Unified Payment Portal" },
     ],
     social_portal_profiles: [
       { user_id: "user-a", email: users.anshu.email, display_name: "AnshuPortal", social_source: "anshu" },
@@ -492,12 +504,18 @@ test("portal authentication binds each account to its database source and reject
     getSupabaseAdmin: () => supabase,
     jsonResponse: (body, status) => new globalThis.Response(JSON.stringify(body), { status }),
   });
-  vm.runInContext(`${extract("getPortalProfile")}\n${extract("requireSocialPortal")}`, context);
+  vm.runInContext(`${extract("getPortalProfile")}\n${extract("requireSocialPortal")}\n${extract("requireUnifiedPaymentPortal")}`, context);
   const request = (token) => ({ headers: new globalThis.Headers({ Authorization: `Bearer ${token}` }) });
   assert.equal((await context.requireSocialPortal(request("anshu"))).socialSource, "anshu");
   assert.equal((await context.requireSocialPortal(request("badal"))).socialSource, "badal");
   assert.equal((await context.requireSocialPortal(request("rohit"))).socialSource, "rohit");
   assert.equal((await context.requireSocialPortal(request("alok"))).socialSource, "alok");
+  assert.equal((await context.requireUnifiedPaymentPortal(request("unified"))).profile.role, "unified_payment");
+  assert.equal((await context.getPortalProfile(request("unified"))).profile.displayName, "Unified Payment Portal");
+  await assert.rejects(context.requireSocialPortal(request("unified")), (error) => error.status === 403);
+  for (const token of ["anshu", "badal", "rohit", "alok", "admin", "standard", "unknown"]) {
+    await assert.rejects(context.requireUnifiedPaymentPortal(request(token)), (error) => error.status === 403);
+  }
   await assert.rejects(context.requireSocialPortal(request("admin")), (error) => error.status === 403);
   await assert.rejects(context.getPortalProfile(request("standard")), (error) => error.status === 403);
   await assert.rejects(context.requireSocialPortal(request("unknown")), (error) => error.status === 403);
@@ -515,7 +533,7 @@ test("retired Standard Portal cannot sign in or read orders; Admin payment histo
   assert.match(migration, /check \(role in \('admin', 'super_admin'\)\)/);
   assert.doesNotMatch(migration, /(?:delete|update) (?:from )?public\.(?:donations|digital_orders|payment_attempts|memberships)/i);
   assert.doesNotMatch(app, /standard-transactions|superAdminStandardPreviewEnabled|role === "standard"/);
-  assert.match(app, /state\.adminProfile\?\.role === "social_partner"\) \{\s*openSocialPanel\(\);\s*await loadSocialTransactions\(\)/);
+  assert.match(app, /\["social_partner", "unified_payment"\]\.includes\(state\.adminProfile\?\.role\)\) \{\s*openSocialPanel\(\);\s*await loadSocialTransactions\(\)/);
   assert.doesNotMatch(html, /Standard Portal|superAdminStandardPreviewEnabled/);
   assert.doesNotMatch(settings, /superAdminStandardPreviewEnabled/);
   assert.doesNotMatch(config, /functions\.standard-transactions/);
@@ -543,4 +561,49 @@ test("social accounts cannot inherit admin privileges and attribution leaves old
   assert.match(prepare, /social_source: getAutomaticSocialSource\(body\.sourceTag, amountCents\)/);
   assert.match(capture, /social_source: paymentAttempt\.social_source \|\| null/);
   assert.match(app, /function renderSocialCalendar\(\)[\s\S]*email\.textContent = transaction\.email/);
+});
+
+
+test("Unified Payment Portal equals the eligible union of all four partners and excludes SuperAdmin-only records", async () => {
+  const base = {
+    amount: 11, created_at: "2026-11-14T10:00:00.000Z",
+    paypal_payer_email: "customer@example.invalid", digital_orders: { contact_email: "order@example.invalid" },
+    payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
+  };
+  const rows = [
+    ...["anshu", "badal", "rohit", "alok"].flatMap((social_source) => [
+      { ...base, social_source, display_name: `${social_source}-low` },
+      { ...base, social_source, display_name: `${social_source}-standard`, payment_route: "standard", visibility_scope: "public", amount: 54.99 },
+      { ...base, social_source, display_name: `${social_source}-earlier-high`, amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
+      { ...base, social_source, display_name: `${social_source}-boundary`, amount: 55, social_source_manually_assigned: true },
+      { ...base, social_source, display_name: `${social_source}-failed`, paypal_status: "FAILED" },
+      { ...base, social_source, display_name: `${social_source}-old`, created_at: "2026-11-03T18:29:59.999Z" },
+    ]),
+    { ...base, display_name: "Untagged", social_source: null },
+    { ...base, display_name: "Other", social_source: "unknown" },
+    { ...base, display_name: "Dodo", social_source: "anshu", payment_method: "dodo" },
+    { ...base, display_name: "Pending", social_source: "badal", paypal_status: "APPROVED" },
+  ];
+  const expected = (await Promise.all(["anshu", "badal", "rohit", "alok"].map((source) => readPortalMonth(rows, source))))
+    .flatMap((result) => result.body.transactions.map((row) => row.name)).sort();
+  const result = await readPortalMonth(rows, "unified");
+  assert.equal(result.status, 200);
+  assert.equal(expected.length, 10);
+  assert.deepEqual(result.body.transactions.map((row) => row.name).sort(), expected);
+  for (const row of result.body.transactions) {
+    assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name", "socialSource"]);
+    assert.equal(row.email, "order@example.invalid");
+  }
+  assert.deepEqual((await readPortalMonth(rows, "unified", "2026-10")).body.transactions, []);
+  assert.equal((await readPortalMonth(rows, "unified", "2026-99")).status, 422);
+  const many = Array.from({ length: 1001 }, (_, index) => ({ ...base, display_name: `Order${index}`, social_source: "anshu" }));
+  assert.equal((await readPortalMonth(many, "unified")).body.transactions.length, 1001);
+});
+
+test("Unified portal migration adds a protected read-only identity without changing any orders or existing profiles", () => {
+  const sql = read("supabase/migrations/202611140001_unified_payment_portal.sql");
+  assert.match(sql, /alter table public\.unified_payment_portal_profiles enable row level security/);
+  assert.match(sql, /revoke all on public\.unified_payment_portal_profiles from anon, authenticated/);
+  assert.doesNotMatch(sql, /(?:update|delete from|truncate|alter table) public\.(?:donations|digital_orders|payment_attempts|memberships|admin_profiles|social_portal_profiles)/i);
+  assert.doesNotMatch(sql, /password/i);
 });

@@ -738,6 +738,11 @@ async function trackCheckoutEvent(eventName, donation = pendingDonation) {
 }
 
 async function signInAdmin(email, password) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const payload = await callEdge("portal-login", { body: { username: email, password } });
+    setAdminSession(payload);
+    return payload;
+  }
   const response = await fetch(`${PUBLIC_CONFIG.supabaseUrl.replace(/\/$/, "")}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: {
@@ -759,7 +764,7 @@ async function signInAdmin(email, password) {
 async function openPortalForCurrentSession() {
   await loadAdminProfile();
   closeAdminLogin();
-  if (state.adminProfile?.role === "social_partner") {
+  if (["social_partner", "unified_payment"].includes(state.adminProfile?.role)) {
     openSocialPanel();
     await loadSocialTransactions();
   } else {
@@ -2110,7 +2115,7 @@ async function decrementPageView() {
 }
 
 async function refreshAdminPortalData() {
-  if (state.adminProfile?.role === "social_partner") {
+  if (["social_partner", "unified_payment"].includes(state.adminProfile?.role)) {
     await loadSocialTransactions();
     return;
   }
@@ -3741,6 +3746,11 @@ function renderSocialCalendar() {
       const email = document.createElement("small");
       email.textContent = transaction.email || "Email unavailable";
       identity.append(email);
+      if (state.adminProfile?.role === "unified_payment") {
+        const portal = document.createElement("small");
+        portal.textContent = ({ anshu: "AnshuPortal", badal: "Badal Portal", rohit: "Rohit Portal", alok: "Alok Portal" })[transaction.socialSource] || "";
+        identity.append(portal);
+      }
       const paid = document.createElement("div");
       paid.className = "social-order-paid";
       const paidLabel = document.createElement("small");
@@ -3757,20 +3767,24 @@ function renderSocialCalendar() {
 async function loadSocialTransactions() {
   const month = getMonthKey(socialCalendarCursor);
   const source = state.adminProfile?.socialSource;
+  const role = state.adminProfile?.role;
   const accessToken = getAdminAccessToken();
-  if (state.adminProfile?.role !== "social_partner") return;
+  if (!["social_partner", "unified_payment"].includes(role)) return;
   elements.socialCalendarPrev.disabled = true;
   elements.socialCalendarNext.disabled = true;
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
   try {
-    const payload = await callEdge(`social-portal-transactions?month=${month}`, { admin: true, method: "GET" });
-    if (month !== getMonthKey(socialCalendarCursor) || state.adminProfile?.role !== "social_partner" ||
+    const endpoint = role === "unified_payment" ? "unified-portal-transactions" : "social-portal-transactions";
+    const payload = await callEdge(`${endpoint}?month=${month}`, { admin: true, method: "GET" });
+    if (month !== getMonthKey(socialCalendarCursor) || role !== state.adminProfile?.role ||
         source !== state.adminProfile?.socialSource || accessToken !== getAdminAccessToken()) return;
     socialTransactions = Array.isArray(payload.transactions)
       ? payload.transactions.filter((transaction) => {
         const amountCents = Math.round(Number(transaction.amount) * 100);
+        const transactionSource = role === "unified_payment" ? transaction.socialSource : source;
+        if (role === "unified_payment" && !["anshu", "badal", "rohit", "alok"].includes(transactionSource)) return false;
         return Number.isFinite(amountCents) && amountCents > 0 &&
-          (amountCents < 5500 || (!["rohit", "alok"].includes(source) && Date.parse(transaction.createdAt || "") < Date.parse(SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO)));
+          (amountCents < 5500 || (["anshu", "badal"].includes(transactionSource) && Date.parse(transaction.createdAt || "") < Date.parse(SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO)));
       })
       : [];
     renderSocialCalendar();
@@ -3784,7 +3798,7 @@ async function loadSocialTransactions() {
 
 function openAdminPanel() {
   const isSuperAdmin = state.adminProfile?.role === "super_admin";
-  if (state.adminProfile?.role === "social_partner") return openSocialPanel();
+  if (["social_partner", "unified_payment"].includes(state.adminProfile?.role)) return openSocialPanel();
 
   const titleEl = document.getElementById("adminTitle");
   if (titleEl) {
@@ -3851,13 +3865,13 @@ function openAdminPanel() {
 }
 
 function openSocialPanel() {
-  if (state.adminProfile?.role !== "social_partner") return;
+  if (!["social_partner", "unified_payment"].includes(state.adminProfile?.role)) return;
   selectedSocialDate = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   socialCalendarCursor = fromDateKey(selectedSocialDate);
   elements.socialTitle.textContent = state.adminProfile.displayName ||
-    (state.adminProfile.socialSource === "anshu" ? "AnshuPortal" : state.adminProfile.socialSource === "badal" ? "Badal Portal" : state.adminProfile.socialSource === "alok" ? "Alok Portal" : "Rohit Portal");
+    (state.adminProfile.role === "unified_payment" ? "Unified Payment Portal" : state.adminProfile.socialSource === "anshu" ? "AnshuPortal" : state.adminProfile.socialSource === "badal" ? "Badal Portal" : state.adminProfile.socialSource === "alok" ? "Alok Portal" : "Rohit Portal");
   elements.closeSocialButton.setAttribute("aria-label", `Close ${elements.socialTitle.textContent}`);
-  elements.socialPortal.setAttribute("aria-label", "Tagged PayPal orders calendar");
+  elements.socialPortal.setAttribute("aria-label", state.adminProfile.role === "unified_payment" ? "Partner payment records calendar" : "Tagged PayPal orders calendar");
   socialTransactions = [];
   elements.socialCalendarGrid.replaceChildren();
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
@@ -4411,7 +4425,7 @@ elements.adminLoginForm.addEventListener("submit", async (event) => {
     const password = elements.adminPasswordInput.value;
 
     if (!email || !password) {
-      elements.adminPasswordError.textContent = "Enter your email and password.";
+      elements.adminPasswordError.textContent = "Enter your username or email and password.";
       return;
     }
 

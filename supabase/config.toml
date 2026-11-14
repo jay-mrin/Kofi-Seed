@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.track-checkout-event]
 verify_jwt = false
+
+[functions.unified-portal-transactions]
+verify_jwt = true
+
+[functions.portal-login]
+verify_jwt = false

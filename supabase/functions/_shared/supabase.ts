@@ -59,7 +59,24 @@ export async function getPortalProfile(request: Request) {
     .maybeSingle();
   if (socialError) throw socialError;
   if (!socialProfile) {
-    throw jsonResponse({ error: "This account cannot access a portal." }, 403);
+    const { data: unifiedProfile, error: unifiedError } = await supabase
+      .from("unified_payment_portal_profiles")
+      .select("user_id, email, display_name")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    if (unifiedError) throw unifiedError;
+    if (!unifiedProfile) {
+      throw jsonResponse({ error: "This account cannot access a portal." }, 403);
+    }
+    return {
+      supabase,
+      profile: {
+        userId: unifiedProfile.user_id,
+        email: unifiedProfile.email || data.user.email || "",
+        displayName: unifiedProfile.display_name,
+        role: "unified_payment" as const,
+      },
+    };
   }
   if (!["anshu", "badal", "rohit", "alok"].includes(socialProfile.social_source)) {
     throw jsonResponse({ error: "This social portal is unavailable." }, 403);
@@ -87,6 +104,14 @@ export async function requireSocialPortal(request: Request) {
     socialSource: result.profile.socialSource,
     profile: result.profile,
   };
+}
+
+export async function requireUnifiedPaymentPortal(request: Request) {
+  const result = await getPortalProfile(request);
+  if (result.profile.role !== "unified_payment") {
+    throw jsonResponse({ error: "This account cannot access the unified payment portal." }, 403);
+  }
+  return result;
 }
 
 export async function requireAdmin(
