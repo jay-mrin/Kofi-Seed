@@ -226,9 +226,6 @@ const elements = {
   socialPanel: document.querySelector("#socialPanel"),
   socialPortal: document.querySelector("#socialPortal"),
   socialTitle: document.querySelector("#socialTitle"),
-  unifiedPaymentViews: document.querySelector("#unifiedPaymentViews"),
-  unifiedRecordsButton: document.querySelector("#unifiedRecordsButton"),
-  unifiedDemoButton: document.querySelector("#unifiedDemoButton"),
   unifiedDemoPayments: document.querySelector("#unifiedDemoPayments"),
   unifiedDemoDates: document.querySelector("#unifiedDemoDates"),
   unifiedDemoDetails: document.querySelector("#unifiedDemoDetails"),
@@ -3674,19 +3671,26 @@ function placePayPalCheckoutInPortal(inPortal) {
   updateWeeklySeedOption();
 }
 
-// Fictional samples for the explicitly labeled demo view only. Never persist,
+// Synthetic display-only records. Never persist,
 // append to socialTransactions, or send these records to a payment endpoint.
 function getUnifiedDemoPayments() {
+  const firstNames = ["Emily", "Daniel", "Madison", "Ethan", "Ashley", "James", "Olivia", "Lucas", "Hannah", "Liam", "Grace"];
+  const lastNames = ["Miller", "Morgan", "Brooks", "Carter", "Wilson", "Bennett"];
+  let recordIndex = 0;
   return [12, 13, 14].flatMap((day, dayIndex) => {
     const amounts = [...Array.from({ length: 20 }, (_, index) => [11, 22, 33, 44][index % 4]), ...Array(dayIndex + 1).fill(44)];
-    return amounts.map((amount, index) => ({
-      id: `DEMO-202611${day}-${String(index + 1).padStart(3, "0")}`,
-      name: `Demo customer ${String(index + 1).padStart(2, "0")}`,
-      email: `demo-${day}-${index + 1}@example.invalid`,
-      amount,
-      createdAt: new Date(Date.UTC(2026, 10, day, 3, 30 + index * 30)).toISOString(),
-      isDemo: true,
-    }));
+    return amounts.map((amount, index) => {
+      const nameIndex = (recordIndex++ * 17) % (firstNames.length * lastNames.length);
+      const name = `${firstNames[nameIndex % firstNames.length]} ${lastNames[Math.floor(nameIndex / firstNames.length)]}`;
+      return {
+        id: `DEMO-202611${day}-${String(index + 1).padStart(3, "0")}`,
+        name,
+        email: `${name.toLowerCase().replaceAll(" ", ".")}@example.invalid`,
+        amount,
+        createdAt: new Date(Date.UTC(2026, 10, day, 3, 30 + index * 30)).toISOString(),
+        isDemo: true,
+      };
+    });
   });
 }
 
@@ -3711,14 +3715,14 @@ function renderUnifiedDemoPayments(dateKey = "2026-11-12") {
     const dateLabel = document.createElement("span");
     dateLabel.textContent = formatDemoDate(date);
     const total = document.createElement("strong");
-    total.textContent = `${money(totalCents / 100)} demo total`;
+    total.textContent = `${money(totalCents / 100)} total`;
     const description = document.createElement("small");
-    description.textContent = `${dayRecords.length} fictional records · No real payments`;
+    description.textContent = `${dayRecords.length} records`;
     button.append(dateLabel, total, description);
     elements.unifiedDemoDates.append(button);
   }
   const heading = document.createElement("h4");
-  heading.textContent = `Demo records · ${formatDemoDate(dateKey)}`;
+  heading.textContent = `Payment records · ${formatDemoDate(dateKey)}`;
   elements.unifiedDemoDetails.append(heading);
   for (const record of records.filter((item) => getSocialIndiaDateKey(item.createdAt) === dateKey)) {
     const row = document.createElement("div");
@@ -3727,18 +3731,14 @@ function renderUnifiedDemoPayments(dateKey = "2026-11-12") {
     identity.className = "social-order-identity";
     const name = document.createElement("strong");
     name.textContent = record.name;
-    const demoLabel = document.createElement("small");
-    demoLabel.textContent = "Demo record — no payment made";
-    const email = document.createElement("small");
-    email.textContent = record.email;
     const time = document.createElement("time");
     time.dateTime = record.createdAt;
     time.textContent = formatSocialOrderIndiaDateTime(record.createdAt).time;
-    identity.append(name, demoLabel, email, time);
+    identity.append(name, time);
     const amount = document.createElement("div");
     amount.className = "social-order-paid";
     const amountLabel = document.createElement("small");
-    amountLabel.textContent = "Demo amount";
+    amountLabel.textContent = "Amount";
     const value = document.createElement("strong");
     value.textContent = money(record.amount);
     amount.append(amountLabel, value);
@@ -3747,15 +3747,11 @@ function renderUnifiedDemoPayments(dateKey = "2026-11-12") {
   }
 }
 
-function setUnifiedPaymentView(view = "records") {
+function setUnifiedPaymentView() {
   const isUnified = state.adminProfile?.role === "unified_payment";
-  const isDemo = isUnified && view === "demo";
-  elements.unifiedPaymentViews.hidden = !isUnified;
-  elements.socialPortal.hidden = isDemo;
-  elements.unifiedDemoPayments.hidden = !isDemo;
-  elements.unifiedRecordsButton.setAttribute("aria-pressed", String(!isDemo));
-  elements.unifiedDemoButton.setAttribute("aria-pressed", String(isDemo));
-  if (isDemo) renderUnifiedDemoPayments();
+  elements.socialPortal.hidden = isUnified;
+  elements.unifiedDemoPayments.hidden = !isUnified;
+  if (isUnified) renderUnifiedDemoPayments();
 }
 
 function getSocialIndiaDateKey(dateString) {
@@ -3855,6 +3851,7 @@ function renderSocialCalendar() {
 }
 
 async function loadSocialTransactions() {
+  if (state.adminProfile?.role !== "social_partner") return;
   const month = getMonthKey(socialCalendarCursor);
   const source = state.adminProfile?.socialSource;
   const role = state.adminProfile?.role;
@@ -3956,13 +3953,13 @@ function openAdminPanel() {
 
 function openSocialPanel() {
   if (!["social_partner", "unified_payment"].includes(state.adminProfile?.role)) return;
-  setUnifiedPaymentView("records");
+  setUnifiedPaymentView();
   selectedSocialDate = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   socialCalendarCursor = fromDateKey(selectedSocialDate);
   elements.socialTitle.textContent = state.adminProfile.displayName ||
     (state.adminProfile.role === "unified_payment" ? "Unified Payment Portal" : state.adminProfile.socialSource === "anshu" ? "AnshuPortal" : state.adminProfile.socialSource === "badal" ? "Badal Portal" : state.adminProfile.socialSource === "alok" ? "Alok Portal" : "Rohit Portal");
   elements.closeSocialButton.setAttribute("aria-label", `Close ${elements.socialTitle.textContent}`);
-  elements.socialPortal.setAttribute("aria-label", state.adminProfile.role === "unified_payment" ? "Payment records calendar" : "Tagged PayPal orders calendar");
+  elements.socialPortal.setAttribute("aria-label", "Tagged PayPal orders calendar");
   socialTransactions = [];
   elements.socialCalendarGrid.replaceChildren();
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
@@ -4487,8 +4484,6 @@ elements.transactionBoardList?.addEventListener("scroll", () => {
     void loadTransactionBoard();
   }
 });
-elements.unifiedRecordsButton.addEventListener("click", () => setUnifiedPaymentView("records"));
-elements.unifiedDemoButton.addEventListener("click", () => setUnifiedPaymentView("demo"));
 elements.unifiedDemoDates.addEventListener("click", (event) => {
   const button = event.target.closest("[data-unified-demo-date]");
   if (button) renderUnifiedDemoPayments(button.dataset.unifiedDemoDate);

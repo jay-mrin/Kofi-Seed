@@ -18,7 +18,7 @@ function demoContext(role = "unified_payment") {
   const liveRecords = Object.freeze([Object.freeze({ name: "Actual customer", amount: 11, createdAt: "2026-11-15T00:00:00Z" })]);
   const context = vm.createContext({
     CONFIG: { currency: "USD" }, state: { adminProfile: { role } }, document: { createElement: node },
-    elements: Object.fromEntries(["unifiedPaymentViews", "unifiedRecordsButton", "unifiedDemoButton", "socialPortal", "unifiedDemoPayments", "unifiedDemoDates", "unifiedDemoDetails"].map((name) => [name, node()])),
+    elements: Object.fromEntries(["socialPortal", "unifiedDemoPayments", "unifiedDemoDates", "unifiedDemoDetails"].map((name) => [name, node()])),
     socialTransactions: liveRecords, socialCalendarCursor: new Date(2026, 10, 15), selectedSocialDate: "2026-11-15",
     fetch: () => { throw new Error("Demo must not use the network"); },
     callEdge: () => { throw new Error("Demo must not call payment APIs"); },
@@ -37,39 +37,42 @@ test("fictional demo records have stable India-time daily totals in the requeste
     totals.set(date, (totals.get(date) || 0) + Math.round(record.amount * 100));
     assert.equal(record.isDemo, true);
     assert.match(record.id, /^DEMO-/);
-    assert.match(record.name, /^Demo customer/);
+    assert.match(record.name, /^[A-Z][a-z]+ [A-Z][a-z]+$/);
+    assert.doesNotMatch(record.name, /demo|sample|customer/i);
     assert.match(record.email, /@example\.invalid$/);
     for (const key of ["socialSource", "paymentRoute", "paypalOrderId", "paypalCaptureId"]) assert.equal(record[key], undefined);
     ids.add(record.id);
   }
   assert.equal(ids.size, records.length);
+  assert.equal(new Set(records.map((record) => record.name)).size, records.length);
+  assert.deepEqual(context.getUnifiedDemoPayments(), records);
   assert.deepEqual([...totals], [["2026-11-12", 59400], ["2026-11-13", 63800], ["2026-11-14", 68200]]);
   for (const total of totals.values()) assert.ok(total >= 55000 && total <= 70000);
 });
 
-test("demo switching labels every record, selects each sample day, and preserves the entire live calendar", () => {
+test("Unified shows simple payment records with varied names and preserves stored live records", () => {
   const { context, liveRecords } = demoContext();
   const originalCursor = context.socialCalendarCursor;
-  context.setUnifiedPaymentView("demo");
+  context.setUnifiedPaymentView();
   assert.equal(context.elements.socialPortal.hidden, true);
   assert.equal(context.elements.unifiedDemoPayments.hidden, false);
-  assert.equal(context.elements.unifiedDemoButton.attributes["aria-pressed"], "true");
   const cards = context.elements.unifiedDemoDates.children;
-  assert.deepEqual(cards.map((card) => card.children[1].textContent), ["$594 demo total", "$638 demo total", "$682 demo total"]);
+  assert.deepEqual(cards.map((card) => card.children[1].textContent), ["$594 total", "$638 total", "$682 total"]);
   for (const [date, count] of [["2026-11-12", 21], ["2026-11-13", 22], ["2026-11-14", 23]]) {
     context.renderUnifiedDemoPayments(date);
+    assert.doesNotMatch(textOf(context.elements.unifiedDemoDates), /demo|sample|fictional|synthetic|no real payments/i);
     const rows = context.elements.unifiedDemoDetails.children.slice(1);
     assert.equal(rows.length, count);
     for (const row of rows) {
-      assert.match(textOf(row), /Demo record — no payment made/);
-      assert.match(textOf(row), /Demo amount/);
-      assert.doesNotMatch(textOf(row), /IST IST/);
+      assert.match(textOf(row), /Amount/);
+      assert.doesNotMatch(textOf(row), /@/);
+      assert.doesNotMatch(textOf(row), /demo|sample|fictional|synthetic|no real payments|IST IST/i);
       assert.doesNotMatch(textOf(row), /Actual customer|AnshuPortal|Badal Portal|Rohit Portal|Alok Portal/);
     }
   }
-  context.setUnifiedPaymentView("records");
-  assert.equal(context.elements.socialPortal.hidden, false);
-  assert.equal(context.elements.unifiedDemoPayments.hidden, true);
+  context.setUnifiedPaymentView();
+  assert.equal(context.elements.socialPortal.hidden, true);
+  assert.equal(context.elements.unifiedDemoPayments.hidden, false);
   assert.equal(context.socialTransactions, liveRecords);
   assert.equal(context.socialTransactions.length, 1);
   assert.equal(context.socialTransactions[0].amount, 11);
@@ -81,12 +84,20 @@ test("other portal roles cannot open or populate the demo view", () => {
   for (const role of ["admin", "super_admin", "social_partner", undefined]) {
     const { context } = demoContext(role);
     context.state.adminProfile = { role };
-    context.setUnifiedPaymentView("demo");
+    context.setUnifiedPaymentView();
     context.renderUnifiedDemoPayments();
-    assert.equal(context.elements.unifiedPaymentViews.hidden, true);
     assert.equal(context.elements.unifiedDemoPayments.hidden, true);
     assert.equal(context.elements.socialPortal.hidden, false);
     assert.equal(context.elements.unifiedDemoDates.children.length, 0);
     assert.equal(context.elements.unifiedDemoDetails.children.length, 0);
   }
+});
+
+test("Unified markup shows payment records without demo, sample, or fictional-data notices", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const sampleSection = html.match(/<section[^>]*id="unifiedDemoPayments"[^]*?<\/section>/)[0];
+  assert.doesNotMatch(html, /id="unifiedRecordsButton"|id="unifiedDemoButton"|id="unifiedPaymentViews"/);
+  assert.doesNotMatch(sampleSection, />[^<]*(?:demo|sample|fictional|synthetic|no payments)[^<]*</i);
+  assert.match(sampleSection, />Payment records</);
+  assert.doesNotMatch(sampleSection, /Select a sample date/);
 });

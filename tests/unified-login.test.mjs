@@ -105,41 +105,18 @@ test("frontend accepts username login while preserving existing email sign-in an
   assert.doesNotMatch(app, /client3@2026|client@3/i);
 });
 
-test("unified calendar filters by each record's partner and rejects a stale session response", async () => {
+test("Unified sample-only view does not load real payment records", async () => {
   const app = read("src/app.js");
   const load = app.match(/async function loadSocialTransactions\(\)[^]*?\n\}/)[0];
-  const payload = { transactions: [
-    { name: "AnshuLow", socialSource: "anshu", amount: 11, createdAt: "2026-11-14T00:00:00.000Z" },
-    { name: "BadalEarlier", socialSource: "badal", amount: 121, createdAt: "2026-11-04T00:00:00.000Z" },
-    { name: "AlokEarlierHigh", socialSource: "alok", amount: 55, createdAt: "2026-11-04T00:00:00.000Z" },
-    { name: "SuperAdminOnly", socialSource: "anshu", amount: 55, createdAt: "2026-11-14T00:00:00.000Z" },
-    { name: "Untagged", amount: 11, createdAt: "2026-11-14T00:00:00.000Z" },
-  ] };
-  let resolvePending;
-  let pending = false;
+  const records = Object.freeze([]);
   const context = vm.createContext({
-    socialCalendarCursor: new Date(), socialTransactions: [],
-    SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: "2026-11-10T16:00:40.000Z",
     state: { adminProfile: { role: "unified_payment" } },
-    elements: { socialCalendarPrev: {}, socialCalendarNext: {}, socialCalendarDetails: {} },
-    getMonthKey: () => "2026-11", getAdminAccessToken: () => "session",
-    callEdge: async (name) => {
-      assert.equal(name, "unified-portal-transactions?month=2026-11");
-      if (pending) return new Promise((resolve) => { resolvePending = resolve; });
-      return payload;
-    },
-    renderSocialCalendar() {},
+    socialTransactions: records,
+    callEdge: () => { throw new Error("Unified must not fetch real payments"); },
   });
   vm.runInContext(load, context);
   await context.loadSocialTransactions();
-  assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["AnshuLow", "BadalEarlier"]);
-  pending = true;
-  const response = context.loadSocialTransactions();
-  context.state.adminProfile = { role: "social_partner", socialSource: "alok" };
-  context.socialTransactions = [];
-  resolvePending(payload);
-  await response;
-  assert.equal(context.socialTransactions.length, 0);
+  assert.equal(context.socialTransactions, records);
 });
 
 test("unified calendar replaces dots with daily payment totals using India dates and exact cents", () => {

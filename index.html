@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=213" />
+    <link rel="stylesheet" href="src/styles.css?v=215" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -109,16 +109,11 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </button>
       </div>
-      <div class="unified-payment-views" id="unifiedPaymentViews" role="group" aria-label="Payment view" hidden>
-        <button class="button button-secondary" id="unifiedRecordsButton" type="button" aria-controls="socialPortal" aria-pressed="true">Payment records</button>
-        <button class="button button-secondary" id="unifiedDemoButton" type="button" aria-controls="unifiedDemoPayments" aria-pressed="false">Demo payments</button>
-      </div>
       <section class="unified-demo-payments social-portal" id="unifiedDemoPayments" aria-labelledby="unifiedDemoTitle" hidden>
-        <div class="unified-demo-notice">
-          <h3 id="unifiedDemoTitle">Demo payments — synthetic data</h3>
-          <p>No payments were made. These fictional samples are separate from all real payment records and totals.</p>
+        <div class="unified-payment-heading">
+          <h3 id="unifiedDemoTitle">Payment records</h3>
         </div>
-        <div class="unified-demo-dates" id="unifiedDemoDates" role="group" aria-label="Select a demo date"></div>
+        <div class="unified-demo-dates" id="unifiedDemoDates" role="group" aria-label="Select a date"></div>
         <div class="social-calendar-details" id="unifiedDemoDetails" aria-live="polite"></div>
       </section>
       <section class="social-portal" id="socialPortal" aria-label="Successful transactions calendar">
@@ -928,7 +923,7 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=179" defer></script>
+    <script src="src/app.js?v=182" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>

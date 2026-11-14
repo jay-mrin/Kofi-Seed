@@ -496,44 +496,18 @@ a {
   box-shadow: var(--shadow);
 }
 
-.unified-payment-views {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: min(760px, 100%);
-  margin: 0 auto 18px;
-}
-
-.unified-payment-views[hidden],
 .unified-demo-payments[hidden],
 .social-portal[hidden] {
   display: none;
 }
 
-.unified-payment-views button[aria-pressed="true"] {
-  border-color: #98671a;
-  background: #fff1d5;
-  color: #573709;
-}
-
-.unified-demo-notice {
+.unified-payment-heading {
   margin-bottom: 18px;
-  padding: 16px;
-  border: 2px solid #bc842a;
-  border-radius: 12px;
-  background: #fff3d9;
-  color: #573709;
 }
 
-.unified-demo-notice h3 {
-  margin: 0 0 8px;
-  font-size: 20px;
-}
-
-.unified-demo-notice p {
+.unified-payment-heading h3 {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 20px;
 }
 
 .unified-demo-dates {
