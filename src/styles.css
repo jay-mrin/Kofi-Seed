@@ -1355,6 +1355,14 @@ a {
   text-overflow: ellipsis;
 }
 
+.admin-calendar-day .unified-day-total {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  font-size: clamp(7px, 1.6vw, 10px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
 .admin-calendar-day.is-empty {
   min-height: 62px;
   border-color: transparent;

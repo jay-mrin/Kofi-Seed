@@ -3677,6 +3677,7 @@ function getSocialIndiaDateKey(dateString) {
 
 function renderSocialCalendar() {
   if (!elements.socialCalendarGrid) return;
+  const isUnified = state.adminProfile?.role === "unified_payment";
   const year = socialCalendarCursor.getFullYear();
   const month = socialCalendarCursor.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -3701,19 +3702,23 @@ function renderSocialCalendar() {
     const date = new Date(year, month, day);
     const dateKey = toDateKey(date);
     const records = byDate.get(dateKey) || [];
+    const dayTotal = isUnified && records.length
+      ? money(records.reduce((sum, record) => sum + Math.round(Number(record.amount) * 100), 0) / 100)
+      : "";
     const button = document.createElement("button");
     button.type = "button";
     button.className = `admin-calendar-day${records.length ? " has-donations" : ""}${dateKey === selectedSocialDate ? " is-selected" : ""}${dateKey === toDateKey(new Date()) ? " is-today" : ""}`;
     button.setAttribute("role", "gridcell");
     button.setAttribute("aria-selected", String(dateKey === selectedSocialDate));
-    button.setAttribute("aria-label", `${readableDate(date)}, ${records.length} successful transactions`);
+    button.setAttribute("aria-label", `${readableDate(date)}, ${records.length} successful transactions${dayTotal ? `, total ${dayTotal}` : ""}`);
     button.dataset.socialCalendarDate = dateKey;
     const dayNumber = document.createElement("span");
     dayNumber.textContent = String(day);
     button.append(dayNumber);
     if (records.length) {
       const count = document.createElement("small");
-      count.textContent = "●";
+      if (isUnified) count.className = "unified-day-total";
+      count.textContent = isUnified ? dayTotal : "●";
       button.append(count);
     }
     elements.socialCalendarGrid.append(button);

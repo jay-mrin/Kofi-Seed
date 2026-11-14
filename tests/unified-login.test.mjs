@@ -141,3 +141,43 @@ test("unified calendar filters by each record's partner and rejects a stale sess
   await response;
   assert.equal(context.socialTransactions.length, 0);
 });
+
+test("unified calendar replaces dots with daily payment totals using India dates and exact cents", () => {
+  const app = read("src/app.js");
+  const extract = (name) => app.match(new RegExp(`function ${name}\\([^]*?\\n\\}`))[0];
+  const node = (tag) => ({
+    tag, children: [], attributes: {}, dataset: {}, textContent: "",
+    append(...children) { this.children.push(...children); },
+    replaceChildren(...children) { this.children = [...children]; },
+    setAttribute(name, value) { this.attributes[name] = value; },
+  });
+  const grid = node("div");
+  const context = vm.createContext({
+    state: { adminProfile: { role: "unified_payment" } }, CONFIG: { currency: "USD" },
+    document: { createElement: node },
+    elements: { socialCalendarGrid: grid, socialCalendarDetails: node("div"), socialCalendarTitle: {} },
+    socialCalendarCursor: new Date(2026, 10, 1), selectedSocialDate: "2026-11-01",
+    socialTransactions: [
+      { amount: 7, createdAt: "2026-11-13T18:29:59.999Z" },
+      { amount: 11, createdAt: "2026-11-13T18:30:00.000Z" },
+      { amount: 22, createdAt: "2026-11-14T10:00:00.000Z" },
+      { amount: 0.1, createdAt: "2026-11-14T11:00:00.000Z" },
+      { amount: 0.2, createdAt: "2026-11-14T12:00:00.000Z" },
+    ],
+    toDateKey: (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+    readableDate: (date) => String(date), fromDateKey: (date) => date,
+    formatMonthTitle: () => "November 2026",
+  });
+  vm.runInContext(["money", "getSocialIndiaDateKey", "renderSocialCalendar"].map(extract).join("\n"), context);
+  context.renderSocialCalendar();
+  const day = (date) => grid.children.find((child) => child.dataset.socialCalendarDate === date);
+  assert.equal(day("2026-11-13").children[1].textContent, "$7");
+  assert.equal(day("2026-11-14").children[1].textContent, "$33.3");
+  assert.equal(day("2026-11-14").children[1].className, "unified-day-total");
+  assert.match(day("2026-11-14").attributes["aria-label"], /4 successful transactions, total \$33\.3$/);
+  assert.equal(day("2026-11-15").children.length, 1);
+  context.state.adminProfile = { role: "social_partner", socialSource: "anshu" };
+  context.renderSocialCalendar();
+  assert.equal(day("2026-11-14").children[1].textContent, "●");
+  assert.doesNotMatch(day("2026-11-14").attributes["aria-label"], /total/);
+});
