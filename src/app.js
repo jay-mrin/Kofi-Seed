@@ -227,6 +227,9 @@ const elements = {
   socialPortal: document.querySelector("#socialPortal"),
   socialTitle: document.querySelector("#socialTitle"),
   unifiedDemoPayments: document.querySelector("#unifiedDemoPayments"),
+  unifiedCalendarPrev: document.querySelector("#unifiedCalendarPrev"),
+  unifiedCalendarNext: document.querySelector("#unifiedCalendarNext"),
+  unifiedDemoTitle: document.querySelector("#unifiedDemoTitle"),
   unifiedDemoDates: document.querySelector("#unifiedDemoDates"),
   unifiedDemoDetails: document.querySelector("#unifiedDemoDetails"),
   closeSocialButton: document.querySelector("#closeSocialButton"),
@@ -3697,33 +3700,56 @@ function getUnifiedDemoPayments() {
 function renderUnifiedDemoPayments(dateKey = "2026-11-12") {
   if (state.adminProfile?.role !== "unified_payment") return;
   const records = getUnifiedDemoPayments();
-  const demoDates = ["2026-11-12", "2026-11-13", "2026-11-14"];
-  if (!demoDates.includes(dateKey)) dateKey = demoDates[0];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || toDateKey(fromDateKey(dateKey)) !== dateKey) dateKey = "2026-11-12";
+  const selectedDate = fromDateKey(dateKey);
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  elements.unifiedDemoTitle.textContent = formatMonthTitle(firstDay);
+  elements.unifiedCalendarPrev.dataset.unifiedDemoDate = toDateKey(new Date(year, month - 1, 1));
+  elements.unifiedCalendarNext.dataset.unifiedDemoDate = toDateKey(new Date(year, month + 1, 1));
   const formatDemoDate = (date) => new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Kolkata", day: "numeric", month: "long", year: "numeric",
   }).format(new Date(`${date}T12:00:00+05:30`));
   elements.unifiedDemoDates.replaceChildren();
   elements.unifiedDemoDetails.replaceChildren();
-  for (const date of demoDates) {
+  for (let offset = 0; offset < firstDay.getDay(); offset += 1) {
+    const blank = document.createElement("span");
+    blank.className = "admin-calendar-day is-empty";
+    blank.setAttribute("role", "presentation");
+    elements.unifiedDemoDates.append(blank);
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = toDateKey(new Date(year, month, day));
     const dayRecords = records.filter((record) => getSocialIndiaDateKey(record.createdAt) === date);
     const totalCents = dayRecords.reduce((sum, record) => sum + Math.round(record.amount * 100), 0);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "unified-demo-date";
+    button.className = `admin-calendar-day${dayRecords.length ? " has-donations" : ""}${date === dateKey ? " is-selected" : ""}${date === toDateKey(new Date()) ? " is-today" : ""}`;
     button.dataset.unifiedDemoDate = date;
-    button.setAttribute("aria-pressed", String(date === dateKey));
+    button.setAttribute("role", "gridcell");
+    button.setAttribute("aria-selected", String(date === dateKey));
+    button.setAttribute("aria-label", `${formatDemoDate(date)}, ${dayRecords.length} records${dayRecords.length ? `, total ${money(totalCents / 100)}` : ""}`);
     const dateLabel = document.createElement("span");
-    dateLabel.textContent = formatDemoDate(date);
-    const total = document.createElement("strong");
-    total.textContent = `${money(totalCents / 100)} total`;
-    const description = document.createElement("small");
-    description.textContent = `${dayRecords.length} records`;
-    button.append(dateLabel, total, description);
+    dateLabel.textContent = String(day);
+    button.append(dateLabel);
+    if (dayRecords.length) {
+      const total = document.createElement("small");
+      total.className = "unified-day-total";
+      total.textContent = money(totalCents / 100);
+      button.append(total);
+    }
     elements.unifiedDemoDates.append(button);
   }
   const heading = document.createElement("h4");
   heading.textContent = `Payment records · ${formatDemoDate(dateKey)}`;
   elements.unifiedDemoDetails.append(heading);
+  if (!records.some((record) => getSocialIndiaDateKey(record.createdAt) === dateKey)) {
+    const empty = document.createElement("p");
+    empty.textContent = "No payment records on this date.";
+    elements.unifiedDemoDetails.append(empty);
+  }
   for (const record of records.filter((item) => getSocialIndiaDateKey(item.createdAt) === dateKey)) {
     const row = document.createElement("div");
     row.className = "social-transaction";
@@ -4484,7 +4510,7 @@ elements.transactionBoardList?.addEventListener("scroll", () => {
     void loadTransactionBoard();
   }
 });
-elements.unifiedDemoDates.addEventListener("click", (event) => {
+elements.unifiedDemoPayments.addEventListener("click", (event) => {
   const button = event.target.closest("[data-unified-demo-date]");
   if (button) renderUnifiedDemoPayments(button.dataset.unifiedDemoDate);
 });

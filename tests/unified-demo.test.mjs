@@ -18,12 +18,12 @@ function demoContext(role = "unified_payment") {
   const liveRecords = Object.freeze([Object.freeze({ name: "Actual customer", amount: 11, createdAt: "2026-11-15T00:00:00Z" })]);
   const context = vm.createContext({
     CONFIG: { currency: "USD" }, state: { adminProfile: { role } }, document: { createElement: node },
-    elements: Object.fromEntries(["socialPortal", "unifiedDemoPayments", "unifiedDemoDates", "unifiedDemoDetails"].map((name) => [name, node()])),
+    elements: Object.fromEntries(["socialPortal", "unifiedDemoPayments", "unifiedDemoDates", "unifiedDemoDetails", "unifiedDemoTitle", "unifiedCalendarPrev", "unifiedCalendarNext"].map((name) => [name, node()])),
     socialTransactions: liveRecords, socialCalendarCursor: new Date(2026, 10, 15), selectedSocialDate: "2026-11-15",
     fetch: () => { throw new Error("Demo must not use the network"); },
     callEdge: () => { throw new Error("Demo must not call payment APIs"); },
   });
-  vm.runInContext(["money", "formatSocialOrderIndiaDateTime", "getSocialIndiaDateKey", "getUnifiedDemoPayments", "renderUnifiedDemoPayments", "setUnifiedPaymentView"].map(extract).join("\n"), context);
+  vm.runInContext(["toDateKey", "fromDateKey", "formatMonthTitle", "money", "formatSocialOrderIndiaDateTime", "getSocialIndiaDateKey", "getUnifiedDemoPayments", "renderUnifiedDemoPayments", "setUnifiedPaymentView"].map(extract).join("\n"), context);
   return { context, liveRecords };
 }
 
@@ -56,8 +56,10 @@ test("Unified shows simple payment records with varied names and preserves store
   context.setUnifiedPaymentView();
   assert.equal(context.elements.socialPortal.hidden, true);
   assert.equal(context.elements.unifiedDemoPayments.hidden, false);
-  const cards = context.elements.unifiedDemoDates.children;
-  assert.deepEqual(cards.map((card) => card.children[1].textContent), ["$594 total", "$638 total", "$682 total"]);
+  const days = context.elements.unifiedDemoDates.children.filter((day) => day.dataset.unifiedDemoDate);
+  assert.equal(days.length, 30);
+  assert.equal(context.elements.unifiedDemoTitle.textContent, "November 2026");
+  assert.deepEqual(days.filter((day) => day.children.length > 1).map((day) => day.children[1].textContent), ["$594", "$638", "$682"]);
   for (const [date, count] of [["2026-11-12", 21], ["2026-11-13", 22], ["2026-11-14", 23]]) {
     context.renderUnifiedDemoPayments(date);
     assert.doesNotMatch(textOf(context.elements.unifiedDemoDates), /demo|sample|fictional|synthetic|no real payments/i);
@@ -100,4 +102,26 @@ test("Unified markup shows payment records without demo, sample, or fictional-da
   assert.doesNotMatch(sampleSection, />[^<]*(?:demo|sample|fictional|synthetic|no payments)[^<]*</i);
   assert.match(sampleSection, />Payment records</);
   assert.doesNotMatch(sampleSection, /Select a sample date/);
+});
+
+test("Unified calendar navigates months, aligns weekdays, and handles empty dates without fetching", () => {
+  const { context } = demoContext();
+  context.renderUnifiedDemoPayments("2026-11-14");
+  const day = context.elements.unifiedDemoDates.children.find((item) => item.dataset.unifiedDemoDate === "2026-11-14");
+  assert.equal(day.attributes["aria-selected"], "true");
+  assert.match(day.attributes["aria-label"], /23 records, total \$682/);
+  assert.equal(context.elements.unifiedCalendarPrev.dataset.unifiedDemoDate, "2026-10-01");
+  assert.equal(context.elements.unifiedCalendarNext.dataset.unifiedDemoDate, "2026-12-01");
+  context.renderUnifiedDemoPayments(context.elements.unifiedCalendarNext.dataset.unifiedDemoDate);
+  assert.equal(context.elements.unifiedDemoTitle.textContent, "December 2026");
+  const cells = context.elements.unifiedDemoDates.children;
+  assert.equal(cells.length, 33);
+  assert.equal(cells[0].attributes.role, "presentation");
+  assert.equal(cells[1].attributes.role, "presentation");
+  assert.equal(cells[2].dataset.unifiedDemoDate, "2026-12-01");
+  assert.match(textOf(context.elements.unifiedDemoDetails), /No payment records on this date/);
+  context.renderUnifiedDemoPayments("2027-01-01");
+  assert.equal(context.elements.unifiedCalendarPrev.dataset.unifiedDemoDate, "2026-12-01");
+  context.renderUnifiedDemoPayments("invalid");
+  assert.equal(context.elements.unifiedDemoTitle.textContent, "November 2026");
 });

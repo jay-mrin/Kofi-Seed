@@ -501,46 +501,6 @@ a {
   display: none;
 }
 
-.unified-payment-heading {
-  margin-bottom: 18px;
-}
-
-.unified-payment-heading h3 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.unified-demo-dates {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-  gap: 10px;
-}
-
-.unified-demo-date {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-  border: 1px solid #d8c5a5;
-  border-radius: 12px;
-  background: #fffbf2;
-  color: #573709;
-  text-align: left;
-  cursor: pointer;
-}
-
-.unified-demo-date[aria-pressed="true"] {
-  border: 2px solid #98671a;
-  background: #fff1d5;
-}
-
-.unified-demo-date strong {
-  font-size: 19px;
-}
-
-.unified-demo-date small {
-  line-height: 1.4;
-}
-
 .social-panel-header {
   display: flex;
   align-items: flex-start;
