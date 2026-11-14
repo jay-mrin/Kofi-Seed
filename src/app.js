@@ -3746,11 +3746,6 @@ function renderSocialCalendar() {
       const email = document.createElement("small");
       email.textContent = transaction.email || "Email unavailable";
       identity.append(email);
-      if (state.adminProfile?.role === "unified_payment") {
-        const portal = document.createElement("small");
-        portal.textContent = ({ anshu: "AnshuPortal", badal: "Badal Portal", rohit: "Rohit Portal", alok: "Alok Portal" })[transaction.socialSource] || "";
-        identity.append(portal);
-      }
       const paid = document.createElement("div");
       paid.className = "social-order-paid";
       const paidLabel = document.createElement("small");
@@ -3871,7 +3866,7 @@ function openSocialPanel() {
   elements.socialTitle.textContent = state.adminProfile.displayName ||
     (state.adminProfile.role === "unified_payment" ? "Unified Payment Portal" : state.adminProfile.socialSource === "anshu" ? "AnshuPortal" : state.adminProfile.socialSource === "badal" ? "Badal Portal" : state.adminProfile.socialSource === "alok" ? "Alok Portal" : "Rohit Portal");
   elements.closeSocialButton.setAttribute("aria-label", `Close ${elements.socialTitle.textContent}`);
-  elements.socialPortal.setAttribute("aria-label", state.adminProfile.role === "unified_payment" ? "Partner payment records calendar" : "Tagged PayPal orders calendar");
+  elements.socialPortal.setAttribute("aria-label", state.adminProfile.role === "unified_payment" ? "Payment records calendar" : "Tagged PayPal orders calendar");
   socialTransactions = [];
   elements.socialCalendarGrid.replaceChildren();
   elements.socialCalendarDetails.textContent = "Loading successful transactions...";
