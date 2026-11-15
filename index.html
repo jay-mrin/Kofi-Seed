@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=225" />
+    <link rel="stylesheet" href="src/styles.css?v=226" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -99,16 +99,20 @@
           <path d="m44 107 2-1m27 0 3 1m-20-6 2-.5" stroke="#f2d6a5" stroke-width="1.2" stroke-linecap="round" opacity=".65"/>
         </g>
         <g id="seedArtLeafLeft">
-          <path d="M0 0C-22 0-33-15-33-32-14-31 1-19 0 0Z" fill="url(#seedArtLeafSage)" stroke="#e4d99a" stroke-width=".6"/>
-          <path d="M-1-1C-9-11-19-22-29-29m15 13-10-2m17 10-1-10" fill="none" stroke="#f6e9b4" stroke-width=".8" stroke-linecap="round" opacity=".8"/>
+          <g class="seed-art-leaf seed-art-leaf-left">
+            <path d="M0 0C-22 0-33-15-33-32-14-31 1-19 0 0Z" fill="url(#seedArtLeafSage)" stroke="#e4d99a" stroke-width=".6"/>
+            <path d="M-1-1C-9-11-19-22-29-29m15 13-10-2m17 10-1-10" fill="none" stroke="#f6e9b4" stroke-width=".8" stroke-linecap="round" opacity=".8"/>
+          </g>
         </g>
         <g id="seedArtLeafRight">
-          <path d="M0 0C0-20 14-31 34-32 32-13 19 1 0 0Z" fill="url(#seedArtLeafJade)" stroke="#d9d89a" stroke-width=".6"/>
-          <path d="M1-1C11-13 20-22 30-29m-17 16 1-10m6 3 9-1" fill="none" stroke="#f6e9b4" stroke-width=".8" stroke-linecap="round" opacity=".75"/>
+          <g class="seed-art-leaf seed-art-leaf-right">
+            <path d="M0 0C0-20 14-31 34-32 32-13 19 1 0 0Z" fill="url(#seedArtLeafJade)" stroke="#d9d89a" stroke-width=".6"/>
+            <path d="M1-1C11-13 20-22 30-29m-17 16 1-10m6 3 9-1" fill="none" stroke="#f6e9b4" stroke-width=".8" stroke-linecap="round" opacity=".75"/>
+          </g>
         </g>
         <symbol id="seedArt1" viewBox="0 0 120 120">
           <use href="#seedArtSoil"/>
-          <g>
+          <g class="seed-art-plant seed-art-plant-1">
             <path d="M59 101c1-13-1-21-4-30m4 17c3-9 7-15 11-19" fill="none" stroke="url(#seedArtStem)" stroke-width="2.6" stroke-linecap="round"/>
             <use href="#seedArtLeafLeft" transform="translate(57 78) rotate(-8) scale(.66)"/>
             <use href="#seedArtLeafRight" transform="translate(60 80) rotate(5) scale(.7)"/>
@@ -117,7 +121,7 @@
         <symbol id="seedArt3" viewBox="0 0 120 120">
           <use href="#seedArtAura" fill="url(#seedArtHaloPurple)" color="#bc9dcc"/>
           <use href="#seedArtSoil"/>
-          <g filter="url(#seedArtBloomPurple)">
+          <g class="seed-art-plant seed-art-plant-3" filter="url(#seedArtBloomPurple)">
             <path d="M59 101c4-26 0-43-2-62m4 45 16-17m-18 1-15-15" fill="none" stroke="url(#seedArtStem)" stroke-width="2.6" stroke-linecap="round"/>
             <use href="#seedArtLeafLeft" transform="translate(59 67) rotate(-7) scale(.82)"/>
             <use href="#seedArtLeafRight" transform="translate(59 47) rotate(-6) scale(.9)"/>
@@ -127,7 +131,7 @@
         <symbol id="seedArt5" viewBox="0 0 120 120">
           <use href="#seedArtAura" fill="url(#seedArtHaloRed)" color="#d8a09a"/>
           <use href="#seedArtSoil"/>
-          <g filter="url(#seedArtBloomRed)">
+          <g class="seed-art-plant seed-art-plant-5" filter="url(#seedArtBloomRed)">
             <path d="M60 101c3-33 0-57-1-79m1 59L39 62m22 7 18-21" fill="none" stroke="url(#seedArtStem)" stroke-width="2.7" stroke-linecap="round"/>
             <use href="#seedArtLeafLeft" transform="translate(60 82) rotate(-5) scale(.93)"/>
             <use href="#seedArtLeafRight" transform="translate(61 69) rotate(5) scale(.88)"/>
@@ -138,7 +142,7 @@
         <symbol id="seedArt11" viewBox="0 0 120 120">
           <use href="#seedArtAura" fill="url(#seedArtHalo)" color="#d6af58"/>
           <use href="#seedArtSoil"/>
-          <g filter="url(#seedArtBloom)">
+          <g class="seed-art-plant seed-art-plant-11" filter="url(#seedArtBloom)">
             <path d="M59 101c6-37 3-62 2-83m-1 68L35 64m28 6 22-22m-24 7L43 32" fill="none" stroke="url(#seedArtStem)" stroke-width="2.8" stroke-linecap="round"/>
             <use href="#seedArtLeafLeft" transform="translate(59 88) rotate(-4) scale(1.05)"/>
             <use href="#seedArtLeafRight" transform="translate(62 78) rotate(7) scale(1.02)"/>

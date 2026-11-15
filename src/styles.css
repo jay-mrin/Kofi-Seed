@@ -5914,6 +5914,33 @@ body:has(dialog[open]) {
   filter: none;
   transition: filter 180ms ease;
 }
+.seed-art-plant {
+  transform-box: view-box;
+  transform-origin: 60px 101px;
+  animation: seed-plant-sway var(--seed-sway-duration, 6s) ease-in-out infinite;
+  animation-delay: var(--seed-sway-delay, 0s);
+}
+.seed-art-plant-1 { --seed-sway-duration: 5.8s; --seed-sway-delay: -1.2s; --seed-leaf-duration: 4.2s; }
+.seed-art-plant-3 { --seed-sway-duration: 6.4s; --seed-sway-delay: -3.6s; --seed-leaf-duration: 4.8s; }
+.seed-art-plant-5 { --seed-sway-duration: 7s; --seed-sway-delay: -2.1s; --seed-leaf-duration: 5.3s; }
+.seed-art-plant-11 { --seed-sway-duration: 7.6s; --seed-sway-delay: -5.2s; --seed-leaf-duration: 5.7s; }
+.seed-art-leaf {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: seed-leaf-flutter var(--seed-leaf-duration, 4.8s) ease-in-out infinite;
+  animation-delay: var(--seed-leaf-delay, -.8s);
+}
+.seed-art-leaf-right { animation-direction: reverse; }
+.seed-art-plant > use:nth-of-type(2n) { --seed-leaf-delay: -2.3s; }
+.seed-art-plant > use:nth-of-type(3n) { --seed-leaf-delay: -3.7s; }
+@keyframes seed-plant-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes seed-leaf-flutter {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(4deg); }
+}
 .seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; }
 .seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; }
 .seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; }
@@ -5935,6 +5962,8 @@ body:has(dialog[open]) {
   50% { box-shadow: 0 0 20px #e6b94c80, inset 0 0 14px #f5d68b40; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .seed-art-plant,
+  .seed-art-leaf { animation: none; }
   .home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="11"] {
     animation: none;
     box-shadow: 0 0 12px #e6b94c59, inset 0 0 10px #f5d68b26;
