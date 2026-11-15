@@ -5877,8 +5877,8 @@ body:has(dialog[open]) {
 .seed-hero-sun { position: absolute; right: 20%; bottom: 6%; width: 65px; height: 65px; border-radius: 50%; background: #fff6d9; box-shadow: 0 0 65px 32px #fff0c277; }
 .seed-hero-hills { position: absolute; inset: auto 0 0; width: 100%; height: 100px; opacity: .55; }
 .home-checkout-view .seed-garden-checkout .minimal-offering-form { padding: 0 clamp(18px, 5.5vw, 64px) 26px; }
-.seed-choice-heading { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 12px 0 26px; color: var(--garden-ink); font: 700 clamp(29px, 4.7vw, 45px)/1.15 Georgia, "Times New Roman", serif; }
-.seed-choice-heading svg { width: 32px; height: 34px; color: #b58a43; }
+.seed-choice-heading { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 12px 0 26px; color: var(--garden-ink); font: 700 clamp(25px, 4.1vw, 40px)/1.2 Georgia, "Times New Roman", serif; text-align: center; text-wrap: balance; }
+.seed-choice-heading svg { width: 32px; height: 34px; flex: 0 0 auto; color: #b58a43; }
 .seed-choice-heading svg:first-child { transform: rotate(-45deg); }
 .seed-choice-heading svg:last-child { transform: rotate(45deg); }
 .home-checkout-view .seed-garden-checkout .seed-quantity-row {
@@ -6021,10 +6021,7 @@ body:has(dialog[open]) {
   }
 }
 .home-checkout-view .seed-garden-checkout .seed-option-name { color: var(--garden-ink); font: 800 clamp(22px, 3.6vw, 38px)/1.2 Inter, "Segoe UI", sans-serif; white-space: nowrap; }
-.seed-quantity-divider { display: flex; grid-column: 1 / -1; grid-row: 2; align-items: center; justify-content: center; gap: 20px; margin: 12px 0 0; color: var(--garden-ink); font: 700 clamp(21px, 3.3vw, 32px)/1.2 Georgia, "Times New Roman", serif; text-align: center; }
-.seed-quantity-divider::before, .seed-quantity-divider::after { content: ""; flex: 1; max-width: 135px; height: 1px; background: linear-gradient(90deg, transparent, #bf879b); }
-.seed-quantity-divider::after { transform: rotate(180deg); }
-.home-checkout-view .seed-garden-checkout .paypal-quantity-control { grid-column: 1; grid-row: 3; min-height: 85px; padding: 12px 18px; border-color: #e4c3d1; border-radius: 22px; background: #fff9fc; box-shadow: none; }
+.home-checkout-view .seed-garden-checkout .paypal-quantity-control { grid-column: 1; grid-row: 2; min-height: 85px; padding: 12px 18px; border-color: #e4c3d1; border-radius: 22px; background: #fff9fc; box-shadow: none; }
 .home-checkout-view .seed-garden-checkout .seed-price strong { color: var(--garden-ink); font: 800 clamp(21px, 3vw, 32px)/1.2 Inter, "Segoe UI", sans-serif; }
 .home-checkout-view .seed-garden-checkout .seed-stepper-button { width: 48px; height: 48px; flex-basis: 48px; color: #ad5e80; background: #f8e5ed; }
 .home-checkout-view .seed-garden-checkout .seed-stepper-button-plus {
@@ -6060,11 +6057,11 @@ body:has(dialog[open]) {
 @media (prefers-reduced-motion: reduce) {
   .home-checkout-view .seed-garden-checkout .seed-stepper-button-plus::before { animation: none; opacity: .5; }
 }
-.home-checkout-view .seed-garden-checkout .compact-amount-field { grid-column: 2; grid-row: 3; min-height: 85px; padding: 8px; color: var(--garden-muted); border: 1px solid #e4c3d1; border-radius: 22px; background: #fff9fc; }
+.home-checkout-view .seed-garden-checkout .compact-amount-field { grid-column: 2; grid-row: 2; min-height: 85px; padding: 8px; color: var(--garden-muted); border: 1px solid #e4c3d1; border-radius: 22px; background: #fff9fc; }
 .home-checkout-view .seed-garden-checkout .paypal-total-value { color: var(--garden-ink); font-family: Inter, "Segoe UI", sans-serif; font-size: clamp(23px, 3.4vw, 35px); font-weight: 800; }
 .home-checkout-view .seed-garden-checkout .compact-amount-field > span:first-child,
 .home-checkout-view .seed-garden-checkout .compact-amount-field > small { color: var(--garden-ink); font-weight: 700; }
-.home-checkout-view .seed-garden-checkout .seed-quantity-row .paypal-name-field { grid-column: 1 / -1; grid-row: 4; margin-top: 0; }
+.home-checkout-view .seed-garden-checkout .seed-quantity-row .paypal-name-field { grid-column: 1 / -1; grid-row: 3; margin-top: 0; }
 .home-checkout-view .seed-garden-checkout .paypal-name-field input { min-height: 60px; border-color: #e4c3d1; border-radius: 19px; color: var(--garden-ink); background: #fff9fc; font-family: Inter, "Segoe UI", sans-serif; font-size: 23px; font-weight: 700; }
 .home-checkout-view .seed-garden-checkout .paypal-name-field input::placeholder { color: #825568; opacity: 1; }
 .home-checkout-view .seed-garden-checkout .checkout-button {
@@ -6153,7 +6150,6 @@ body:has(dialog[open]) {
   .seed-garden-design .topbar { padding-inline: 12px; }
   .seed-garden-hero { grid-template-columns: 45% 55%; }
   .seed-garden-message .seed-checkout-title { font-size: clamp(21px, 6vw, 25px); }
-  .seed-quantity-divider { gap: 8px; font-size: 20px; }
   .home-checkout-view .seed-garden-checkout .seed-option-name { font-size: 16px; }
   .home-checkout-view .seed-garden-checkout .seed-option-art { width: 50px; height: 56px; }
   .home-checkout-view .seed-garden-checkout .seed-option-card { min-height: 102px; }
