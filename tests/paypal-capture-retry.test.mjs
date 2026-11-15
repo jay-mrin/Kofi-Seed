@@ -38,7 +38,7 @@ function checkout(kind) {
     vm.runInContext(recoverySource, context);
     const node = () => ({ textContent: "", replaceChildren() {} });
     const recovery = context.window.createPayPalRecovery({
-      ui: { status: node(), reload: node(), paypal: node(), card: node() },
+      ui: { status: node(), reason: node(), reload: node(), paypal: node(), card: node() },
       getDetails: () => ({ amount: 11 }),
       captureOrder: (orderId) => context.callEdge("capture-paypal-order", { body: { orderId } }),
       finish: context.finishVerifiedDonation,

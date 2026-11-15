@@ -8,6 +8,7 @@ window.createPayPalRecovery = (options) => {
   let namespace = "";
   let buttons = [];
   let loading = false;
+  let lastFailureReason = "THE PAYMENT FAILED";
   const completedOrders = new Set();
   const ui = options.ui;
   const storageKey = "sow-your-seed:paypal-pending-approval";
@@ -45,12 +46,38 @@ window.createPayPalRecovery = (options) => {
     ui.status.textContent = message;
   }
 
-  function failureIssue(error) {
-    let provider = error?.details;
+  function providerError(error) {
+    let provider = Array.isArray(error?.details) ? error : error?.details;
     if (typeof provider === "string") {
       try { provider = JSON.parse(provider.slice(provider.indexOf("{"))); } catch { provider = null; }
     }
-    return error?.code || provider?.details?.[0]?.issue || "";
+    return provider && typeof provider === "object" ? provider : null;
+  }
+
+  function failureIssue(error) {
+    return providerError(error)?.details?.[0]?.issue || error?.code || "";
+  }
+
+  function setFailure(error, preserveKnownReason = false) {
+    const reasons = {
+      INSTRUMENT_DECLINED: "PayPal declined the selected payment method. Please choose another payment method.",
+      PAYMENT_DENIED: "PayPal declined this payment. Please choose another payment method.",
+      CARD_EXPIRED: "The card has expired. Please use a different card.",
+      ORDER_NOT_APPROVED: "The payment was not approved in PayPal.",
+      MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: "PayPal's payment attempt limit was reached. Please choose another payment method.",
+      REDIRECT_PAYER_FOR_ALTERNATE_FUNDING: "PayPal requested a different payment method.",
+    };
+    const provider = providerError(error);
+    const issue = failureIssue(error);
+    const suppliedCode = provider?.details?.[0]?.issue || provider?.name ||
+      (/^(?:PAYEE_|PAYER_|PAYMENT_|CARD_|INSTRUMENT_|ORDER_|REDIRECT_|MAX_)/.test(issue) ? issue : "");
+    const capture = provider?.purchase_units?.[0]?.payments?.captures?.at(-1);
+    const reason = Object.hasOwn(reasons, issue) ? reasons[issue]
+      : typeof suppliedCode === "string" && /^[A-Z][A-Z0-9_]{2,79}$/.test(suppliedCode) ? `PayPal reported: ${suppliedCode.toLowerCase().replaceAll("_", " ")}.`
+      : ["DENIED", "DECLINED", "FAILED"].includes(capture?.status) ? "PayPal declined this payment. Please choose another payment method."
+      : "";
+    if (reason || !preserveKnownReason) lastFailureReason = reason || "THE PAYMENT FAILED";
+    ui.reason.textContent = lastFailureReason;
   }
 
   function definitelyNotPaid(error, issue) {
@@ -66,6 +93,7 @@ window.createPayPalRecovery = (options) => {
     ui.reload.textContent = verifiedPayment ? "Show payment confirmation" : "Check payment status";
     ui.title.textContent = verifiedPayment ? "Your Seed Was Sown" : "Checking Your Seed Payment";
     ui.description.textContent = verifiedPayment ? "Your payment is complete." : "We are checking your existing PayPal payment.";
+    ui.reason.hidden = true;
     setStatus(verifiedPayment
       ? "PayPal confirmed your payment. Finish viewing your confirmation below."
       : "PayPal approval was received, but payment confirmation was interrupted. Check this payment before starting another attempt.");
@@ -98,6 +126,7 @@ window.createPayPalRecovery = (options) => {
         details = null;
         cleanup();
       } catch (error) {
+        setFailure(error);
         const issue = failureIssue(error);
         if (!verifiedPayment && definitelyNotPaid(error, issue)) {
           approvedOrderId = "";
@@ -140,6 +169,8 @@ window.createPayPalRecovery = (options) => {
     let rendering = true;
     namespace = currentNamespace;
     ui.title.textContent = "Your Seed Was Not Sown...";
+    ui.reason.hidden = false;
+    ui.reason.textContent = lastFailureReason;
     ui.description.textContent = "Your payment didn't finish. Your details are saved, and you can try again below.";
     ui.reload.textContent = "Reload PayPal options";
     ui.reload.disabled = true;
@@ -159,14 +190,20 @@ window.createPayPalRecovery = (options) => {
             style: { layout: "vertical", shape: "pill", tagline: false, height: 44 },
             createOrder: async () => {
               if (generation !== currentGeneration || approvedOrderId) throw new Error("This checkout has expired. Reload the payment options.");
-              const result = await options.createOrder(currentDetails);
+              setFailure();
+              let result;
+              try { result = await options.createOrder(currentDetails); } catch (error) {
+                if (generation === currentGeneration) setFailure(error);
+                throw error;
+              }
               if (generation !== currentGeneration) throw new Error("This checkout has expired. Reload the payment options.");
               return result.id;
             },
             onApprove: (data, actions) => generation === currentGeneration ? approve(data.orderID, actions) : undefined,
-            onCancel: () => { if (generation === currentGeneration) options.onFailure(); },
-            onError: () => {
+            onCancel: () => { if (generation === currentGeneration) { setFailure(); options.onFailure(); } },
+            onError: (error) => {
               if (generation !== currentGeneration) return;
+              setFailure(error, true);
               if (!rendering) { options.onFailure(); return; }
               // Do not spin up another SDK automatically if rendering itself failed.
               setStatus("PayPal couldn't complete this attempt. Reload the options below to try again.");
@@ -203,8 +240,9 @@ window.createPayPalRecovery = (options) => {
   return {
     approve,
     show,
+    setFailure,
     hasPendingApproval: () => Boolean(approvedOrderId || verifiedPayment || confirmation),
-    begin: () => { if (!approvedOrderId && !verifiedPayment) { cleanup(); details = null; } },
+    begin: () => { if (!approvedOrderId && !verifiedPayment) { cleanup(); details = null; setFailure(); } },
     close: cleanup,
     retry: () => approvedOrderId || verifiedPayment ? approve(approvedOrderId) : show(),
   };

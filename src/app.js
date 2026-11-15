@@ -3000,6 +3000,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
     createOrder: async () => {
       if (checkoutGeneration !== paypalCheckoutGeneration) throw new Error("This PayPal checkout has closed. Please use the current payment options.");
       if (getPayPalRecovery().hasPendingApproval()) throw new Error("Check the previous PayPal payment before starting another attempt.");
+      getPayPalRecovery().setFailure();
       if (!pendingDonation) throw new Error("Order details are missing.");
       const ui = getCheckoutUi();
       const email = requirePaymentEmail();
@@ -3021,7 +3022,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
           sourceTag: readSocialSourceTag(),
           productType: "seed",
         },
-      });
+      }).catch((error) => { getPayPalRecovery().setFailure(error); throw error; });
       pendingDonation.paymentRoute = payload.paymentRoute;
       void trackCheckoutEvent("paypal_checkout_started", pendingDonation);
       if (checkoutGeneration !== paypalCheckoutGeneration) throw new Error("This PayPal checkout has closed. Please use the current payment options.");
@@ -3035,6 +3036,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
     onCancel: () => {
       if (checkoutGeneration !== paypalCheckoutGeneration) return;
       if (!pendingDonation && !getPayPalRecovery().hasPendingApproval()) return;
+      getPayPalRecovery().setFailure();
       closeInlinePayPalCheckout();
       openPaymentFailure("paypal");
     },
@@ -3042,6 +3044,7 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
       if (checkoutGeneration !== paypalCheckoutGeneration) return;
       console.warn("PayPal checkout failed.", error);
       if (!pendingDonation && !getPayPalRecovery().hasPendingApproval()) return;
+      getPayPalRecovery().setFailure(error, true);
       closeInlinePayPalCheckout();
       openPaymentFailure("paypal");
     },
@@ -3055,6 +3058,7 @@ function getPayPalRecovery() {
       host: document.querySelector("#paypalRecovery"),
       title: document.querySelector("#paymentFailureTitle"),
       description: document.querySelector("#paymentFailureDescription"),
+      reason: document.querySelector("#paymentFailureReason"),
       status: document.querySelector("#paypalRecoveryStatus"),
       loading: document.querySelector("#paypalRecoveryLoading"),
       amount: document.querySelector("#paypalRecoveryAmount"),
@@ -3536,6 +3540,8 @@ function openPaymentFailure(source = alternateCheckoutSource, { preview = false 
   elements.retryPaymentButton.hidden = Boolean(canRetryPayPal);
   document.querySelector("#paymentFailureTitle").textContent = "Your Seed Was Not Sown...";
   document.querySelector("#paymentFailureDescription").textContent = "Your payment didn't finish. You can try again when you're ready.";
+  document.querySelector("#paymentFailureReason").textContent = "THE PAYMENT FAILED";
+  document.querySelector("#paymentFailureReason").hidden = false;
   if (elements.paymentFailureDialog.open) {
     if (canRetryPayPal) void getPayPalRecovery().show();
     return;

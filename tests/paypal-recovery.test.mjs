@@ -10,7 +10,7 @@ const app = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
 
 function setup({ loadFails = false, renderFails = false, storage = new Map(), details = {} } = {}) {
   const node = () => ({ hidden: false, disabled: false, textContent: "", children: [], replaceChildren() { this.children = []; } });
-  const ui = Object.fromEntries(["host", "title", "description", "status", "loading", "amount", "paypal", "card", "reload"].map((key) => [key, node()]));
+  const ui = Object.fromEntries(["host", "title", "description", "reason", "status", "loading", "amount", "paypal", "card", "reload"].map((key) => [key, node()]));
   const rendered = [], namespaces = [], closed = [], captures = [], creates = [], finished = [], resets = [];
   let captureError, finishError, captureWait, sdkWait;
   const context = vm.createContext({ window: { sessionStorage: {
@@ -103,6 +103,7 @@ test("an interrupted approval rechecks the same order and never creates a replac
   await flow.controller.approve("PAYPAL-ORDER");
   assert.equal(flow.controller.hasPendingApproval(), true);
   assert.match(flow.ui.title.textContent, /Checking/);
+  assert.equal(flow.ui.reason.hidden, true, "Unconfirmed payments must not be labeled as failed");
   assert.equal(flow.namespaces.length, 0);
   await flow.controller.retry();
   assert.deepEqual(flow.captures, ["PAYPAL-ORDER", "PAYPAL-ORDER"]);
@@ -198,6 +199,46 @@ test("pending approvals survive a refresh without persisting customer contact in
   await restored.controller.retry();
   assert.deepEqual(restored.captures, ["PAYPAL-ORDER"]);
   assert.equal(restored.finished.length, 1);
+});
+
+test("missing PayPal reasons show the exact failure fallback without exposing SDK diagnostics", async () => {
+  const flow = setup();
+  await flow.controller.show();
+  assert.equal(flow.ui.reason.textContent, "THE PAYMENT FAILED");
+  flow.controller.setFailure(Object.assign(new Error("SDK stack with private diagnostics"), { code: "NETWORK_ERROR" }));
+  assert.equal(flow.ui.reason.textContent, "THE PAYMENT FAILED");
+  await flow.controller.retry();
+  assert.equal(flow.ui.reason.textContent, "THE PAYMENT FAILED");
+  assert.equal(flow.namespaces.length, 2);
+});
+
+test("PayPal reasons survive fresh SDK rendering and legacy API response wrappers", async () => {
+  const flow = setup();
+  flow.controller.setFailure(Object.assign(new Error("Capture failed"), {
+    details: 'PayPalApiError: PayPal capture failed: {"details":[{"issue":"CARD_EXPIRED"}],"debug_id":"never-display"}',
+  }));
+  await flow.controller.show();
+  assert.match(flow.ui.reason.textContent, /card has expired/i);
+  assert.doesNotMatch(flow.ui.reason.textContent, /never-display|debug_id/);
+  await flow.controller.retry();
+  assert.match(flow.ui.reason.textContent, /card has expired/i);
+  flow.controller.setFailure({ details: [{ issue: "PAYEE_ACCOUNT_RESTRICTED" }] });
+  assert.equal(flow.ui.reason.textContent, "PayPal reported: payee account restricted.");
+  flow.controller.setFailure(Object.assign(new Error("Wrapped SDK error"), { code: "NETWORK_ERROR" }), true);
+  assert.equal(flow.ui.reason.textContent, "PayPal reported: payee account restricted.");
+});
+
+test("a new attempt clears the previous decline reason before recording its own provider error", async () => {
+  const flow = setup();
+  flow.controller.setFailure({ code: "CARD_EXPIRED" });
+  await flow.controller.show();
+  const payment = flow.rendered[0];
+  await payment.createOrder();
+  assert.equal(flow.ui.reason.textContent, "THE PAYMENT FAILED");
+  payment.onError({ details: [{ issue: "INSTRUMENT_DECLINED" }] });
+  await setImmediate();
+  assert.match(flow.ui.reason.textContent, /declined the selected payment method/);
+  assert.equal(flow.namespaces.length, 2);
 });
 
 test("a confirmed payment shows its receipt without waiting for a public-content refresh", async () => {

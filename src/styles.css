@@ -2810,12 +2810,14 @@ legend::after {
 }
 
 .payment-failure-verse {
-  margin-block: 22px 0;
+  margin-block: 22px 20px;
   color: #94858d;
   font-size: 13px;
   font-style: italic;
   line-height: 1.5;
 }
+
+.payment-failure-card .payment-failure-reason { margin: 0 0 18px; color: #f0bdc5; font: 700 15px/1.5 Inter, "Segoe UI", sans-serif; overflow-wrap: anywhere; }
 
 .paypal-recovery { display: grid; gap: 12px; }
 .paypal-recovery .paypal-recovery-amount { margin: 0; color: #f5ecef; font: 500 14px/1.5 Inter, "Segoe UI", sans-serif; }

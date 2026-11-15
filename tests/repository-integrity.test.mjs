@@ -127,7 +127,8 @@ test("failed and cancelled PayPal payments open the seed-not-sown dialog", () =>
   const app = readRepositoryFile("src/app.js");
   const styles = readRepositoryFile("src/styles.css");
 
-  assert.match(html, /id="paymentFailureDialog"[\s\S]*Your Seed Was Not Sown\.\.\.[\s\S]*id="retryPaymentButton"[\s\S]*SOW YOUR SEED NOW[\s\S]*Galatians 6:7/);
+  assert.match(html, /id="paymentFailureDialog"[\s\S]*Your Seed Was Not Sown\.\.\.[\s\S]*Galatians 6:7[\s\S]*id="paymentFailureReason"[\s\S]*THE PAYMENT FAILED[\s\S]*id="paypalRecoveryButtons"/);
+  assert.match(html, /id="retryPaymentButton"[^>]*>🌱 SOW YOUR SEED NOW/);
   assert.match(app, /INSTRUMENT_DECLINED[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
   assert.match(app, /onCancel:[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
   assert.match(app, /onError:[\s\S]*PayPal checkout failed[\s\S]*closeInlinePayPalCheckout\(\)[\s\S]*openPaymentFailure\("paypal"\)/);
