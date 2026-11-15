@@ -5865,20 +5865,12 @@ body:has(dialog[open]) {
   -webkit-mask-image: linear-gradient(#000 85%, transparent 100%);
   mask-image: linear-gradient(#000 85%, transparent 100%);
 }
-.seed-garden-message { position: relative; z-index: 3; grid-column: 2; align-self: center; padding: 26px clamp(12px, 3.5vw, 38px) 42px 8px; text-align: center; }
-.seed-garden-message .seed-checkout-title {
-  max-width: 510px;
-  margin: 0 auto;
-  color: var(--garden-ink);
-  font: italic 600 clamp(28px, 4.7vw, 57px)/1.03 "Cormorant Garamond", Georgia, serif;
-  letter-spacing: -0.7px;
-  text-align: center;
-}
 .seed-hero-sun { position: absolute; right: 20%; bottom: 6%; width: 65px; height: 65px; border-radius: 50%; background: #fff6d9; box-shadow: 0 0 65px 32px #fff0c277; }
 .seed-hero-hills { position: absolute; inset: auto 0 0; width: 100%; height: 100px; opacity: .55; }
 .home-checkout-view .seed-garden-checkout .minimal-offering-form { padding: 0 clamp(18px, 5.5vw, 64px) 26px; }
-.seed-choice-heading { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 12px 0 26px; color: var(--garden-ink); font: 700 clamp(25px, 4.1vw, 40px)/1.2 Georgia, "Times New Roman", serif; text-align: center; text-wrap: balance; }
-.seed-choice-heading svg { width: 32px; height: 34px; flex: 0 0 auto; color: #b58a43; }
+.seed-choice-heading { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px 0 22px; color: var(--garden-ink); font: 700 clamp(18px, 2.8vw, 28px)/1.35 Georgia, "Times New Roman", serif; text-align: center; text-wrap: balance; }
+.seed-choice-heading span { min-width: 0; max-width: 32ch; }
+.seed-choice-heading svg { width: 25px; height: 27px; flex: 0 0 auto; color: #b58a43; }
 .seed-choice-heading svg:first-child { transform: rotate(-45deg); }
 .seed-choice-heading svg:last-child { transform: rotate(45deg); }
 .home-checkout-view .seed-garden-checkout .seed-quantity-row {
@@ -6123,14 +6115,12 @@ body:has(dialog[open]) {
   .seed-garden-design .support-brand-mark { width: 27px; height: 37px; }
   .seed-garden-design .support-brand-mark svg { width: 24px; height: 32px; }
   .seed-brand-leaf { width: 20px; height: 21px; }
-  .seed-garden-message { padding: 18px 17px 28px 3px; }
-  .seed-garden-message .seed-checkout-title { font-size: clamp(24px, 5.3vw, 36px); }
   .seed-hero-sun { width: 40px; height: 40px; }
-  .seed-choice-heading { gap: 10px; margin: 4px 0 20px; font-size: clamp(23px, 5.8vw, 35px); text-align: center; }
+  .seed-choice-heading { gap: 8px; margin: 8px 0 18px; font-size: clamp(17px, 4.6vw, 24px); }
   .seed-choice-heading svg { flex: 0 0 auto; }
   .home-checkout-view .seed-garden-checkout .minimal-offering-form { padding-inline: 18px; }
   .home-checkout-view .seed-garden-checkout .seed-option-name { font-size: clamp(16px, 4.4vw, 28px); white-space: normal; text-align: center; }
-  .seed-choice-heading svg { width: 23px; height: 25px; }
+  .seed-choice-heading svg { width: 20px; height: 22px; }
   .home-checkout-view .seed-garden-checkout .seed-quantity-row { gap: 13px 10px; grid-template-columns: minmax(0, 1fr) minmax(86px, .42fr); }
   .home-checkout-view .seed-garden-checkout .seed-option-card { min-height: clamp(106px, 19vw, 128px); padding: 8px 5px; gap: 4px; }
   .home-checkout-view .seed-garden-checkout .seed-option-art { width: clamp(50px, 9vw, 66px); height: clamp(56px, 10vw, 72px); }
@@ -6149,7 +6139,6 @@ body:has(dialog[open]) {
   .seed-garden-design .brand-title { font-size: 29px; }
   .seed-garden-design .topbar { padding-inline: 12px; }
   .seed-garden-hero { grid-template-columns: 45% 55%; }
-  .seed-garden-message .seed-checkout-title { font-size: clamp(21px, 6vw, 25px); }
   .home-checkout-view .seed-garden-checkout .seed-option-name { font-size: 16px; }
   .home-checkout-view .seed-garden-checkout .seed-option-art { width: 50px; height: 56px; }
   .home-checkout-view .seed-garden-checkout .seed-option-card { min-height: 102px; }
