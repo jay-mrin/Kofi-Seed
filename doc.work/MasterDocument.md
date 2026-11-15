@@ -77,6 +77,8 @@ The About section describes personalised writing prepared from a customer's pray
 
 The Dodo flow is routed to Admin collection. New PayPal orders use SuperAdmin collection. Existing Admin PayPal records remain visible in Admin history. Checkout cancellation or failure opens a retry message. Duplicate confirmations and webhook deliveries are designed to avoid duplicate orders.
 
+One-time PayPal seed retries stay inside the failure dialog with freshly loaded SDK instances and preserved checkout details. Interrupted approvals retain the original order ID for confirmation checks, including across a page refresh in the same browser tab, before another payment can be offered. Successful confirmation stops retries and duplicate callbacks. Provider funding declines still use PayPal's funding-method restart where available; weekly and Dodo flows remain separate.
+
 ### PayPal weekly plan
 
 When the PayPal checkout is active, the customer can choose a weekly subscription. The initial amount is charged at signup as a setup fee. Subsequent payments are scheduled for Mondays at 7:30 AM India time, with completed charges linked to orders. The one time path remains available when the weekly option is off.

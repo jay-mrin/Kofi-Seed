@@ -2817,6 +2817,16 @@ legend::after {
   line-height: 1.5;
 }
 
+.paypal-recovery { display: grid; gap: 12px; }
+.paypal-recovery .paypal-recovery-amount { margin: 0; color: #f5ecef; font: 500 14px/1.5 Inter, "Segoe UI", sans-serif; }
+.paypal-recovery-amount strong { display: block; font-size: 26px; }
+.paypal-recovery .paypal-recovery-status { margin: 0; color: #e4d6ba; font: 400 14px/1.5 Inter, "Segoe UI", sans-serif; }
+.paypal-recovery-loading { color: #f5ecef; font: 500 14px/1.5 Inter, "Segoe UI", sans-serif; }
+.paypal-recovery-buttons { padding: 12px; border-radius: 12px; background: #fff; }
+.paypal-recovery-buttons:empty { display: none; }
+.paypal-recovery .payment-failure-retry { width: 100%; border: 0; cursor: pointer; letter-spacing: 0; }
+.paypal-recovery .payment-failure-retry:disabled { cursor: wait; opacity: .6; transform: none; }
+
 .toast {
   position: fixed;
   right: 18px;

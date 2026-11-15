@@ -10,7 +10,7 @@ const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
 const DEMO_ADMIN_PASSWORD = "sowseed";
 const SEED_DOLLAR_VALUE = 11;
 const MIN_DONATION_AMOUNT = 11;
-const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
+const PAYPAL_SDK_LOAD_TIMEOUT_MS = 20000;
 const SOCIAL_PORTAL_START_ISO = "2026-11-03T18:30:00.000Z";
 const SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO = "2026-11-10T16:00:40.000Z";
 const TOP_BRAND_TITLE = "Seed Garden";
@@ -331,6 +331,8 @@ let transactionBoardCount = 0;
 const paypalSdkPromises = new Map();
 const paypalSdkKeysByNamespace = new Map();
 let paypalRenderPromise = null;
+let paypalCheckoutGeneration = 0;
+let paypalRecovery = null;
 let visitorCountry = "";
 let visitorCountryPromise = null;
 let paymentConfig = {
@@ -2809,6 +2811,12 @@ function updatePayPalVisibility() {
 function submitDonation(event) {
   event.preventDefault();
 
+  if (getPayPalRecovery().hasPendingApproval()) {
+    openPaymentFailure("paypal");
+    return;
+  }
+  getPayPalRecovery().begin();
+
   if (!validateForm()) {
     closeInlinePayPalCheckout();
     pendingDonation = null;
@@ -2883,11 +2891,11 @@ function resetAllPayPalSdks() {
   resetPayPalSdk(getPayPalSdkNamespace(true));
 }
 
-function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked, amount = elements.amountInput?.value) {
-  const clientId = getPayPalClientId(amount);
-  const route = getCheckoutRoute(amount);
-  const sdkKey = `${route}:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}`;
-  const namespace = getPayPalSdkNamespace(weekly, amount);
+function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked, amount = elements.amountInput?.value, options = {}) {
+  const clientId = options.clientId || getPayPalClientId(amount);
+  const route = options.paymentRoute || getCheckoutRoute(amount);
+  const namespace = options.namespace || getPayPalSdkNamespace(weekly, amount);
+  const sdkKey = `${route}:${weekly ? "weekly" : "once"}:${clientId}:${paymentConfig.currency || CONFIG.currency}:${namespace}`;
   const activeSdkKey = paypalSdkKeysByNamespace.get(namespace) || "";
 
   if (!clientId) {
@@ -2927,7 +2935,7 @@ function loadPayPalSdk(weekly = elements.weeklySeedToggle.checked, amount = elem
     };
     const fail = (error) => {
       if (settled) return;
-      resetPayPalSdk(namespace);
+      if (paypalSdkPromises.get(sdkKey) === sdkPromise) resetPayPalSdk(namespace);
       finish(reject, error);
     };
 
@@ -2979,6 +2987,7 @@ async function waitForRenderedPayPalButton(container, label, timeoutMs = 4000) {
 }
 
 function buildPayPalButtonOptions(paypal, fundingSource) {
+  const checkoutGeneration = paypalCheckoutGeneration;
   return {
     fundingSource,
     style: {
@@ -2989,6 +2998,8 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
       height: 44,
     },
     createOrder: async () => {
+      if (checkoutGeneration !== paypalCheckoutGeneration) throw new Error("This PayPal checkout has closed. Please use the current payment options.");
+      if (getPayPalRecovery().hasPendingApproval()) throw new Error("Check the previous PayPal payment before starting another attempt.");
       if (!pendingDonation) throw new Error("Order details are missing.");
       const ui = getCheckoutUi();
       const email = requirePaymentEmail();
@@ -3012,39 +3023,71 @@ function buildPayPalButtonOptions(paypal, fundingSource) {
         },
       });
       pendingDonation.paymentRoute = payload.paymentRoute;
-      await trackCheckoutEvent("paypal_checkout_started", pendingDonation);
+      void trackCheckoutEvent("paypal_checkout_started", pendingDonation);
+      if (checkoutGeneration !== paypalCheckoutGeneration) throw new Error("This PayPal checkout has closed. Please use the current payment options.");
       return payload.id;
     },
     onApprove: async (data, actions) => {
+      if (checkoutGeneration !== paypalCheckoutGeneration) return;
       setPaymentStatus("Confirming your custom order with PayPal...");
-      try {
-        const payload = await callEdge("capture-paypal-order", {
-          body: { orderId: data.orderID },
-        });
-        await finishVerifiedDonation(payload);
-      } catch (error) {
-        if (error?.code === "INSTRUMENT_DECLINED") {
-          setPaymentStatus(
-            "That payment method was declined. Please choose another PayPal payment method.",
-            true,
-          );
-          if (typeof actions?.restart === "function") return actions.restart();
-          return;
-        }
-
-        throw error;
-      }
+      return getPayPalRecovery().approve(data.orderID, actions);
     },
     onCancel: () => {
+      if (checkoutGeneration !== paypalCheckoutGeneration) return;
+      if (!pendingDonation && !getPayPalRecovery().hasPendingApproval()) return;
       closeInlinePayPalCheckout();
       openPaymentFailure("paypal");
     },
     onError: (error) => {
+      if (checkoutGeneration !== paypalCheckoutGeneration) return;
       console.warn("PayPal checkout failed.", error);
+      if (!pendingDonation && !getPayPalRecovery().hasPendingApproval()) return;
       closeInlinePayPalCheckout();
       openPaymentFailure("paypal");
     },
   };
+}
+
+function getPayPalRecovery() {
+  if (paypalRecovery) return paypalRecovery;
+  paypalRecovery = window.createPayPalRecovery({
+    ui: {
+      host: document.querySelector("#paypalRecovery"),
+      title: document.querySelector("#paymentFailureTitle"),
+      description: document.querySelector("#paymentFailureDescription"),
+      status: document.querySelector("#paypalRecoveryStatus"),
+      loading: document.querySelector("#paypalRecoveryLoading"),
+      amount: document.querySelector("#paypalRecoveryAmount"),
+      paypal: document.querySelector("#paypalRecoveryButtons"),
+      card: document.querySelector("#paypalRecoveryCardButtons"),
+      reload: document.querySelector("#reloadPayPalRecoveryButton"),
+    },
+    getDetails: () => pendingDonation?.frequency !== "weekly" && pendingDonation?.name && isValidEmailAddress(pendingDonation?.email)
+      ? { ...pendingDonation, clientId: getPayPalClientId(pendingDonation.amount), sourceTag: readSocialSourceTag() }
+      : null,
+    formatAmount: money,
+    loadSdk: (details, namespace) => loadPayPalSdk(false, details.amount, {
+      namespace, clientId: details.clientId, paymentRoute: details.paymentRoute,
+    }),
+    resetSdk: resetPayPalSdk,
+    waitForButton: (container) => waitForRenderedPayPalButton(container, "The PayPal retry button"),
+    createOrder: async (details) => {
+      const payload = await callEdge("create-paypal-order", {
+        body: {
+          amount: details.amount, name: details.name, email: details.email,
+          message: details.message, paymentRoute: details.paymentRoute,
+          sourceTag: details.sourceTag, productType: "seed",
+        },
+      });
+      void trackCheckoutEvent("paypal_checkout_started", details);
+      return payload;
+    },
+    captureOrder: (orderId) => callEdge("capture-paypal-order", { body: { orderId } }),
+    finish: finishVerifiedDonation,
+    onDeclined: () => setPaymentStatus("Your seed wasn't sown. Please choose another PayPal payment method.", true),
+    onFailure: () => { closeInlinePayPalCheckout(); openPaymentFailure("paypal"); },
+  });
+  return paypalRecovery;
 }
 
 function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
@@ -3127,14 +3170,17 @@ function buildPayPalSubscriptionButtonOptions(paypal, fundingSource) {
 function renderPayPalButtons() {
   if (paypalRenderPromise) return paypalRenderPromise;
 
-  paypalRenderPromise = renderFreshPayPalButtons().finally(() => {
-    paypalRenderPromise = null;
+  const renderPromise = renderFreshPayPalButtons().finally(() => {
+    if (paypalRenderPromise === renderPromise) paypalRenderPromise = null;
   });
+  paypalRenderPromise = renderPromise;
 
   return paypalRenderPromise;
 }
 
 async function renderFreshPayPalButtons() {
+  const generation = paypalCheckoutGeneration;
+  const isCurrent = () => generation === paypalCheckoutGeneration;
   let namespace = "";
   const ui = getCheckoutUi();
   const showCustomCardOnly = () => {
@@ -3152,6 +3198,7 @@ async function renderFreshPayPalButtons() {
   setPaymentStatus("");
   setPayPalCheckoutLoading(true);
   await loadVisitorCountry();
+  if (!isCurrent()) return;
   updateWeeklySeedOption();
   if (pendingDonation) pendingDonation = { ...pendingDonation, paymentRoute: getCheckoutRoute() };
   if (isCustomCardCheckoutAvailable()) {
@@ -3171,6 +3218,7 @@ async function renderFreshPayPalButtons() {
 
   try {
     await loadBackendData({ mode: "critical", throwOnError: true });
+    if (!isCurrent()) return;
     updateWeeklySeedOption();
     if (isCustomCardCheckoutAvailable()) {
       showCustomCardOnly();
@@ -3194,6 +3242,7 @@ async function renderFreshPayPalButtons() {
     }
 
     const paypal = await loadPayPalSdk(weekly);
+    if (!isCurrent()) return;
 
     if (weekly) {
       const subscriptionButtons = paypal.Buttons(buildPayPalSubscriptionButtonOptions(paypal, paypal.FUNDING.PAYPAL));
@@ -3203,15 +3252,20 @@ async function renderFreshPayPalButtons() {
       }
       ui.paypalButton.hidden = false;
       await subscriptionButtons.render(ui.paypalButtonContainer);
+      if (!isCurrent()) return;
       await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal subscription button");
+      if (!isCurrent()) return;
       let cardReady = false;
       if (subscriptionCardButtons.isEligible()) {
         ui.paypalCardButton.hidden = false;
         try {
           await subscriptionCardButtons.render(ui.paypalCardButtonContainer);
+          if (!isCurrent()) return;
           await waitForRenderedPayPalButton(ui.paypalCardButtonContainer, "The PayPal subscription card button");
+          if (!isCurrent()) return;
           cardReady = true;
         } catch (cardError) {
+          if (!isCurrent()) return;
           console.warn("PayPal subscription card button could not load.", cardError);
           ui.paypalCardButtonContainer.innerHTML = "";
         }
@@ -3239,9 +3293,12 @@ async function renderFreshPayPalButtons() {
       ui.paypalButton.hidden = false;
       try {
         await paypalButtons.render(ui.paypalButtonContainer);
+        if (!isCurrent()) return;
         await waitForRenderedPayPalButton(ui.paypalButtonContainer, "The PayPal button");
+        if (!isCurrent()) return;
         paypalReady = true;
       } catch (paypalError) {
+        if (!isCurrent()) return;
         console.warn("PayPal button could not load.", paypalError);
         ui.paypalButton.hidden = true;
         ui.paypalButtonContainer.innerHTML = "";
@@ -3254,9 +3311,12 @@ async function renderFreshPayPalButtons() {
       ui.paypalCardButton.hidden = false;
       try {
         await paypalCardButtons.render(ui.paypalCardButtonContainer);
+        if (!isCurrent()) return;
         await waitForRenderedPayPalButton(ui.paypalCardButtonContainer, "The PayPal debit or credit card button");
+        if (!isCurrent()) return;
         paypalCardReady = true;
       } catch (cardError) {
+        if (!isCurrent()) return;
         console.warn("PayPal card button could not load.", cardError);
         ui.paypalCardButton.hidden = true;
         ui.paypalCardButtonContainer.innerHTML = "";
@@ -3277,6 +3337,7 @@ async function renderFreshPayPalButtons() {
         : "PayPal is unavailable. Continue with PayPal debit or credit card.",
     !paypalReady || !paypalCardReady);
   } catch (error) {
+    if (!isCurrent()) return;
     clearPayPalButtons();
     if (namespace) resetPayPalSdk(namespace);
     ui.paypalButton.hidden = true;
@@ -3284,7 +3345,7 @@ async function renderFreshPayPalButtons() {
     ui.cardButton.hidden = true;
     setPaymentStatus(error?.message || "PayPal could not load. Please try again.", true);
   } finally {
-    setPayPalCheckoutLoading(false);
+    if (isCurrent()) setPayPalCheckoutLoading(false);
   }
 }
 
@@ -3298,7 +3359,7 @@ async function finishVerifiedDonation(payload) {
     setDonorToken(payload.donorAccessToken);
   }
 
-  if (donation && paymentRoute !== "superadmin") {
+  if (donation && paymentRoute !== "superadmin" && !state.donations.some((entry) => entry.id === donation.id)) {
     state.donations.unshift({
       id: donation.id,
       name: donation.display_name || donation.name || pendingDonation?.name || "Customer",
@@ -3333,7 +3394,7 @@ async function finishVerifiedDonation(payload) {
   }
 
   if (isBackendConfigured()) {
-    await loadBackendData();
+    void loadBackendData();
   } else {
     saveState();
   }
@@ -3422,6 +3483,8 @@ async function continueWithPayPal() {
 }
 
 function closeInlinePayPalCheckout() {
+  paypalCheckoutGeneration += 1;
+  paypalRenderPromise = null;
   const ui = getCheckoutUi();
   clearPayPalButtons();
   resetAllPayPalSdks();
@@ -3464,7 +3527,19 @@ function openPaymentFailure(source = alternateCheckoutSource, { preview = false 
     })();
     return;
   }
-  if (!elements.paymentFailureDialog || elements.paymentFailureDialog.open) return;
+  if (!elements.paymentFailureDialog) return;
+
+  const canRetryPayPal = source === "paypal" && !preview &&
+    ((pendingDonation?.frequency === "once" && pendingDonation.name && isValidEmailAddress(pendingDonation.email)) ||
+      paypalRecovery?.hasPendingApproval());
+  document.querySelector("#paypalRecovery").hidden = !canRetryPayPal;
+  elements.retryPaymentButton.hidden = Boolean(canRetryPayPal);
+  document.querySelector("#paymentFailureTitle").textContent = "Your Seed Was Not Sown...";
+  document.querySelector("#paymentFailureDescription").textContent = "Your payment didn't finish. You can try again when you're ready.";
+  if (elements.paymentFailureDialog.open) {
+    if (canRetryPayPal) void getPayPalRecovery().show();
+    return;
+  }
 
   document.querySelector("#paymentFailurePreviewLabel").hidden = !preview;
   setActiveView("homeView", true);
@@ -3474,10 +3549,12 @@ function openPaymentFailure(source = alternateCheckoutSource, { preview = false 
   } else {
     elements.paymentFailureDialog.setAttribute("open", "");
   }
+  if (canRetryPayPal) void getPayPalRecovery().show();
 }
 
 function closePaymentFailure(returnToSupport = false) {
   if (!elements.paymentFailureDialog) return;
+  paypalRecovery?.close();
 
   document.body.classList.remove("payment-failure-open");
   if (elements.paymentFailureDialog.open && typeof elements.paymentFailureDialog.close === "function") {
@@ -4614,6 +4691,9 @@ elements.closePaymentFailureButton?.addEventListener("click", () => closePayment
 elements.retryPaymentButton?.addEventListener("click", (event) => {
   event.preventDefault();
   closePaymentFailure(true);
+});
+document.querySelector("#reloadPayPalRecoveryButton")?.addEventListener("click", () => {
+  void getPayPalRecovery().retry();
 });
 elements.paymentFailureDialog?.addEventListener("cancel", (event) => {
   event.preventDefault();

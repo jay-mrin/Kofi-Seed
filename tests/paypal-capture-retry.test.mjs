@@ -7,6 +7,7 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const app = readFileSync(path.join(root, "src/app.js"), "utf8");
+const recoverySource = readFileSync(path.join(root, "src/paypal-recovery.js"), "utf8");
 
 function checkout(kind) {
   const result = { restarts: 0, closes: 0, failures: 0, completed: [], messages: [] };
@@ -17,6 +18,7 @@ function checkout(kind) {
     classList: { add() {} },
   };
   const context = vm.createContext({
+    paypalCheckoutGeneration: 0,
     status,
     document: { querySelector: () => ({ close() { result.closes += 1; } }) },
     callEdge: async (name, options) => {
@@ -32,6 +34,18 @@ function checkout(kind) {
   });
   let approve;
   if (kind === "seed") {
+    context.window = {};
+    vm.runInContext(recoverySource, context);
+    const node = () => ({ textContent: "", replaceChildren() {} });
+    const recovery = context.window.createPayPalRecovery({
+      ui: { status: node(), reload: node(), paypal: node(), card: node() },
+      getDetails: () => ({ amount: 11 }),
+      captureOrder: (orderId) => context.callEdge("capture-paypal-order", { body: { orderId } }),
+      finish: context.finishVerifiedDonation,
+      onDeclined: () => context.setPaymentStatus("Your seed wasn't sown. Please choose another PayPal payment method."),
+      onFailure: () => { result.failures += 1; },
+    });
+    context.getPayPalRecovery = () => recovery;
     const source = app.match(/function buildPayPalButtonOptions\([^]*?\n\}/)?.[0];
     assert.ok(source);
     approve = vm.runInContext(`${source}; buildPayPalButtonOptions({ FUNDING: { PAYPAL: "paypal" } }, "paypal").onApprove`, context);
@@ -43,10 +57,20 @@ function checkout(kind) {
   }
   return {
     result, payload, status,
+    closeSession() { context.paypalCheckoutGeneration += 1; },
     setError(error) { captureError = error; },
     approve: (actions = { restart: async () => { result.restarts += 1; } }) => approve({ orderID: "PAYPAL-ORDER" }, actions),
   };
 }
+
+test("an older seed SDK cannot approve after its checkout session closes", async () => {
+  const flow = checkout("seed");
+  flow.closeSession();
+  await flow.approve();
+  assert.equal(flow.result.completed.length, 0);
+  assert.equal(flow.result.failures, 0);
+  assert.equal(flow.result.messages.length, 0);
+});
 
 for (const kind of ["seed", "ritual"]) {
   test(`${kind} retries a declined funding method without closing checkout or reporting success`, async () => {
@@ -79,7 +103,10 @@ for (const kind of ["seed", "ritual"]) {
     const flow = checkout(kind);
     const error = Object.assign(new Error("PayPal could not confirm payment"), { code: "PAYMENT_DENIED" });
     flow.setError(error);
-    if (kind === "seed") await assert.rejects(flow.approve(), (actual) => actual === error);
+    if (kind === "seed") {
+      await flow.approve();
+      assert.equal(flow.result.failures, 1);
+    }
     else {
       await flow.approve();
       assert.equal(flow.status.textContent, error.message);

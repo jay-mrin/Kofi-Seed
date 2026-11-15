@@ -39,7 +39,8 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.equal(context.readSocialSourceTag(), null);
   window.location.search = "?campaign=unknown";
   assert.equal(context.readSocialSourceTag(), null);
-  assert.equal((app.match(/sourceTag: readSocialSourceTag\(\)/g) || []).length, 3);
+  assert.equal((app.match(/sourceTag: readSocialSourceTag\(\)/g) || []).length, 4);
+  assert.match(app, /sourceTag: details\.sourceTag, productType: "seed"/);
   assert.doesNotMatch(source, /sessionStorage|localStorage/);
   const routing = JSON.parse(read("vercel.json"));
   assert.deepEqual(routing.rewrites.map(({ source, destination }) => [source, destination]), [

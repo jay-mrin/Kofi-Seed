@@ -14,7 +14,7 @@ function source(name) {
   return match[0];
 }
 
-async function renderChoices({ customEnabled, country = "US", frequency = "once", paypalEligible = true, cardEligible = true, paypalFails = false }) {
+async function renderChoices({ customEnabled, country = "US", frequency = "once", paypalEligible = true, cardEligible = true, paypalFails = false, closeDuringSdkLoad = false }) {
   const rendered = [];
   let bootstrapLoads = 0;
   let sdkLoads = 0;
@@ -40,6 +40,7 @@ async function renderChoices({ customEnabled, country = "US", frequency = "once"
     },
   };
   const context = vm.createContext({
+    paypalCheckoutGeneration: 0,
     backendReady: true,
     pendingDonation: { amount: 11, frequency, paymentRoute: customEnabled ? "superadmin" : "standard" },
     elements: { weeklySeedToggle: { checked: frequency === "weekly" } },
@@ -60,7 +61,7 @@ async function renderChoices({ customEnabled, country = "US", frequency = "once"
     isPayPalConfigured: () => true,
     resetAllPayPalSdks: () => {},
     resetPayPalSdk: () => {},
-    loadPayPalSdk: async () => { sdkLoads += 1; return paypal; },
+    loadPayPalSdk: async () => { sdkLoads += 1; if (closeDuringSdkLoad) context.paypalCheckoutGeneration += 1; return paypal; },
     buildPayPalButtonOptions: (_paypal, fundingSource) => ({ fundingSource }),
     buildPayPalSubscriptionButtonOptions: (_paypal, fundingSource) => ({ fundingSource }),
     waitForRenderedPayPalButton: async () => {},
@@ -101,6 +102,12 @@ test("an unavailable PayPal button does not hide an eligible card button", async
   assert.equal(failedPaypal.ui.cardButton.hidden, true);
   assert.equal(failedPaypal.ui.paypalButton.hidden, true);
   assert.equal(failedPaypal.ui.paypalCardButton.hidden, false);
+});
+
+test("a checkout closed during SDK loading cannot render stale payment buttons", async () => {
+  const flow = await renderChoices({ customEnabled: false, closeDuringSdkLoad: true });
+  assert.deepEqual(flow.rendered, []);
+  assert.equal(flow.sdkLoads, 1);
 });
 
 test("US custom checkout cancels weekly selection while other countries keep PayPal subscriptions", async () => {

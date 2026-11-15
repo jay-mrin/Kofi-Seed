@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=233" />
+    <link rel="stylesheet" href="src/styles.css?v=234" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -1041,13 +1041,15 @@
         <div class="payment-failure-icon" aria-hidden="true">🥀</div>
         <h2 id="paymentFailureTitle">Your Seed Was Not Sown...</h2>
         <p class="payment-failure-preview-label" id="paymentFailurePreviewLabel" hidden>Preview only · No payment attempted</p>
-        <p class="payment-failure-intro">
-          The prayer you carried in your heart is still waiting. The hope you wanted to place before God has not yet been planted.
-        </p>
-        <p class="payment-failure-emphasis">Do not let this moment pass unfinished.</p>
-        <p class="payment-failure-copy">
-          Sow your seed with faith for the person you love, the prayer you are holding onto, and the future you are asking Jesus to guide. Even the smallest seed begins with one faithful act.
-        </p>
+        <p class="payment-failure-intro" id="paymentFailureDescription">Your payment didn't finish. You can try again when you're ready.</p>
+        <section class="paypal-recovery" id="paypalRecovery" aria-label="Try your seed payment again" hidden>
+          <p class="paypal-recovery-amount">Your seed amount <strong id="paypalRecoveryAmount"></strong></p>
+          <p class="paypal-recovery-status" id="paypalRecoveryStatus" role="status" aria-live="polite"></p>
+          <div class="paypal-recovery-loading" id="paypalRecoveryLoading" role="status" hidden><span aria-hidden="true">🌱</span> Loading PayPal…</div>
+          <div class="paypal-recovery-buttons" id="paypalRecoveryButtons"></div>
+          <div class="paypal-recovery-buttons" id="paypalRecoveryCardButtons"></div>
+          <button class="payment-failure-retry" id="reloadPayPalRecoveryButton" type="button">Reload PayPal options</button>
+        </section>
         <a class="payment-failure-retry" id="retryPaymentButton" href="#support">🌱 SOW YOUR SEED NOW</a>
         <p class="payment-failure-verse">“For whatever one sows, that will he also reap.” — Galatians 6:7</p>
       </div>
@@ -1078,7 +1080,8 @@
     </footer>
 
     <script src="src/config.js?v=3"></script>
-    <script src="src/app.js?v=185" defer></script>
+    <script src="src/paypal-recovery.js?v=1" defer></script>
+    <script src="src/app.js?v=186" defer></script>
     <script src="src/seed-testimonies.js?v=3" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>

@@ -174,6 +174,10 @@ A name and a valid email address are required at checkout so the order can be de
 
 Configure the Admin PayPal Business webhook with the deployed `paypal-webhook` URL and save its Webhook ID as `PAYPAL_WEBHOOK_ID`. The endpoint supports capture events and subscription events; the screenshot's **All Events** setting is supported. Keep the separate SuperAdmin webhook ID in `SUPER_ADMIN_PAYPAL_WEBHOOK_ID`.
 
+One-time PayPal seed failures now keep fresh PayPal and eligible card buttons inside the failure dialog, preserving the customer's checkout details, amount, collecting account, and source tag. Customers can reload the options repeatedly; each retry uses a new SDK namespace. The SDK loading timeout is 20 seconds, and analytics reporting no longer delays returning a created order to PayPal.
+
+`src/paypal-recovery.js` must load before `src/app.js`. If approval or capture confirmation is interrupted, recovery checks the same PayPal order rather than creating another payment. Only the pending order ID, amount, and route are retained in browser session storage; customer contact details are not persisted there. Verified payments stop retries, including duplicate callbacks. Funding declines retain PayPal's `actions.restart()` flow where available. Weekly subscriptions and Dodo keep their separate flows. This frontend change requires no database migration or Edge Function deployment.
+
 The custom card checkout is shown only for detected US visitors when Custom Credit Debit is selected. The Vercel function at `/api/visitor-country` reads Vercel's `x-vercel-ip-country` header and returns a country code with caching disabled. All other countries, failed lookups, and local static development default to the normal PayPal options. The weekly subscription choice is hidden for US visitors under Custom Credit Debit; other visitors retain the configured weekly option. No country override is accepted from URL parameters or browser language settings.
 
 
