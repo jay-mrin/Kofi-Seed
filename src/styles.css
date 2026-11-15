@@ -5842,9 +5842,9 @@ body:has(dialog[open]) {
   0%, 100% { transform: rotate(-10deg); }
   50% { transform: rotate(12deg); }
 }
-.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; --seed-tap-color: #b36be0; }
-.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; --seed-tap-color: #ec7568; }
-.seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; --seed-tap-color: #ebc35d; }
+.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d726; --seed-art-glow-active: #a552d740; --seed-tap-color: #b36be0; }
+.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e26; --seed-art-glow-active: #e64e4e40; --seed-tap-color: #ec7568; }
+.seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d7a; --seed-art-glow-active: #e0af3dad; --seed-tap-color: #ebc35d; }
 .seed-tap-light {
   position: absolute;
   z-index: 1;
