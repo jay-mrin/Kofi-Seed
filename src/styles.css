@@ -5905,7 +5905,39 @@ body:has(dialog[open]) {
 }
 .home-checkout-view .seed-garden-checkout .seed-option-card:hover { border-color: #d685a8; background: #fff8fb; }
 .home-checkout-view .seed-garden-checkout .seed-option-card[aria-pressed="true"] { border: 2px solid var(--support-pink); background: #fff6fa; box-shadow: 0 8px 18px #e02c8710; }
-.seed-option-art { display: block; width: clamp(58px, 11.5vw, 118px); height: clamp(60px, 12vw, 122px); flex: 0 0 auto; }
+.seed-option-art {
+  display: block;
+  width: clamp(58px, 11.5vw, 118px);
+  height: clamp(60px, 12vw, 122px);
+  flex: 0 0 auto;
+  overflow: visible;
+  filter: none;
+  transition: filter 180ms ease;
+}
+.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d74d; --seed-art-glow-active: #a552d780; }
+.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e4d; --seed-art-glow-active: #e64e4e80; }
+.seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; }
+.seed-option-card[data-seed-count="3"] .seed-option-art,
+.seed-option-card[data-seed-count="5"] .seed-option-art,
+.seed-option-card[data-seed-count="11"] .seed-option-art { filter: drop-shadow(0 0 5px var(--seed-art-glow)); }
+.seed-option-card[data-seed-count]:is(:hover, :focus-visible, [aria-pressed="true"]) .seed-option-art {
+  filter: drop-shadow(0 0 7px var(--seed-art-glow-active, transparent));
+}
+.home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="11"] {
+  border-color: #d6ac50;
+  background: linear-gradient(160deg, #fffdf5, #fff2da80);
+  animation: seed-card-golden-pulse 3s ease-in-out infinite;
+}
+@keyframes seed-card-golden-pulse {
+  0%, 100% { box-shadow: 0 0 8px #e6b94c33, inset 0 0 8px #f5d68b1a; }
+  50% { box-shadow: 0 0 20px #e6b94c80, inset 0 0 14px #f5d68b40; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="11"] {
+    animation: none;
+    box-shadow: 0 0 12px #e6b94c59, inset 0 0 10px #f5d68b26;
+  }
+}
 .home-checkout-view .seed-garden-checkout .seed-option-name { color: var(--garden-ink); font: 800 clamp(22px, 3.6vw, 38px)/1.2 Inter, "Segoe UI", sans-serif; white-space: nowrap; }
 .seed-quantity-divider { display: flex; grid-column: 1 / -1; grid-row: 2; align-items: center; justify-content: center; gap: 20px; margin: 12px 0 0; color: var(--garden-ink); font: 700 clamp(21px, 3.3vw, 32px)/1.2 Georgia, "Times New Roman", serif; text-align: center; }
 .seed-quantity-divider::before, .seed-quantity-divider::after { content: ""; flex: 1; max-width: 135px; height: 1px; background: linear-gradient(90deg, transparent, #bf879b); }
