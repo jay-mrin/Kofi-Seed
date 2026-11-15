@@ -4668,6 +4668,9 @@ main {
 }
 
 .support-ritual-card .ritual-option {
+  --ritual-accent: #388c68;
+  --ritual-glow: 56, 140, 104;
+  --ritual-tint: #f1faf4;
   position: relative;
   isolation: isolate;
   display: grid;
@@ -4675,37 +4678,58 @@ main {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 10px;
-  border: 2px solid transparent;
+  border: 2px solid rgba(var(--ritual-glow), .55);
   border-radius: 22px;
   color: var(--support-ink);
-  background: #f2efef;
+  background: var(--ritual-tint);
   scroll-snap-align: start;
 }
 
-.support-ritual-card .ritual-option.is-selected {
-  border-color: var(--support-pink);
-  background: #fff2f8;
+.support-ritual-card .ritual-option:nth-child(2) {
+  --ritual-accent: #477dd0;
+  --ritual-glow: 71, 125, 208;
+  --ritual-tint: #f2f6ff;
 }
 
-.support-ritual-card .ritual-option.is-selected::before {
+.support-ritual-card .ritual-option:nth-child(3) {
+  --ritual-accent: #d45e63;
+  --ritual-glow: 212, 94, 99;
+  --ritual-tint: #fff4f4;
+}
+
+.support-ritual-card .ritual-option:nth-child(4) {
+  --ritual-accent: #c99a32;
+  --ritual-glow: 215, 165, 54;
+  --ritual-tint: #fff9ec;
+  --ritual-glow-min: .5;
+  --ritual-glow-max: .95;
+}
+
+.support-ritual-card .ritual-option.is-selected {
+  --ritual-glow-min: .65;
+  --ritual-glow-max: 1;
+  border-color: var(--ritual-accent);
+}
+
+.support-ritual-card .ritual-option::before {
   content: "";
   position: absolute;
   z-index: -1;
   inset: -2px;
   border-radius: inherit;
-  box-shadow: 0 0 8px 1px #ff53b466, 0 0 20px 4px #ff46ab40;
+  box-shadow: 0 0 8px 1px rgba(var(--ritual-glow), .4), 0 0 20px 4px rgba(var(--ritual-glow), .25);
   opacity: .8;
   pointer-events: none;
   animation: ritual-selection-glow 4.2s ease-in-out infinite;
 }
 
 @keyframes ritual-selection-glow {
-  0%, 100% { opacity: .55; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: var(--ritual-glow-min, .3); }
+  50% { opacity: var(--ritual-glow-max, .65); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .support-ritual-card .ritual-option.is-selected::before { animation: none; opacity: .8; }
+  .support-ritual-card .ritual-option::before { animation: none; opacity: var(--ritual-glow-max, .65); }
 }
 
 .support-ritual-card .ritual-option-name {
