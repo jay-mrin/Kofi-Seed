@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=223" />
+    <link rel="stylesheet" href="src/styles.css?v=224" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -30,15 +30,15 @@
           <stop offset="1" stop-color="#f5d892" stop-opacity="0"/>
         </radialGradient>
         <radialGradient id="seedArtHaloPurple">
-          <stop offset="0" stop-color="#faf0ff" stop-opacity=".98"/>
-          <stop offset=".4" stop-color="#c58aef" stop-opacity=".65"/>
-          <stop offset=".75" stop-color="#a552d7" stop-opacity=".22"/>
+          <stop offset="0" stop-color="#faf0ff" stop-opacity=".35"/>
+          <stop offset=".4" stop-color="#c58aef" stop-opacity=".2"/>
+          <stop offset=".75" stop-color="#a552d7" stop-opacity=".06"/>
           <stop offset="1" stop-color="#a552d7" stop-opacity="0"/>
         </radialGradient>
         <radialGradient id="seedArtHaloRed">
-          <stop offset="0" stop-color="#fff2ed" stop-opacity=".98"/>
-          <stop offset=".4" stop-color="#f38d85" stop-opacity=".65"/>
-          <stop offset=".75" stop-color="#e64e4e" stop-opacity=".22"/>
+          <stop offset="0" stop-color="#fff2ed" stop-opacity=".35"/>
+          <stop offset=".4" stop-color="#f38d85" stop-opacity=".2"/>
+          <stop offset=".75" stop-color="#e64e4e" stop-opacity=".06"/>
           <stop offset="1" stop-color="#e64e4e" stop-opacity="0"/>
         </radialGradient>
         <linearGradient id="seedArtLeafJade" x1="0" y1="0" x2="1" y2="1">
@@ -69,14 +69,14 @@
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <filter id="seedArtBloomPurple" x="-35%" y="-30%" width="170%" height="160%" color-interpolation-filters="sRGB">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur"/>
-          <feFlood flood-color="#ad60e0" flood-opacity=".6"/>
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.8" result="blur"/>
+          <feFlood flood-color="#ad60e0" flood-opacity=".22"/>
           <feComposite in2="blur" operator="in"/>
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
         <filter id="seedArtBloomRed" x="-35%" y="-30%" width="170%" height="160%" color-interpolation-filters="sRGB">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur"/>
-          <feFlood flood-color="#e95c53" flood-opacity=".6"/>
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.8" result="blur"/>
+          <feFlood flood-color="#e95c53" flood-opacity=".22"/>
           <feComposite in2="blur" operator="in"/>
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
@@ -115,7 +115,7 @@
           </g>
         </symbol>
         <symbol id="seedArt3" viewBox="0 0 120 120">
-          <use href="#seedArtAura" fill="url(#seedArtHaloPurple)" color="#aa62d4"/>
+          <use href="#seedArtAura" fill="url(#seedArtHaloPurple)" color="#bc9dcc"/>
           <use href="#seedArtSoil"/>
           <g filter="url(#seedArtBloomPurple)">
             <path d="M59 101c4-26 0-43-2-62m4 45 16-17m-18 1-15-15" fill="none" stroke="url(#seedArtStem)" stroke-width="2.6" stroke-linecap="round"/>
@@ -125,7 +125,7 @@
           </g>
         </symbol>
         <symbol id="seedArt5" viewBox="0 0 120 120">
-          <use href="#seedArtAura" fill="url(#seedArtHaloRed)" color="#df6259"/>
+          <use href="#seedArtAura" fill="url(#seedArtHaloRed)" color="#d8a09a"/>
           <use href="#seedArtSoil"/>
           <g filter="url(#seedArtBloomRed)">
             <path d="M60 101c3-33 0-57-1-79m1 59L39 62m22 7 18-21" fill="none" stroke="url(#seedArtStem)" stroke-width="2.7" stroke-linecap="round"/>

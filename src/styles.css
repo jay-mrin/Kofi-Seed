@@ -5914,8 +5914,8 @@ body:has(dialog[open]) {
   filter: none;
   transition: filter 180ms ease;
 }
-.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d74d; --seed-art-glow-active: #a552d780; }
-.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e4d; --seed-art-glow-active: #e64e4e80; }
+.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; }
+.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; }
 .seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; }
 .seed-option-card[data-seed-count="3"] .seed-option-art,
 .seed-option-card[data-seed-count="5"] .seed-option-art,
