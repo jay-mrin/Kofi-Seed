@@ -5923,6 +5923,8 @@ body:has(dialog[open]) {
 .seed-option-card[data-seed-count]:is(:hover, :focus-visible, [aria-pressed="true"]) .seed-option-art {
   filter: drop-shadow(0 0 7px var(--seed-art-glow-active, transparent));
 }
+.home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="3"] { border-color: #b58acb; }
+.home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="5"] { border-color: #db8883; }
 .home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="11"] {
   border-color: #d6ac50;
   background: linear-gradient(160deg, #fffdf5, #fff2da80);
