@@ -201,7 +201,7 @@ Use Dodo test mode and PayPal sandbox first:
 - Admin login requires Supabase Auth and `admin_profiles`; Admin and SuperAdmin see only the orders routed to their respective collection account.
 - Donor comments require the same-browser donor token returned after a completed donation.
 
-The progress card and its goal settings have been retired. Deploy the updated Edge Functions and apply `202610100001_remove_progress_feature.sql` to remove the old database settings, progress ledger, and routines. The migration preserves orders, payments, and subscription processing. Earlier migrations are retained as upgrade history.
+The homepage soulmate pitch, share button, and support-goal display are retired. Deploy the updated `public-bootstrap` Edge Function to stop its goal-total request and response. This cleanup requires no database migration and does not alter orders, payments, or subscriptions. Historical progress migrations remain as upgrade history.
 
 The homepage shows a 21-book gallery grouped into Blue (10 Seeds per book), Red & peach (5 Seeds), and Grey (2 Seeds) series, in that order. Book purchasing is marked coming soon; no book payment gateway is connected. New book checkouts remain rejected; existing book orders retain their payment metadata, delivery controls, proof downloads, and payment recovery.
 

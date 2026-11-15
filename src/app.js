@@ -10,7 +10,6 @@ const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
 const DEMO_ADMIN_PASSWORD = "sowseed";
 const SEED_DOLLAR_VALUE = 11;
 const MIN_DONATION_AMOUNT = 11;
-const GOAL_SEED_COUNT = 100;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 8000;
 const SOCIAL_PORTAL_START_ISO = "2026-11-03T18:30:00.000Z";
 const SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO = "2026-11-10T16:00:40.000Z";
@@ -305,10 +304,6 @@ const elements = {
   receiptTitle: document.querySelector("#receiptTitle"),
   retryPaymentButton: document.querySelector("#retryPaymentButton"),
   saveCheckoutDisplayButton: document.querySelector("#saveCheckoutDisplayButton"),
-  shareSupportButton: document.querySelector("#shareSupportButton"),
-  supportGoal: document.querySelector("#supportGoal"),
-  supportGoalFill: document.querySelector("#supportGoalFill"),
-  supportGoalPercent: document.querySelector("#supportGoalPercent"),
   seedCommentsList: document.querySelector("#seedCommentsList"),
   seedCommentsPanel: document.querySelector("#seedCommentsPanel"),
   seedPriceLabel: document.querySelector("#seedPriceLabel"),
@@ -544,39 +539,11 @@ function normalizeAnalytics(analytics) {
   };
 }
 
-function normalizeGoalProgress(goalProgress) {
-  const confirmedSeedCount = Math.max(
-    Number.parseInt(goalProgress?.confirmedSeedCount, 10) || 0,
-    0,
-  );
-  const goalSeedCount = Math.max(
-    Number.parseInt(goalProgress?.goalSeedCount, 10) || GOAL_SEED_COUNT,
-    1,
-  );
-  const goalAmountCents = Math.max(
-    Number.parseInt(goalProgress?.goalAmountCents, 10) || goalSeedCount * SEED_DOLLAR_VALUE * 100,
-    1,
-  );
-  const confirmedAmountCents = Math.max(
-    Number.parseInt(goalProgress?.confirmedAmountCents, 10) || confirmedSeedCount * SEED_DOLLAR_VALUE * 100,
-    0,
-  ) % goalAmountCents;
-
-  return {
-    confirmedSeedCount: Math.floor(confirmedAmountCents / (SEED_DOLLAR_VALUE * 100)),
-    goalSeedCount,
-    confirmedAmountCents,
-    goalAmountCents,
-    percentage: (confirmedAmountCents / goalAmountCents) * 100,
-  };
-}
-
 function loadState() {
   if (isBackendConfigured()) {
     return {
       analytics: createEmptyAnalytics(),
       donations: [],
-      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: {
         ...cloneDefaultSettings(),
@@ -590,7 +557,6 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
-      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: cloneDefaultSettings(),
     };
@@ -601,7 +567,6 @@ function loadState() {
     return {
       analytics: normalizeAnalytics(parsed.analytics),
       donations: Array.isArray(parsed.donations) ? parsed.donations : seedFeed,
-      goalProgress: normalizeGoalProgress(parsed.goalProgress),
       seedComments: normalizeSeedComments(parsed.seedComments),
       settings: normalizeSettings(parsed.settings),
     };
@@ -609,7 +574,6 @@ function loadState() {
     return {
       analytics: createEmptyAnalytics(),
       donations: seedFeed,
-      goalProgress: normalizeGoalProgress(),
       seedComments: [],
       settings: cloneDefaultSettings(),
     };
@@ -813,7 +777,6 @@ function applyBootstrap(payload) {
   }
 
   if (Array.isArray(payload.donations)) state.donations = payload.donations;
-  if (payload.goalProgress) state.goalProgress = normalizeGoalProgress(payload.goalProgress);
   if (Array.isArray(payload.seedComments)) state.seedComments = normalizeSeedComments(payload.seedComments);
 
   if (payload.payment) {
@@ -4167,21 +4130,8 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function renderGoalProgress() {
-  const goalProgress = normalizeGoalProgress(state.goalProgress);
-  const roundedPercentage = Math.round(goalProgress.percentage);
-
-  elements.supportGoalFill?.style.setProperty("--goal-progress", `${goalProgress.percentage}%`);
-  if (elements.supportGoalPercent) elements.supportGoalPercent.textContent = `${roundedPercentage}%`;
-  elements.supportGoal?.setAttribute(
-    "aria-label",
-    `${roundedPercentage} percent of support goal reached: $${(goalProgress.confirmedAmountCents / 100).toFixed(2)} of $${(goalProgress.goalAmountCents / 100).toFixed(2)} in confirmed seed payments`,
-  );
-}
-
 function renderApp() {
   renderSettings();
-  renderGoalProgress();
   renderRecentDonations();
   renderSeedComments();
   renderAdminAnalytics();
@@ -4478,25 +4428,6 @@ elements.closePaypalPaymentDialog.addEventListener("click", closeInlinePayPalChe
 elements.paypalPaymentDialog.addEventListener("cancel", (event) => {
   event.preventDefault();
   closeInlinePayPalCheckout();
-});
-elements.shareSupportButton?.addEventListener("click", async () => {
-  const shareData = {
-    title: "Sow Your Seed Here",
-    text: "Buy a Seed to Sow for the Love You’ve Been Waiting For 💓💕",
-    url: window.location.href,
-  };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-      return;
-    }
-
-    await navigator.clipboard.writeText(shareData.url);
-    showToast("Support page link copied.");
-  } catch (error) {
-    if (error?.name !== "AbortError") showToast("The support page link could not be shared.");
-  }
 });
 [elements.alternateCardCheckoutLink, elements.dodoAlternateCardCheckoutLink].forEach((link) => {
   link?.addEventListener("click", (event) => {

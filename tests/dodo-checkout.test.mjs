@@ -50,7 +50,7 @@ test("seed checkout appears above the cover and profile heading without an extra
   assert.ok(html.indexOf('id="homeView"') < html.indexOf('id="seedCheckoutCard"'));
   assert.ok(html.indexOf('id="seedCheckoutCard"') < html.indexOf('class="cover-frame"'));
   assert.ok(html.indexOf('class="cover-frame"') < html.indexOf("Finding Love - Soulmate - Protection"));
-  assert.ok(html.indexOf("Finding Love - Soulmate - Protection") < html.indexOf('id="support-story"'));
+  assert.ok(html.indexOf("Finding Love - Soulmate - Protection") < html.indexOf('id="supportAbout"'));
   assert.match(styles, /\.support-page-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
 });
 

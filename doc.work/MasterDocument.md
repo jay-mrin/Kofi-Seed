@@ -8,7 +8,7 @@
 
 ## 1. Site at a glance
 
-Sow Your Seed Here is a faith and spirituality themed site centered on “sowing” a seed in support of its content. Its public home screen combines a seed checkout, a ritual offering, a recent transaction board, a progress display, and messaging about love, prayer, hope, and spiritual guidance. The same repository also contains a personalised digital writing service, an ebook catalog, a community Blessing Wall, and staff portals for orders and reporting.
+Sow Your Seed Here is a faith and spirituality themed site centered on “sowing” a seed in support of its content. Its public home screen combines a seed checkout, a ritual offering, a recent transaction board, and messaging about love, prayer, hope, and spiritual guidance. The same repository also contains a personalised digital writing service, an ebook catalog, a community Blessing Wall, and staff portals for orders and reporting.
 
 The site is a static HTML, CSS, and JavaScript frontend backed by Supabase. Supabase provides data storage, authentication, access control, and Edge Functions. Dodo Payments and PayPal are the implemented payment providers. All displayed prices are in US dollars. The default seed price in current code and the latest price migration is **$11 per seed**; an Admin can change the saved seed price.
 
@@ -16,7 +16,7 @@ The site is a static HTML, CSS, and JavaScript frontend backed by Supabase. Supa
 
 | Role | Main experience |
 | --- | --- |
-| Public visitor | Read the home content, choose seeds, view the progress display and recent public transactions, browse ebook entries where accessible, and open the checkout or ritual forms. |
+| Public visitor | Read the home content, choose seeds, view recent public transactions, browse ebook entries where accessible, and open the checkout or ritual forms. |
 | Customer | Provide name, email, and applicable request details; complete a checkout; receive a confirmation and fortune message after a verified payment. |
 | Admin | Sign in, see Admin collection orders, update fulfillment, download order proof PDFs, manage the seed price and Blessing Wall visibility, and view Admin scoped analytics. |
 | SuperAdmin | Sign in, see SuperAdmin collection orders and analytics, use the private PayPal checkout area, and control which checkout form appears on Home. |
@@ -28,7 +28,7 @@ Portal access is based on Supabase Auth plus the `admin_profiles` role. The publ
 
 | Area or file | Purpose and current behavior |
 | --- | --- |
-| `index.html` / Home | Main landing page with branding, seed checkout, ritual card, hero image, recent transaction board, progress display, spiritual support copy, sharing action, and portal login button. |
+| `index.html` / Home | Main landing page with branding, seed checkout, ritual card, hero image, recent transaction board, About content, and portal login button. |
 | `libraryView` in `index.html` | “Christgarden EBooks” catalog with 21 covers and entries across three series. Clicking an entry opens a preview dialog. |
 | `aboutView` in `index.html` | Recent custom orders, expandable personalised writing description, and community Blessing Wall. |
 | `privacy-policy.html` | Standalone privacy policy page. |
@@ -41,13 +41,13 @@ Portal access is based on Supabase Auth plus the `admin_profiles` role. The publ
 
 - The header shows the Sow Your Seed Here brand and a menu button that opens portal login.
 - The seed control starts at one seed and adjusts the count before checkout. The normal starting amount is $11. The public form shown on Home depends on the SuperAdmin checkout display setting.
-- The hero image shows a sower in a sunlit landscape. A recent transaction board displays eligible public Admin routed transactions. The goal card shows progress toward 100 seeds using confirmed seed payments; the backend uses a $1,100 cycle.
-- The story and About Sowing Your Seed sections describe support as optional and connect the site to soulmate messages, spiritual guidance, Jesus, and Archangel Michael. The share button uses device sharing where available and otherwise copies the page address.
+- The hero image shows a sower in a sunlit landscape. A recent transaction board displays eligible public Admin routed transactions.
+- About Sowing Your Seed describes support as optional and connects the site to soulmate messages, spiritual guidance, Jesus, and Archangel Michael. The separate soulmate pitch, share button, and support goal have been removed, together with their frontend logic and backend goal-total request.
 - The footer displays Proverbs 18:22.
 
 ### Rituals
 
-The Home ritual card has four selectable tiers displayed at **$199, $299, $399, and $499**. A visitor selects a tier, enters a name, email, and “who is this ritual for” message, then proceeds through the active payment provider. The code records ritual payments separately from seed progress and seed comments. The labels in the public card and the internal item names differ; see the review notes below.
+The Home ritual card has four selectable tiers displayed at **$199, $299, $399, and $499**. A visitor selects a tier, enters a name, email, and “who is this ritual for” message, then proceeds through the active payment provider. The code records ritual payments separately from seed comments. The labels in the public card and the internal item names differ; see the review notes below.
 
 ### Ebook catalog
 
@@ -73,7 +73,7 @@ The About section describes personalised writing prepared from a customer's pray
 2. The visitor opens the active checkout form and supplies the required customer details.
 3. An Edge Function creates a provider checkout or order and records the attempt.
 4. After payment, the browser returns or receives provider approval. A server function verifies the provider result; webhooks also process completed payments.
-5. A confirmed payment creates one linked digital service order. The site shows a confirmation and fortune message. Eligible public data can appear in the transaction board, goal, and Blessing Wall.
+5. A confirmed payment creates one linked digital service order. The site shows a confirmation and fortune message. Eligible public data can appear in the transaction board and Blessing Wall.
 
 The Dodo flow is routed to Admin collection. New PayPal orders use SuperAdmin collection. Existing Admin PayPal records remain visible in Admin history. Checkout cancellation or failure opens a retry message. Duplicate confirmations and webhook deliveries are designed to avoid duplicate orders.
 

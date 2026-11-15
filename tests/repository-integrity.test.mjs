@@ -106,31 +106,20 @@ test("public startup loads checkout settings before deferred community content",
   assert.match(bootstrap, /Promise\.all\(\[\s*supabase[\s\S]*\.from\("donations"\)[\s\S]*\.from\("seed_comments"\)/);
 });
 
-test("support goal uses cumulative confirmed seed payments and resets every $1,100", () => {
+test("retired support pitch, share button, and goal are removed while public content stays scoped", () => {
   const html = readRepositoryFile("index.html");
   const app = readRepositoryFile("src/app.js");
+  const styles = readRepositoryFile("src/styles.css");
   const bootstrap = readRepositoryFile("supabase/functions/public-bootstrap/index.ts");
-  const migration = readRepositoryFile("supabase/migrations/202610200001_cumulative_seed_goal.sql");
-  const campaignStart = readRepositoryFile("supabase/migrations/202610200004_sunday_seed_goal_start.sql");
-  const publicScope = readRepositoryFile("supabase/migrations/202610200005_public_seed_goal_scope.sql");
 
-  assert.match(html, /id="supportGoal"[\s\S]*id="supportGoalFill"[\s\S]*id="supportGoalPercent"/);
-  assert.match(app, /function normalizeGoalProgress\(goalProgress\)[\s\S]*confirmedAmountCents[\s\S]*goalAmountCents/);
-  assert.match(bootstrap, /supabase\.rpc\("get_confirmed_seed_total_cents"\)/);
-  assert.match(bootstrap, /const goalAmountCents = 110000/);
-  assert.match(bootstrap, /const confirmedSeedCount = Math\.floor\(confirmedAmountCents \/ 1100\)/);
-  assert.match(bootstrap, /goalTotalResult\.data[\s\S]*% goalAmountCents/);
-  assert.match(migration, /d\.paypal_status = 'COMPLETED'/);
-  assert.match(migration, /d\.payment_method in \('paypal', 'dodo'\)/);
-  assert.match(migration, /d\.raw_payment->>'mode' is distinct from 'test'/);
-  assert.match(migration, /d\.raw_payment#>>'\{product,type\}' is distinct from 'book'/);
-  assert.match(campaignStart, /d\.created_at >= '2026-10-17 18:30:00\+00'::timestamptz/);
-  assert.match(campaignStart, /d\.raw_payment#>>'\{product,type\}' = 'seed'/);
-  assert.match(publicScope, /d\.payment_route = 'standard'/);
-  assert.match(publicScope, /d\.visibility_scope = 'public'/);
+  assert.doesNotMatch(html, /support-story|supportGoal|shareSupportButton|whisper to the universe/);
+  assert.doesNotMatch(app, /goalProgress|GoalProgress|GOAL_SEED_COUNT|supportGoal|shareSupportButton|navigator\.share/);
+  assert.doesNotMatch(styles, /support-story|support-goal|support-share-button|support-pitch-header/);
+  assert.doesNotMatch(bootstrap, /get_confirmed_seed_total_cents|goalProgress|goalTotalResult/);
   assert.match(bootstrap, /\.eq\("payment_route", "standard"\)/);
   assert.match(bootstrap, /\.gte\("created_at", getIndiaDayStart\(\)\)/);
   assert.match(bootstrap, /confirmedSeedDonations[\s\S]*visibility_scope === "public"/);
+  assert.match(html, /id="supportAbout"/);
 });
 
 test("failed and cancelled PayPal payments open the seed-not-sown dialog", () => {

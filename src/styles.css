@@ -4582,14 +4582,12 @@ main {
   width: 100%;
 }
 
-.support-story-column,
 .support-checkout-column {
   display: grid;
   min-width: 0;
   gap: 20px;
 }
 
-.support-story-card,
 .support-about-card,
 .support-ritual-card,
 .home-checkout-view .dodo-checkout-card,
@@ -4813,26 +4811,10 @@ main {
   margin-top: 18px;
 }
 
-.support-story-card,
 .support-about-card {
   padding: 26px;
 }
 
-.support-story-heading {
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-}
-
-.support-story-heading > span {
-  color: var(--support-pink);
-  font-size: 32px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.support-story-card h2,
 .support-about-card h2 {
   margin: 0;
   color: var(--support-ink);
@@ -4840,127 +4822,11 @@ main {
   line-height: 1.28;
 }
 
-.support-story-card p,
 .support-about-card p {
   margin: 17px 0 0;
   color: #4f4c50;
   font-size: 15px;
   line-height: 1.68;
-}
-
-.support-impact-list {
-  display: grid;
-  gap: 9px;
-  margin-top: 20px;
-  padding: 17px;
-  border-radius: 17px;
-  color: #49444a;
-  background: #fbf4f8;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.support-impact-list span::first-letter {
-  color: var(--support-pink);
-}
-
-.support-story-card .support-thank-you {
-  color: #2c2930;
-  font-weight: 800;
-}
-
-.support-pitch-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 54px;
-  gap: 14px;
-  align-items: start;
-}
-
-.support-pitch-header h2 {
-  margin: 0;
-  color: var(--support-ink);
-  font-size: clamp(18px, 1.8vw, 22px);
-  font-weight: 900;
-  line-height: 1.42;
-}
-
-.support-share-button {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  border: 0;
-  border-radius: 13px;
-  color: var(--support-ink);
-  background: #dedada;
-  cursor: pointer;
-}
-
-.support-share-button:hover {
-  background: #d4cfcf;
-}
-
-.support-share-button svg {
-  width: 25px;
-  height: 25px;
-  stroke-width: 2.2;
-}
-
-.support-goal {
-  margin-top: 28px;
-}
-
-.support-goal-track {
-  height: 13px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #f0f0f0;
-}
-
-.support-goal-track span {
-  display: block;
-  width: var(--goal-progress, 0%);
-  height: 100%;
-  background: #1fdf85;
-  transition: width 500ms ease;
-}
-
-.support-story-card .support-goal p {
-  margin: 3px 0 0;
-  color: var(--support-ink);
-  font-size: 18px;
-  line-height: 1.25;
-}
-
-.support-story-card .support-goal strong {
-  font-size: 22px;
-}
-
-.support-story-card .support-story-copy {
-  margin-top: 24px;
-  color: var(--support-ink);
-  font-size: 17px;
-  line-height: 1.48;
-}
-
-.support-story-more {
-  margin-top: 8px;
-  color: var(--support-ink);
-  font-size: 16px;
-  line-height: 1.48;
-}
-
-.support-story-more > summary {
-  width: fit-content;
-  color: var(--support-ink);
-  font-weight: 800;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.support-story-more > p {
-  margin: 10px 0 0;
-  color: var(--support-ink);
 }
 
 .support-about-details {
@@ -5238,10 +5104,6 @@ main {
     grid-template-columns: 1fr;
   }
 
-  .support-story-column {
-    grid-template-columns: 1fr 1fr;
-  }
-
 }
 
 @media (max-width: 680px) {
@@ -5327,11 +5189,6 @@ main {
     gap: 10px;
   }
 
-  .support-story-column {
-    grid-template-columns: 1fr;
-  }
-
-  .support-story-card,
   .support-about-card,
   .support-ritual-card,
   .home-checkout-view .dodo-checkout-card,
@@ -5424,24 +5281,6 @@ main {
   .checkout-card-heading h2,
   .checkout-card-heading .seed-checkout-title {
     font-size: 21px;
-  }
-
-  .support-pitch-header {
-    grid-template-columns: minmax(0, 1fr) 48px;
-    gap: 11px;
-  }
-
-  .support-pitch-header h2 {
-    font-size: 19px;
-  }
-
-  .support-share-button {
-    width: 48px;
-    height: 48px;
-  }
-
-  .support-story-card .support-story-copy {
-    font-size: 16px;
   }
 
   .support-verse-footer {
