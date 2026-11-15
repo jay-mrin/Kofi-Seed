@@ -5892,6 +5892,8 @@ body:has(dialog[open]) {
 }
 .home-checkout-view .seed-garden-checkout .seed-quick-picks { grid-column: 1 / -1; grid-row: 1; width: 100%; gap: clamp(8px, 1.7vw, 20px); margin: 0; }
 .home-checkout-view .seed-garden-checkout .seed-option-card {
+  position: relative;
+  isolation: isolate;
   aspect-ratio: auto;
   min-height: clamp(148px, 25vw, 246px);
   gap: 7px;
@@ -5941,9 +5943,57 @@ body:has(dialog[open]) {
   0%, 100% { transform: rotate(-3deg); }
   50% { transform: rotate(4deg); }
 }
-.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; }
-.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; }
-.seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; }
+.seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; --seed-tap-color: #b36be0; }
+.seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; --seed-tap-color: #ec7568; }
+.seed-option-card[data-seed-count="11"] { --seed-art-glow: #e0af3d66; --seed-art-glow-active: #e0af3d99; --seed-tap-color: #ebc35d; }
+.seed-tap-light {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  color: var(--seed-tap-color);
+  pointer-events: none;
+}
+.seed-tap-light::before,
+.seed-tap-light::after { content: ""; position: absolute; pointer-events: none; }
+.seed-tap-light::before {
+  inset: -2px;
+  border: 1px solid currentColor;
+  border-radius: inherit;
+  box-shadow: 0 0 12px currentColor;
+  animation: seed-tap-ring 800ms ease-out both;
+}
+.seed-tap-light::after {
+  inset: -12% -15% 10%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, currentColor 0%, transparent 65%);
+  animation: seed-tap-halo 700ms ease-out both;
+}
+.seed-tap-light i {
+  position: absolute;
+  top: 37%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fffaf0;
+  box-shadow: 0 0 4px 1px currentColor, 0 0 9px currentColor;
+  animation: seed-tap-ray 720ms ease-out both;
+  animation-delay: var(--seed-ray-delay);
+}
+@keyframes seed-tap-ring {
+  0% { opacity: .6; transform: scale(.98); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+@keyframes seed-tap-halo {
+  0% { opacity: .3; transform: scale(.55); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+@keyframes seed-tap-ray {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+  15% { opacity: .9; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--seed-ray-x)), calc(-50% + var(--seed-ray-y))) scale(.2); }
+}
 .seed-option-card[data-seed-count="3"] .seed-option-art,
 .seed-option-card[data-seed-count="5"] .seed-option-art,
 .seed-option-card[data-seed-count="11"] .seed-option-art { filter: drop-shadow(0 0 5px var(--seed-art-glow)); }
@@ -5962,6 +6012,7 @@ body:has(dialog[open]) {
   50% { box-shadow: 0 0 20px #e6b94c80, inset 0 0 14px #f5d68b40; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .seed-tap-light { display: none; }
   .seed-art-plant,
   .seed-art-leaf { animation: none; }
   .home-checkout-view .seed-garden-checkout .seed-option-card[data-seed-count="11"] {

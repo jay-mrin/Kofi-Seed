@@ -2683,6 +2683,29 @@ function updateCheckoutLabel() {
   });
 }
 
+function emitSeedTapLight(button) {
+  if (!["3", "5", "11"].includes(button.dataset.seedCount) ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const previousLights = button.querySelectorAll(".seed-tap-light");
+  if (previousLights.length >= 3) previousLights[0].remove();
+
+  const light = document.createElement("span");
+  light.className = "seed-tap-light";
+  light.setAttribute("aria-hidden", "true");
+  const { width, height } = button.getBoundingClientRect();
+  for (let index = 0; index < 8; index += 1) {
+    const angle = (index / 8) * Math.PI * 2;
+    const ray = document.createElement("i");
+    ray.style.setProperty("--seed-ray-x", `${Math.cos(angle) * width * .48}px`);
+    ray.style.setProperty("--seed-ray-y", `${Math.sin(angle) * height * .35}px`);
+    ray.style.setProperty("--seed-ray-delay", `${index * 12}ms`);
+    light.appendChild(ray);
+  }
+  button.appendChild(light);
+  window.setTimeout(() => light.remove(), 1000);
+}
+
 function getCheckoutUi() {
   return {
     alternateCardCheckoutLink: elements.alternateCardCheckoutLink,
@@ -4175,6 +4198,7 @@ elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
   button.addEventListener("click", () => {
     const seedPrice = Math.max(Number.parseFloat(state.settings.seedPrice) || SEED_DOLLAR_VALUE, 1);
     setAmount(Number(button.dataset.seedCount) * seedPrice);
+    emitSeedTapLight(button);
   });
 });
 elements.adminCalendarPrev.addEventListener("click", () => {
