@@ -49,6 +49,13 @@
     slide.setAttribute("aria-label", `${index + 1} of ${slides.length}`);
   });
 
+  panel.addEventListener("click", (event) => {
+    const arrow = event.target.closest("[data-testimony-step]");
+    if (!arrow) return;
+    showSlide(activeIndex + Number(arrow.dataset.testimonyStep));
+    scheduleAutoAdvance();
+  });
+
   track.addEventListener("keydown", (event) => {
     if (event.target !== track) return;
     const destinations = { ArrowLeft: activeIndex - 1, ArrowRight: activeIndex + 1, Home: 0, End: slides.length - 1 };

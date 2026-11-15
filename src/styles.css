@@ -5764,7 +5764,12 @@ body:has(dialog[open]) {
 }
 .testimony-text { min-height: 0; margin: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; text-align: left; }
 .testimony-text p { margin: 0; font: 400 clamp(13px, 1.7vw, 17px)/1.5 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
-.testimony-slide .testimony-author { flex: 0 0 auto; margin: 4px 0 0; color: var(--garden-muted); font: 600 clamp(11px, 1.4vw, 14px)/1.4 Inter, "Segoe UI", sans-serif; }
+.testimony-footer { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; flex: 0 0 auto; width: 100%; margin-top: 4px; }
+.testimony-arrow { display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; border: 0; border-radius: 50%; color: var(--garden-ink); background: transparent; cursor: pointer; transition: background 160ms ease; }
+.testimony-arrow svg { display: block; width: 24px; height: 24px; }
+.testimony-arrow:hover { background: #b8799414; }
+.testimony-arrow:focus-visible { outline: 2px solid #a8627e; outline-offset: -2px; }
+.testimony-slide .testimony-author { min-width: 0; margin: 0; color: var(--garden-muted); font: 600 clamp(11px, 1.4vw, 14px)/1.4 Inter, "Segoe UI", sans-serif; }
 .testimony-track:focus-visible,
 .testimony-text:focus-visible { outline: 2px solid #a8627e; outline-offset: 2px; }
 .seed-hero-sun { position: absolute; right: 20%; bottom: 6%; width: 65px; height: 65px; border-radius: 50%; background: #fff6d9; box-shadow: 0 0 65px 32px #fff0c277; }
@@ -5816,10 +5821,10 @@ body:has(dialog[open]) {
   animation: seed-plant-sway var(--seed-sway-duration, 6s) ease-in-out infinite;
   animation-delay: var(--seed-sway-delay, 0s);
 }
-.seed-art-plant-1 { --seed-sway-duration: 5.8s; --seed-sway-delay: -1.2s; --seed-leaf-duration: 4.2s; }
-.seed-art-plant-3 { --seed-sway-duration: 6.4s; --seed-sway-delay: -3.6s; --seed-leaf-duration: 4.8s; }
-.seed-art-plant-5 { --seed-sway-duration: 7s; --seed-sway-delay: -2.1s; --seed-leaf-duration: 5.3s; }
-.seed-art-plant-11 { --seed-sway-duration: 7.6s; --seed-sway-delay: -5.2s; --seed-leaf-duration: 5.7s; }
+.seed-art-plant-1 { --seed-sway-duration: 3.6s; --seed-sway-delay: -1.2s; --seed-leaf-duration: 2.6s; }
+.seed-art-plant-3 { --seed-sway-duration: 4s; --seed-sway-delay: -3.6s; --seed-leaf-duration: 2.9s; }
+.seed-art-plant-5 { --seed-sway-duration: 4.4s; --seed-sway-delay: -2.1s; --seed-leaf-duration: 3.2s; }
+.seed-art-plant-11 { --seed-sway-duration: 4.8s; --seed-sway-delay: -5.2s; --seed-leaf-duration: 3.5s; }
 .seed-art-leaf {
   transform-box: view-box;
   transform-origin: 0 0;
@@ -5830,12 +5835,12 @@ body:has(dialog[open]) {
 .seed-art-plant > use:nth-of-type(2n) { --seed-leaf-delay: -2.3s; }
 .seed-art-plant > use:nth-of-type(3n) { --seed-leaf-delay: -3.7s; }
 @keyframes seed-plant-sway {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
 }
 @keyframes seed-leaf-flutter {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(4deg); }
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(12deg); }
 }
 .seed-option-card[data-seed-count="3"] { --seed-art-glow: #a552d71a; --seed-art-glow-active: #a552d733; --seed-tap-color: #b36be0; }
 .seed-option-card[data-seed-count="5"] { --seed-art-glow: #e64e4e1a; --seed-art-glow-active: #e64e4e33; --seed-tap-color: #ec7568; }
