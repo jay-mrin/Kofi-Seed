@@ -15,6 +15,10 @@
     [...dots.children].forEach((dot, dotIndex) => {
       dot.setAttribute("aria-current", String(dotIndex === index));
     });
+    const activeDot = dots.children[index];
+    if (activeDot) {
+      dots.scrollTo({ left: activeDot.offsetLeft - (dots.clientWidth - activeDot.offsetWidth) / 2, behavior: "auto" });
+    }
     status.textContent = `Testimony ${index + 1} of ${slides.length}`;
   }
 

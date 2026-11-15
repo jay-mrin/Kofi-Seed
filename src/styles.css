@@ -5870,10 +5870,12 @@ body:has(dialog[open]) {
   z-index: 3;
   grid-column: 2;
   grid-row: 1;
+  align-self: center;
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  height: clamp(280px, 65vw, 500px);
   margin: 12px clamp(10px, 2.5vw, 28px) 28px 4px;
   padding: clamp(12px, 2vw, 22px) clamp(8px, 1.5vw, 16px);
   border: 1px solid #cf9cb45c;
@@ -5888,7 +5890,7 @@ body:has(dialog[open]) {
   display: flex;
   flex: 1;
   min-width: 0;
-  min-height: 110px;
+  min-height: 0;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -5909,9 +5911,9 @@ body:has(dialog[open]) {
   scroll-snap-stop: always;
   text-align: center;
 }
-.testimony-slide p { margin: 0; font: 400 clamp(13px, 1.8vw, 18px)/1.55 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
-.testimony-quote { height: 38px; color: #bb8c56; opacity: .45; font: 400 70px/1 Georgia, serif; }
-.testimony-empty p { max-width: 16ch; color: var(--garden-muted); font-style: italic; }
+.testimony-text { min-height: 0; margin: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; text-align: left; }
+.testimony-text p { margin: 0; font: 400 clamp(13px, 1.7vw, 17px)/1.5 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
+.testimony-slide .testimony-author { flex: 0 0 auto; margin: 4px 0 0; color: var(--garden-muted); font: 600 clamp(11px, 1.4vw, 14px)/1.4 Inter, "Segoe UI", sans-serif; }
 .testimony-navigation { display: flex; align-items: center; justify-content: center; gap: clamp(4px, 1vw, 12px); }
 .testimony-navigation[hidden] { display: none; }
 .testimony-arrow {
@@ -5928,12 +5930,14 @@ body:has(dialog[open]) {
   font: 400 25px/1 Georgia, serif;
   cursor: pointer;
 }
-.testimony-dots { display: flex; align-items: center; justify-content: center; }
-.testimony-dot { display: grid; place-items: center; width: 24px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.testimony-dots { position: relative; display: flex; align-items: center; max-width: 72px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.testimony-dots::-webkit-scrollbar { display: none; }
+.testimony-dot { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .testimony-dot::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #bc94a4; opacity: .5; }
 .testimony-dot[aria-current="true"]::after { width: 7px; height: 7px; background: var(--garden-ink); opacity: 1; }
 .testimony-arrow:hover { background: #ffffff38; }
 .testimony-track:focus-visible,
+.testimony-text:focus-visible,
 .testimony-arrow:focus-visible,
 .testimony-dot:focus-visible { outline: 2px solid #a8627e; outline-offset: 2px; }
 .seed-hero-sun { position: absolute; right: 20%; bottom: 6%; width: 65px; height: 65px; border-radius: 50%; background: #fff6d9; box-shadow: 0 0 65px 32px #fff0c277; }
