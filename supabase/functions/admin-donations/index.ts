@@ -6,7 +6,7 @@ import {
   readJson,
 } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
-import { isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START } from "../_shared/social-source.ts";
+import { isSocialAssignmentApproved, SOCIAL_PORTAL_START } from "../_shared/social-source.ts";
 
 type UpdateOrderBody = {
   donationId?: string;
@@ -20,9 +20,6 @@ type UpdateOrderBody = {
   toDate?: string;
   includePublicComments?: boolean;
 };
-
-// 4 November 2026, 00:00 Asia/Kolkata. Earlier orders stay outside social portals.
-const SOCIAL_PORTAL_START = "2026-11-03T18:30:00.000Z";
 
 type DeleteDonationBody = {
   donationId?: string;
@@ -104,16 +101,17 @@ function applyDateRange(query: any, fromDate: string, toDate: string) {
 }
 
 function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
+  // Preserve original collecting routes. Amount determines portal access;
+  // pre-16-Nov low-value private history remains in its original portal.
+  const routes = "payment_route.in.(standard,superadmin),visibility_scope.in.(public,superadmin_private)";
   if (role === "super_admin") {
     return query
-      .eq("payment_route", "superadmin")
-      .eq("visibility_scope", "superadmin_private")
-      .eq("payment_method", "paypal");
+      .or(`and(amount.gte.33,${routes}),and(payment_route.eq.superadmin,visibility_scope.eq.superadmin_private,created_at.lt.${SOCIAL_PORTAL_START})`)
+      .in("payment_method", ["paypal", "dodo"]);
   }
-
   return query
-    .eq("payment_route", "standard")
-    .eq("visibility_scope", "public")
+    .lt("amount", 33)
+    .or(`and(payment_route.eq.standard,visibility_scope.eq.public),and(created_at.gte.${SOCIAL_PORTAL_START},${routes})`)
     .in("payment_method", ["paypal", "dodo"]);
 }
 
@@ -170,21 +168,20 @@ Deno.serve(withCors(async (request) => {
           return errorResponse("Choose an order and Anshu, Badal, Rohit, or Alok.", 422);
         }
 
-        const paymentRoute = adminProfile.role === "admin" ? "standard" : "superadmin";
-        const visibilityScope = adminProfile.role === "admin" ? "public" : "superadmin_private";
-        const assignment = supabase.from("donations")
+        // Apply the same amount/date visibility as the order calendar. This
+        // changes attribution only, never the collecting account or payment.
+        let assignment = supabase.from("donations")
           .update({
             social_source: socialSource,
             social_source_manually_assigned: true,
           })
           .eq("id", donationId)
-          .eq("payment_route", paymentRoute)
-          .eq("visibility_scope", visibilityScope)
           .eq("payment_method", "paypal")
           .eq("paypal_status", "COMPLETED")
           .gte("created_at", SOCIAL_PORTAL_START)
-          .or(`amount.lt.55,created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START}`);
-        if (socialSource === "rohit" || socialSource === "alok") assignment.lt("amount", 55);
+          .gt("amount", 0)
+          .lt("amount", 33);
+        assignment = applyAdminDonationScope(assignment, adminProfile.role);
         const { data, error } = await assignment
           .select("id, amount, created_at, social_source, social_source_manually_assigned")
           .maybeSingle();

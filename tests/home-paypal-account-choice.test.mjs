@@ -39,11 +39,11 @@ test("Home and both tagged links use the selected PayPal account while the porta
   );
 
   assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
-  for (const amount of ["55", "55.01", "110"]) {
+  for (const amount of ["33", "33.01", "55", "110"]) {
     context.elements.amountInput.value = amount;
     assert.deepEqual({ ...readRoute() }, { route: "superadmin", clientId: "high-value-superadmin-client" });
   }
-  context.elements.amountInput.value = "54.99";
+  context.elements.amountInput.value = "32.99";
   assert.deepEqual({ ...readRoute() }, { route: "standard", clientId: "admin-client" });
   context.elements.amountInput.value = "11";
   const explicitRitualRoute = vm.runInNewContext(

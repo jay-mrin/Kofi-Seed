@@ -20,6 +20,7 @@ Deno.serve(withCors(async (request) => {
       .eq("paypal_status", "COMPLETED")
       .eq("payment_route", "standard")
       .eq("visibility_scope", "public")
+      .lt("amount", 33)
       .in("payment_method", ["paypal", "dodo"])
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })

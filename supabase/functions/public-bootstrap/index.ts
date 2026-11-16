@@ -89,13 +89,14 @@ async function loadPublicContent(
       )
       .eq("paypal_status", "COMPLETED")
       .eq("payment_route", "standard")
+      .lt("amount", 33)
       .gte("created_at", getIndiaDayStart())
       .order("created_at", { ascending: false })
       .limit(1000),
     supabase
       .from("seed_comments")
       .select(
-        "id, display_name, body, amount, seed_count, source, created_at, donations(payment_route, visibility_scope, payment_method, raw_payment)",
+        "id, display_name, body, amount, seed_count, source, created_at, donations(amount, payment_route, visibility_scope, payment_method, raw_payment)",
       )
       .order("created_at", { ascending: false })
       .limit(1000),
@@ -120,12 +121,14 @@ async function loadPublicContent(
     .slice(0, 50);
   const seedComments = (seedCommentsResult.data || []).filter(
     (comment: Record<string, any>) => {
-      if (comment.source === "legacy") return true;
+      if (Number(comment.amount) >= 33) return false;
       const donation = Array.isArray(comment.donations)
         ? comment.donations[0]
         : comment.donations;
       if (!donation) return true;
       if (
+        Number(donation.amount) >= 33 ||
+        donation.payment_route !== "standard" ||
         donation.visibility_scope !== "public" ||
         !["paypal", "dodo"].includes(donation.payment_method)
       ) return false;

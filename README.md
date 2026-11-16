@@ -210,3 +210,9 @@ The homepage soulmate pitch, share button, and support-goal display are retired.
 The homepage shows a 21-book gallery grouped into Blue (10 Seeds per book), Red & peach (5 Seeds), and Grey (2 Seeds) series, in that order. Book purchasing is marked coming soon; no book payment gateway is connected. New book checkouts remain rejected; existing book orders retain their payment metadata, delivery controls, proof downloads, and payment recovery.
 
 Posts are retired. Deploy the updated functions, remove the deployed `admin-posts` and `post-engagement` functions, and apply `202610100002_remove_posts.sql`. To delete previously uploaded post images through the Storage API, run `node scripts/remove-post-images.mjs` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set. This targets only the dedicated `post-images` bucket. Order/payment tables and the order-linked Blessing Wall remain intact.
+
+## 16 November 2026 portal policy
+
+Orders of $33 or more are SuperAdmin-only; lower orders appear in Admin while retaining the configured collecting account. Admin sees all lower orders dated from 16 November 2026 at 00:00 Asia/Kolkata and can switch completed PayPal orders between Anshu, Badal, Rohit, and Alok. Partner APIs share the same inclusive start and exclusive $33 upper bound. Earlier partner rows are preserved in storage and excluded from partner views. Existing collection routes and provider IDs are never rewritten. Admin checkout activity is removed; SuperAdmin analytics remain available. Public displays exclude $33+ orders.
+
+Apply only `202611160001_thirty_three_portal_boundary.sql`, then deploy the updated Edge Functions and frontend. Do not run an unreviewed database push or apply the pending `202611100001`–`202611100003` migrations. The new migration replaces write guards and retires direct browser access to payment attempts and seed comments, which are served through filtered Edge Functions. It performs no historical data updates.

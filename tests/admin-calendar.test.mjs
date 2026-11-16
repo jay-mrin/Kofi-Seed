@@ -57,12 +57,12 @@ test("a slower month response cannot overwrite the month currently selected", as
   assert.match(calendar.requests[0].url, /month=2026-10/);
   assert.match(calendar.requests[1].url, /month=2026-11/);
   assert.match(calendar.requests[1].url, /startOffset=/);
-  calendar.requests[1].resolve({ donations: [{ id: "november-order" }] });
+  calendar.requests[1].resolve({ donations: [{ id: "november-order", amount: 11 }] });
   await second;
   calendar.requests[0].resolve({ donations: [{ id: "october-order" }] });
   await first;
   assert.deepEqual(calendar.snapshot(), {
-    records: [{ id: "november-order" }], month: "2026-11", loading: false, error: "",
+    records: [{ id: "november-order", amount: 11 }], month: "2026-11", loading: false, error: "",
     publicRecords: [{ id: "public-order" }],
   });
 });
@@ -117,9 +117,9 @@ test("a late SuperAdmin activity response cannot appear in the Admin portal", as
   assert.deepEqual(context.state.analytics, { paymentRoute: "standard", pageViewsLast24h: 0 });
 
   const adminRequest = context.loadAdminAnalytics();
-  requests[1]({ paymentRoute: "standard", pageViewsAreCombined: false, pageViewsLast24h: 2 });
   await adminRequest;
-  assert.equal(context.state.analytics.pageViewsLast24h, 2);
+  assert.equal(requests.length, 1);
+  assert.equal(context.state.analytics.pageViewsLast24h, 0);
 });
 
 test("public content refreshes cannot replace private calendar records", async () => {
@@ -137,12 +137,12 @@ test("public content refreshes cannot replace private calendar records", async (
 test("failed refreshes preserve the loaded month and expose a retryable error", async () => {
   const calendar = createCalendar();
   const first = calendar.context.loadAdminDonations();
-  calendar.requests[0].resolve({ donations: [{ id: "saved-order" }] });
+  calendar.requests[0].resolve({ donations: [{ id: "saved-order", amount: 11 }] });
   await first;
   const second = calendar.context.loadAdminDonations();
   calendar.requests[1].reject(new Error("Connection interrupted"));
   await second;
-  assert.deepEqual(calendar.snapshot().records, [{ id: "saved-order" }]);
+  assert.deepEqual(calendar.snapshot().records, [{ id: "saved-order", amount: 11 }]);
   assert.equal(calendar.snapshot().error, "Connection interrupted");
   assert.equal(calendar.snapshot().loading, false);
 });
@@ -202,20 +202,20 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   const details = { innerHTML: "", querySelector: () => null };
   const donation = {
     id: "private-order", name: "Customer", amount: 11,
-    createdAt: "2026-11-04T12:00:00.000Z", paymentMethod: "paypal", status: "COMPLETED",
+    createdAt: "2026-11-16T12:00:00.000Z", paymentMethod: "paypal", status: "COMPLETED",
     paymentRoute: "superadmin", visibilityScope: "superadmin_private", socialSource: null,
   };
   const context = {
-    details, loaded: true, selectedDate: "2026-11-04", cursor: new Date(2026, 10, 1),
+    details, loaded: true, selectedDate: "2026-11-16", cursor: new Date(2026, 10, 1),
     emptyRecordLabel: "SuperAdmin PayPal orders", donations: [donation],
     allowDelete: true, allowSocialTagging: true, isAdminPortal: false,
   };
   const render = vm.runInNewContext(`${source(app, "getCalendarMonthDonations")}
     ${source(app, "getCalendarSummaryMarkup")}
     ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
-    SOCIAL_PORTAL_START_ISO: "2026-11-03T18:30:00.000Z",
+    SOCIAL_PORTAL_START_ISO: "2026-11-15T18:30:00.000Z",
     SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: "2026-11-10T16:00:40.000Z",
-    getDonationsByDate: (donations) => ({ "2026-11-04": donations }),
+    getDonationsByDate: (donations) => ({ "2026-11-16": donations }),
     fromDateKey: (date) => date,
     readableDate: (date) => date,
     readableTime: () => "5:30 PM",
@@ -256,11 +256,11 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 3);
   }
 
-  donation.amount = 55;
+  donation.amount = 33;
   donation.socialSourceManuallyAssigned = false;
   render(context);
-  assert.match(details.innerHTML, /Portal: AnshuPortal/);
-  assert.ok(tagButtons().slice(2).every((button) => button.includes("disabled")));
+  assert.match(details.innerHTML, /Portal: SuperAdmin only/);
+  assert.ok(tagButtons().every((button) => button.includes("disabled")));
   donation.createdAt = "2026-11-10T16:00:40.000Z";
   donation.socialAssignmentApproved = true;
   render(context);
@@ -276,7 +276,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   const adminDonation = {
     ...donation,
     id: "admin-order",
-    createdAt: "2026-11-04T12:00:00.000Z",
+    createdAt: "2026-11-16T12:00:00.000Z",
     paymentRoute: "standard",
     visibilityScope: "public",
     socialSource: null,

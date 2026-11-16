@@ -63,7 +63,7 @@ Deno.serve(withCors(async (request) => {
       : "standard";
 
     if (request.method === "GET") {
-      const { data, error } = await supabase
+      let query = supabase
         .from("memberships")
         .select("id, customer_name, customer_email, amount, currency, seed_count, payment_route, paypal_subscription_id, status, opted_in_at, billing_anchor_at, next_billing_at, next_retry_at, last_failed_at, last_successful_payment_at, successful_payment_count, cancelled_at, membership_payments(id, paypal_transaction_id, amount, currency, status, payment_kind, paid_at, billing_period_start, billing_period_end)")
         .eq("payment_route", paymentRoute)
@@ -72,6 +72,8 @@ Deno.serve(withCors(async (request) => {
         .order("paid_at", { foreignTable: "membership_payments", ascending: false })
         .order("opted_in_at", { ascending: false })
         .limit(500);
+      if (adminProfile.role === "admin") query = query.lt("amount", 33);
+      const { data, error } = await query;
       if (error) throw error;
 
       return jsonResponse({
@@ -90,12 +92,13 @@ Deno.serve(withCors(async (request) => {
       "Cancelled from Sowing Seed portal";
     if (!membershipId) return errorResponse("Subscription id is required.", 422);
 
-    const { data: membership, error: membershipError } = await supabase
+    let membershipQuery = supabase
       .from("memberships")
       .select("id, paypal_subscription_id, status, payment_route")
       .eq("id", membershipId)
-      .eq("payment_route", paymentRoute)
-      .maybeSingle();
+      .eq("payment_route", paymentRoute);
+    if (adminProfile.role === "admin") membershipQuery = membershipQuery.lt("amount", 33);
+    const { data: membership, error: membershipError } = await membershipQuery.maybeSingle();
     if (membershipError) throw membershipError;
     if (!membership) return errorResponse("Subscription not found.", 404);
     if (["cancelled", "expired"].includes(membership.status)) {

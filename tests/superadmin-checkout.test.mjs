@@ -29,7 +29,7 @@ test("legacy Admin records and webhooks remain available", () => {
   const capture = read("supabase/functions/capture-paypal-order/index.ts");
   const paypal = read("supabase/functions/_shared/paypal.ts");
 
-  assert.match(admin, /payment_route", "standard"/);
+  assert.match(admin, /payment_route\.eq\.standard/);
   assert.match(capture, /paymentAttempt\.payment_route === "superadmin"/);
   assert.match(paypal, /const routes = \["superadmin", "standard"\]/);
 });
@@ -41,7 +41,8 @@ test("SuperAdmin Checkout keeps the PayPal form independent of the Home display 
   assert.match(html, /id="superAdminPaymentControlDetails"[\s\S]*<strong>Payment Control<\/strong>[\s\S]*id="adminWeeklySeedOptionVisible"[\s\S]*id="adminSuperCheckoutSection"[\s\S]*id="saveCheckoutDisplayButton"[\s\S]*id="superAdminPayPalSection" hidden>[\s\S]*id="superAdminCheckoutHost"/);
   assert.equal((html.match(/<strong>Payment Control<\/strong>/g) || []).length, 1);
   assert.match(app, /adminPanel\.insertBefore\(elements\.adminAnalyticsSection, elements\.adminPortalGrid\)/);
-  assert.match(app, /adminRightColumn\.prepend\(elements\.adminAnalyticsSection\)/);
+  assert.doesNotMatch(app, /adminRightColumn\.prepend\(elements\.adminAnalyticsSection\)/);
+  assert.match(app, /!isSuperAdminSection && !isRoleScopedAnalytics/);
   assert.match(app, /function placePayPalCheckoutInPortal\(inPortal\)[\s\S]*superAdminCheckoutHost\.appendChild\(elements\.supportCard\)[\s\S]*supportHomeColumn\.insertBefore\(elements\.supportCard, elements\.supportRitualCard\)[\s\S]*elements\.supportCard\.hidden = !inPortal && !state\.settings\.paypalCheckoutVisible/);
   assert.match(app, /placePayPalCheckoutInPortal\(isSuperAdmin\)/);
   assert.match(app, /function closeAdminPanel\(\) \{\s*clearAdminSession\(\);\s*placePayPalCheckoutInPortal\(false\)/);

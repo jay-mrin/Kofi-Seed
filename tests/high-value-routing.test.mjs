@@ -86,14 +86,14 @@ test("starting checkout preserves expired attempt history for delayed payment re
 });
 
 for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
-  test(`${functionName} enforces the $55 account and assignment boundary on the server`, async () => {
+  test(`${functionName} enforces the $33 account and assignment boundary on the server`, async () => {
     for (const sourceTag of ["anshu", "badal", "rohit", "alok"]) {
-      for (const amount of [54.99, 55, 55.01, 110, 121]) {
+      for (const amount of [11, 22, 32.99, 33, 33.01, 55, 110, 121]) {
         const { response, writes, paypalOrders } = await checkout(functionName, {
           amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag,
         });
         assert.equal(response.status, 200, JSON.stringify(response.body));
-        const high = amount >= 55;
+        const high = amount >= 33;
         assert.equal(response.body.paymentRoute, high ? "superadmin" : "standard");
         assert.ok(writes.length);
         for (const { value } of writes) {
@@ -118,8 +118,8 @@ test("ritual account routing uses the server product price rather than a supplie
   assert.equal(writes[0].value.social_source, null);
 });
 
-test("the legacy Dodo creation endpoint cannot create new $55+ orders", async () => {
-  for (const details of [{ seedCount: 5 }, { seedCount: 10 }, { ritualTier: "199" }]) {
+test("the legacy Dodo creation endpoint cannot create new $33+ orders", async () => {
+  for (const details of [{ seedCount: 3 }, { seedCount: 5 }, { seedCount: 10 }, { ritualTier: "199" }]) {
     const { response, writes, paypalOrders } = await checkout("create-dodo-checkout", {
       ...details, name: "Customer", email: "customer@example.invalid", message: "For family",
       donorAccessToken: "a".repeat(64),
@@ -130,16 +130,16 @@ test("the legacy Dodo creation endpoint cannot create new $55+ orders", async ()
   }
 });
 
-test("$55+ disables the external custom card option while lower orders retain it", () => {
+test("$33+ disables the external custom card option while lower orders retain it", () => {
   const source = read("src/app.js").match(/function isCustomCardCheckoutAvailable\(\) \{[\s\S]*?\n\}/)[0];
   const context = vm.createContext({
     visitorCountry: "US",
     state: { settings: { alternateCardCheckoutVisible: true } },
-    elements: { amountInput: { value: "54.99" }, supportCard: { parentElement: {} }, superAdminCheckoutHost: {} },
+    elements: { amountInput: { value: "32.99" }, supportCard: { parentElement: {} }, superAdminCheckoutHost: {} },
   });
   vm.runInContext(source, context);
   assert.equal(context.isCustomCardCheckoutAvailable(), true);
-  context.elements.amountInput.value = "55";
+  context.elements.amountInput.value = "33";
   assert.equal(context.isCustomCardCheckoutAvailable(), false);
   context.elements.amountInput.value = "110";
   assert.equal(context.isCustomCardCheckoutAvailable(), false);
@@ -152,3 +152,26 @@ test("migration retains existing assignments and guards future high-value recurr
   assert.match(sql, /new\.membership_id is not null[\s\S]*select social_source into new\.social_source/);
   assert.doesNotMatch(sql, /delete from|truncate|set\s+(?:amount|payment_route|social_source)\s*=/i);
 });
+
+test("the new database guard rejects high-value assignments without rewriting history", () => {
+  const sql = read("supabase/migrations/202611160001_thirty_three_portal_boundary.sql");
+  assert.match(sql, /new\.amount >= 33/g);
+  assert.match(sql, /revoke all on table public\.payment_attempts, public\.seed_comments from anon, authenticated/);
+  assert.match(sql, /tg_op = 'UPDATE'[\s\S]*new\.social_source is not distinct from old\.social_source/);
+  assert.match(sql, /raise exception 'Orders of \$33 or more cannot be assigned to another portal'/);
+  assert.match(sql, /before insert or update of amount, created_at, social_source/);
+  assert.match(sql, /set_weekly_order_social_source[\s\S]*if new\.amount >= 33 then[\s\S]*new\.social_source := null/);
+  assert.doesNotMatch(sql, /\b(?:update public\.|delete from|truncate|insert into)\b/i);
+  assert.doesNotMatch(sql, /new\.(?:payment_route|visibility_scope|amount|created_at)\s*:=/i);
+});
+
+for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
+  test(`${functionName} preserves the selected collecting account for lower orders`, async () => {
+    const { response, writes } = await checkout(functionName, {
+      amount: 22, name: "Customer", email: "customer@example.invalid", paymentRoute: "superadmin", sourceTag: "alok",
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.paymentRoute, "superadmin");
+    assert.ok(writes.every(({ value }) => value.payment_route === "superadmin" && value.social_source === "alok"));
+  });
+}

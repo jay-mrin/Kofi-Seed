@@ -1,9 +1,7 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireUnifiedPaymentPortal } from "../_shared/supabase.ts";
-import { isSocialAssignmentApproved, SOCIAL_HIGH_VALUE_EXCLUSION_START } from "../_shared/social-source.ts";
+import { isSocialAssignmentApproved, SOCIAL_PORTAL_START } from "../_shared/social-source.ts";
 
-// Match the four partner portals' existing history and eligibility exactly.
-const SOCIAL_PORTAL_START = "2026-11-03T18:30:00.000Z";
 const IST_OFFSET_MS = 330 * 60_000;
 
 Deno.serve(withCors(async (request) => {
@@ -28,7 +26,7 @@ Deno.serve(withCors(async (request) => {
       const { data, error } = await supabase.from("donations")
         .select("display_name, amount, created_at, social_source, paypal_payer_email, digital_orders(contact_email)")
         .in("social_source", ["anshu", "badal", "rohit", "alok"])
-        .or(`amount.lt.55,and(social_source.in.(anshu,badal),created_at.lt.${SOCIAL_HIGH_VALUE_EXCLUSION_START})`)
+        .lt("amount", 33)
         .eq("payment_method", "paypal")
         .eq("paypal_status", "COMPLETED")
         .in("payment_route", ["standard", "superadmin"])

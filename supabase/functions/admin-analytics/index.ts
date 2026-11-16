@@ -62,8 +62,9 @@ Deno.serve(withCors(async (request) => {
 
   try {
     const { supabase, adminProfile } = await requireAdmin(request, {
-      allowedRoles: ["admin", "super_admin"],
+      allowedRoles: ["super_admin"],
     });
+    if (adminProfile.role !== "super_admin") return errorResponse("Checkout activity is available only in SuperAdmin.", 403);
     const paymentRoute: PaymentRoute = adminProfile.role === "super_admin"
       ? "superadmin"
       : "standard";

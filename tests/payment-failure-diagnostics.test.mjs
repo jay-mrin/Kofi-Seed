@@ -68,7 +68,7 @@ async function readAnalytics(role) {
   });
   return {
     response: await handler(new globalThis.Request("https://diagnostic.invalid/admin-analytics")),
-    fields: selections.find((selection) => selection.table === "payment_attempts").fields,
+    fields: selections.find((selection) => selection.table === "payment_attempts")?.fields,
   };
 }
 
@@ -80,7 +80,6 @@ test("stored PayPal diagnostic fields are read and returned only for SuperAdmin"
   assert.doesNotMatch(JSON.stringify(superAdmin.response.body), /raw_payment|privateUnrelatedDetails|never expose/);
 
   const admin = await readAnalytics("admin");
-  assert.equal(admin.response.status, 200);
-  assert.doesNotMatch(admin.fields, /failure_reason|raw_payment|capture_error|capture_webhook/);
-  assert.equal(Object.hasOwn(admin.response.body.paymentAttempts[0], "failureReason"), false);
+  assert.equal(admin.response.status, 403);
+  assert.equal(admin.fields, undefined);
 });

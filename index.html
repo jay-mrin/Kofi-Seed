@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=238" />
+    <link rel="stylesheet" href="src/styles.css?v=239" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -330,15 +330,15 @@
         </section>
 
         <div class="admin-right-column">
-          <section class="admin-section admin-analytics-section">
+          <section class="admin-section admin-analytics-section" hidden>
             <details class="admin-analytics-details">
               <summary class="admin-analytics-summary">
-                <span><strong id="adminAnalyticsTitle">2. Admin checkout activity</strong><small>Page visits, checkout activity, and payment history</small></span>
+                <span><strong id="adminAnalyticsTitle">1. SuperAdmin checkout activity</strong><small>Page visits, checkout activity, and payment history</small></span>
                 <span class="analytics-chevron" aria-hidden="true">⌄</span>
               </summary>
               <div class="admin-analytics-content">
                 <div class="admin-analytics-heading">
-                  <p id="adminAnalyticsDescription">All page visits and Admin checkout activity from the last 24 hours. Payment records are private to this account.</p>
+                  <p id="adminAnalyticsDescription">All page visits and SuperAdmin checkout activity from the last 24 hours. Payment records are private to this account.</p>
                   <button class="button button-secondary admin-analytics-reset-button" id="resetAdminAnalyticsButton" type="button">Reset data</button>
                 </div>
                 <div class="admin-analytics-grid">
@@ -353,12 +353,12 @@
                   <article>
                     <span>No. who started payment</span>
                     <strong id="adminPaymentStarts24h">0</strong>
-                    <small id="adminPaymentStartsLabel">Persisted Admin checkout attempts</small>
+                    <small id="adminPaymentStartsLabel">Persisted SuperAdmin checkout attempts</small>
                   </article>
                   <article>
                     <span>No. of payments completed</span>
                     <strong id="adminPaymentsCompleted24h">0</strong>
-                    <small id="adminPaymentsCompletedLabel">Server-verified Admin payments</small>
+                    <small id="adminPaymentsCompletedLabel">Server-verified SuperAdmin payments</small>
                   </article>
                 </div>
                 <div class="admin-payment-attempts">
@@ -367,7 +367,7 @@
                     <span>Name, email, amount, and completion status</span>
                   </div>
                   <div class="admin-payment-attempt-list" id="adminPaymentAttemptList" aria-live="polite">
-                    <p class="admin-payment-attempt-empty">No Admin payment attempts in this window.</p>
+                    <p class="admin-payment-attempt-empty">No SuperAdmin payment attempts in this window.</p>
                   </div>
                 </div>
                 <p class="admin-analytics-updated" id="adminAnalyticsUpdated">Waiting for analytics...</p>
@@ -397,7 +397,7 @@
               </section>
               <section class="payment-control-group" id="adminSuperCheckoutSection" hidden>
                 <h3>Checkout display</h3>
-                <p>From 10 November 2026, 21:30:40 IST, orders of $55 or more stay exclusively in SuperAdmin and cannot appear in Anshu or Badal. Earlier orders and assignments stay as they are.</p>
+                <p>Orders below $33 appear in Admin. Orders of $33 or more appear only in SuperAdmin. The checkout account choice below does not change this visibility. Admin can switch eligible orders from 16 November 2026 between Anshu, Badal, Rohit, and Alok.</p>
                 <div class="checkout-routing-content">
                   <div class="checkout-routing-override">
                     <label class="admin-toggle checkout-routing-toggle">
@@ -1130,7 +1130,7 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/paypal-recovery.js?v=2" defer></script>
-    <script src="src/app.js?v=187" defer></script>
+    <script src="src/app.js?v=188" defer></script>
     <script src="src/seed-testimonies.js?v=4" defer></script>
     <script src="src/home-dodo-checkout.js?v=16" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>

@@ -55,7 +55,7 @@ Deno.serve(withCors(async (request) => {
     }
     if (amountCents < 1100) return errorResponse("Amount must be at least $11.", 422);
     if (amountCents >= SOCIAL_AUTO_ASSIGN_LIMIT_CENTS) {
-      return errorResponse("Orders of $55 or more must use the PayPal checkout on the seed form.", 409);
+      return errorResponse("Orders of $33 or more must use the PayPal checkout on the seed form.", 409);
     }
 
     attemptId = crypto.randomUUID();

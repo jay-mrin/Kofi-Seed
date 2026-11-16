@@ -106,11 +106,11 @@ test("Dodo webhook verifies signatures and records idempotency keys", () => {
   assert.match(webhook, /finalizeDodoPayment\(paymentId\)/);
 });
 
-test("portal ownership keeps historical Dodo and new PayPal orders in their collecting portal", () => {
+test("portal access follows the amount split while preserving stored collecting routes", () => {
   const admin = read("supabase/functions/admin-donations/index.ts");
   const paypal = read("supabase/functions/create-paypal-order/index.ts");
 
-  assert.match(admin, /role === "super_admin"[\s\S]*payment_route", "superadmin"/);
-  assert.match(admin, /payment_route", "standard"[\s\S]*\.in\("payment_method", \["paypal", "dodo"\]\)/);
+  assert.match(admin, /role === "super_admin"[\s\S]*amount\.gte\.33/);
+  assert.match(admin, /payment_route\.eq\.standard[\s\S]*\.in\("payment_method", \["paypal", "dodo"\]\)/);
   assert.match(paypal, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
 });

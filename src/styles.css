@@ -3894,6 +3894,9 @@ legend::after {
 .admin-analytics-heading { align-items: center; }
 .admin-analytics-heading p { margin: 0; color: #736954; font-size: 13px; font-weight: 700; }
 .admin-right-column > .admin-super-checkout-section { grid-column: 1; }
+.admin-panel:not(.is-super-admin) .admin-portal-grid { grid-template-columns: minmax(0, 1fr); }
+.admin-panel:not(.is-super-admin) .admin-right-column { display: none; }
+
 
 .payment-control-content {
   display: grid;
