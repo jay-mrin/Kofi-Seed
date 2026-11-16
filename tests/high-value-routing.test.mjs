@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents, fixedDate } from "./helpers/social-policy.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => readFileSync(path.join(root, file), "utf8");
@@ -18,7 +19,7 @@ const moneyParser = read("supabase/functions/_shared/paypal.ts")
   .match(/export function parseMoneyToCents[\s\S]*?\n\}/)[0]
   .replace("export ", "").replace("value: unknown", "value");
 
-async function checkout(functionName, body) {
+async function checkout(functionName, body, now = "2026-11-17T00:00:00Z") {
   const writes = [];
   const paypalOrders = [];
   const deletions = [];
@@ -58,6 +59,7 @@ async function checkout(functionName, body) {
     .replaceAll(" as Record<string, unknown>", "")
     .replace(/readJson<\w+>/g, "readJson");
   const context = vm.createContext({
+    Date: fixedDate(now),
     Deno: { serve(callback) { handler = callback; } },
     withCors: (callback) => callback,
     handleOptions: () => null,
@@ -132,7 +134,7 @@ test("the legacy Dodo creation endpoint cannot create new $33+ orders", async ()
 
 test("$33+ disables the external custom card option while lower orders retain it", () => {
   const source = read("src/app.js").match(/function isCustomCardCheckoutAvailable\(\) \{[\s\S]*?\n\}/)[0];
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     visitorCountry: "US",
     state: { settings: { alternateCardCheckoutVisible: true } },
     elements: { amountInput: { value: "32.99" }, supportCard: { parentElement: {} }, superAdminCheckoutHost: {} },
@@ -175,3 +177,34 @@ for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"
     assert.ok(writes.every(({ value }) => value.payment_route === "superadmin" && value.social_source === "alok"));
   });
 }
+
+for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
+  test(`${functionName} switches from 55 to 33 exactly at midnight India time`, async () => {
+    for (const [now, limit] of [["2026-11-16T18:29:59.999Z", 55], ["2026-11-16T18:30:00.000Z", 33]]) {
+      for (const amount of [32.99, 33, 44, 54.99, 55]) {
+        const result = await checkout(functionName, { amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag: "anshu" }, now);
+        assert.equal(result.response.status, 200);
+        const high = amount >= limit;
+        assert.equal(result.response.body.paymentRoute, high ? "superadmin" : "standard");
+        assert.ok(result.writes.every(({ value }) => value.social_source === (high ? null : "anshu")));
+      }
+    }
+  });
+}
+
+test("database dated guards use the exact India-time window and never rewrite order history", () => {
+  const sql = read("supabase/migrations/202611160002_dated_portal_limits.sql");
+  assert.equal((sql.match(/then 55 else 33 end/g) || []).length, 2);
+  assert.equal((sql.match(/new\.created_at < timestamptz '2026-11-16 18:30:00\+00'/g) || []).length, 2);
+  assert.doesNotMatch(sql, /\b(?:update public\.|delete from|truncate|insert into)\b/i);
+  assert.doesNotMatch(sql, /new\.(?:payment_route|visibility_scope|amount|created_at)\s*:=/i);
+});
+
+test("browser and server agree on the permanent limit for each order's date", () => {
+  const source = read("src/app.js").match(/function getSocialLimitCents\([^]*?\n\}/)[0];
+  const browserLimit = vm.runInNewContext(`${source}; getSocialLimitCents`);
+  for (const [date, cents] of [["2026-11-15T18:29:59.999Z", 5500], ["2026-11-15T18:30:00.000Z", 5500], ["2026-11-16T18:29:59.999Z", 5500], ["2026-11-16T18:30:00.000Z", 3300], ["2026-12-16T00:00:00Z", 3300], ["invalid", 3300]]) {
+    assert.equal(browserLimit(date), cents);
+    assert.equal(getSocialLimitCents(date), cents);
+  }
+});

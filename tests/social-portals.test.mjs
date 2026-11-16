@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 import { createQuery } from "./helpers/portal-query.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -23,7 +24,7 @@ test("only the current tagged path attributes PayPal checkout", () => {
   const window = {
     location: { pathname: "/sowseed", search: "" },
   };
-  const context = vm.createContext({ window });
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), window });
   vm.runInContext(source, context);
   assert.equal(context.readSocialSourceTag(), "anshu");
   window.location.pathname = "/seed";
@@ -86,7 +87,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
     jsonResponse: (body) => new globalThis.Response(JSON.stringify(body)),
     errorResponse: (message, status) => new globalThis.Response(message, { status }),
     URL, Response: globalThis.Response,
-    isSocialAssignmentApproved, SOCIAL_PORTAL_START,
+    ...policy, isSocialAssignmentApproved, SOCIAL_PORTAL_START,
   });
   const request = new globalThis.Request(`https://local.invalid/social-portal-transactions?month=${month}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -95,14 +96,16 @@ async function readPortalMonth(rows, token, month = "2026-11") {
   return { status: response.status, body: response.status === 200 ? await response.json() : null };
 }
 
-test("each partner shows only its own sub-$33 orders from midnight 16 November India time", async () => {
-  const base = { amount: 11, created_at: SOCIAL_PORTAL_START,
+test("each partner retains only its own eligible history and rejects new $33 orders", async () => {
+  const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z",
     paypal_payer_email: "payer@example.invalid", digital_orders: { contact_email: "order@example.invalid" },
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private" };
   const rows = ["anshu", "badal", "rohit", "alok"].flatMap((social_source) => [
     { ...base, social_source, display_name: `${social_source}-first` },
     { ...base, social_source, display_name: `${social_source}-last-cent`, amount: 32.99 },
-    { ...base, social_source, display_name: "Before", created_at: "2026-11-15T18:29:59.999Z" },
+    { ...base, social_source, display_name: `${social_source}-existing`, amount: 44, created_at: "2026-11-12T00:00:00.000Z" },
+    { ...base, social_source, display_name: `${social_source}-nov16`, amount: 54.99, created_at: "2026-11-16T18:29:59.999Z" },
+    { ...base, social_source, display_name: "Before", created_at: "2026-11-03T18:29:59.999Z" },
     ...[33, 33.01, 54.99, 55, 121].map((amount) => ({ ...base, social_source, amount, display_name: "Private", social_source_manually_assigned: true })),
     { ...base, social_source, display_name: "Failed", paypal_status: "FAILED" },
     { ...base, social_source, display_name: "Dodo", payment_method: "dodo" },
@@ -111,7 +114,7 @@ test("each partner shows only its own sub-$33 orders from midnight 16 November I
   for (const source of ["anshu", "badal", "rohit", "alok"]) {
     const result = await readPortalMonth(rows, source);
     assert.equal(result.status, 200);
-    assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-last-cent`]);
+    assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-last-cent`, `${source}-existing`, `${source}-nov16`]);
     for (const row of result.body.transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
     assert.deepEqual((await readPortalMonth(rows, source, "2026-10")).body.transactions, []);
   }
@@ -159,9 +162,9 @@ test("social order cards show paid amount without credited details", () => {
 
 test("old high-value exceptions no longer grant any partner visibility", () => {
   for (const social_source of ["anshu", "badal", "rohit", "alok"]) {
-    for (const amount of [33, 55, 121]) {
+    for (const amount of [55, 121]) {
       assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-04T00:00:00Z", social_source_manually_assigned: true }), false);
-      assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: SOCIAL_PORTAL_START, social_source_manually_assigned: true }), false);
+      assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-16T18:30:00.000Z", social_source_manually_assigned: true }), false);
     }
   }
 });
@@ -170,11 +173,12 @@ test("frontend rejects stale high values and earlier rows from any backend polic
   const source = read("src/app.js").match(/async function loadSocialTransactions\(\) \{[\s\S]*?\n\}/)[0];
   const payload = { transactions: [
     { name: "Low", amount: 32.99, createdAt: SOCIAL_PORTAL_START },
-    { name: "Early", amount: 11, createdAt: "2026-11-15T18:29:59.999Z" },
-    { name: "Boundary", amount: 33, createdAt: SOCIAL_PORTAL_START },
+    { name: "Early", amount: 11, createdAt: "2026-11-03T18:29:59.999Z" },
+    { name: "Boundary", amount: 33, createdAt: "2026-11-16T18:30:00.000Z" },
     { name: "LegacyHigh", amount: 121, createdAt: "2026-11-04T00:00:00Z" },
   ] };
-  const context = vm.createContext({ socialCalendarCursor: new Date(), socialTransactions: [],
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), socialCalendarCursor: new Date(), socialTransactions: [],
+    SOCIAL_PARTNER_HISTORY_START_ISO: policy.SOCIAL_PARTNER_HISTORY_START,
     SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "social_partner", socialSource: "anshu" } },
     elements: { socialCalendarPrev: {}, socialCalendarNext: {}, socialCalendarDetails: {} },
@@ -210,8 +214,8 @@ test("the prospective database guard changes only high-value social assignments 
 test("client blocks $33 and earlier orders before calling the assignment API", async () => {
   const source = read("src/app.js").match(/async function setOrderSocialSource\([^]*?\n\}/)[0];
   let calls = 0;
-  const row = { id: "order", amount: 33, createdAt: SOCIAL_PORTAL_START, socialSource: null };
-  const context = vm.createContext({ SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
+  const row = { id: "order", amount: 33, createdAt: "2026-11-16T18:30:00.000Z", socialSource: null };
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "admin" } }, adminCalendarDonations: [row],
     elements: { adminPanel: { getAttribute: () => "false" } }, getDonationById: () => row, getAdminAccessToken: () => "session",
     runAdminAction: async (_options, action) => action(), renderAdminCalendar() {}, setAdminStatus() {},
@@ -234,13 +238,13 @@ function createAssignmentApi(rows) {
     .replace('query: any, role: "admin" | "super_admin"', 'query, role');
   const update = endpoint.match(/if \(Object\.hasOwn\(body, "socialSource"\)\) \{[\s\S]*?return jsonResponse\(\{ donationId: data\.id, socialSource: data\.social_source, socialAssignmentApproved: isSocialAssignmentApproved\(data\) \}\);\s*\}/)[0];
   const supabase = { from: () => createQuery(rows) };
-  const context = { supabase, SOCIAL_PORTAL_START, isSocialAssignmentApproved,
+  const context = { ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), supabase, SOCIAL_PORTAL_START, isSocialAssignmentApproved,
     errorResponse: (error, status) => ({ error, status }), jsonResponse: (body) => ({ ...body, status: 200 }) };
   return vm.runInNewContext(`${scope}; (async (body, adminProfile) => { ${update} })`, context);
 }
 
 test("Admin switches all eligible orders among four partners without changing their payment data", async () => {
-  const base = { amount: 11, created_at: SOCIAL_PORTAL_START, payment_method: "paypal", paypal_status: "COMPLETED", social_source: "anshu" };
+  const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z", payment_method: "paypal", paypal_status: "COMPLETED", social_source: "anshu" };
   const rows = [
     { ...base, id: "admin", payment_route: "standard", visibility_scope: "public" },
     { ...base, id: "private-low", payment_route: "superadmin", visibility_scope: "superadmin_private" },
@@ -273,7 +277,7 @@ test("Admin switches all eligible orders among four partners without changing th
 
 test("Rohit sees only his successful sub-$33 PayPal orders and no other portal records", async () => {
   const base = {
-    social_source: "rohit", amount: 32.99, created_at: "2026-11-16T10:00:00.000Z",
+    social_source: "rohit", amount: 32.99, created_at: "2026-11-17T10:00:00.000Z",
     paypal_payer_email: "customer@example.invalid", payment_method: "paypal", paypal_status: "COMPLETED",
     payment_route: "superadmin", visibility_scope: "superadmin_private",
   };
@@ -282,7 +286,7 @@ test("Rohit sees only his successful sub-$33 PayPal orders and no other portal r
     { ...base, display_name: "AdminLow", payment_route: "standard", visibility_scope: "public" },
     { ...base, display_name: "Boundary", amount: 33 },
     { ...base, display_name: "High", amount: 121, social_source_manually_assigned: true },
-    { ...base, display_name: "EarlierHigh", amount: 33, created_at: "2026-11-04T10:00:00.000Z" },
+    { ...base, display_name: "EarlierHigh", amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
     { ...base, display_name: "Anshu", social_source: "anshu" },
     { ...base, display_name: "Badal", social_source: "badal" },
     { ...base, display_name: "Untagged", social_source: null },
@@ -299,7 +303,7 @@ test("Rohit sees only his successful sub-$33 PayPal orders and no other portal r
 
 test("Alok sees only his successful sub-$33 PayPal orders and no other portal records", async () => {
   const base = {
-    social_source: "alok", amount: 32.99, created_at: "2026-11-16T10:00:00.000Z",
+    social_source: "alok", amount: 32.99, created_at: "2026-11-17T10:00:00.000Z",
     paypal_payer_email: "customer@example.invalid", payment_method: "paypal", paypal_status: "COMPLETED",
     payment_route: "superadmin", visibility_scope: "superadmin_private",
   };
@@ -308,7 +312,7 @@ test("Alok sees only his successful sub-$33 PayPal orders and no other portal re
     { ...base, display_name: "AdminLow", payment_route: "standard", visibility_scope: "public" },
     { ...base, display_name: "Boundary", amount: 33 },
     { ...base, display_name: "High", amount: 121, social_source_manually_assigned: true },
-    { ...base, display_name: "EarlierHigh", amount: 33, created_at: "2026-11-04T10:00:00.000Z" },
+    { ...base, display_name: "EarlierHigh", amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
     { ...base, display_name: "Anshu", social_source: "anshu" },
     { ...base, display_name: "Badal", social_source: "badal" },
     { ...base, display_name: "Rohit", social_source: "rohit" },
@@ -384,7 +388,7 @@ test("portal authentication binds each account to its database source and reject
       };
     },
   };
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     getSupabaseAdmin: () => supabase,
     jsonResponse: (body, status) => new globalThis.Response(JSON.stringify(body), { status }),
   });
@@ -450,7 +454,7 @@ test("social accounts cannot inherit admin privileges and attribution leaves old
 
 test("Unified Payment Portal equals the eligible union of all four partners and excludes SuperAdmin-only records", async () => {
   const base = {
-    amount: 11, created_at: "2026-11-16T10:00:00.000Z",
+    amount: 11, created_at: "2026-11-17T10:00:00.000Z",
     paypal_payer_email: "customer@example.invalid", digital_orders: { contact_email: "order@example.invalid" },
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
   };
@@ -458,7 +462,7 @@ test("Unified Payment Portal equals the eligible union of all four partners and 
     ...["anshu", "badal", "rohit", "alok"].flatMap((social_source) => [
       { ...base, social_source, display_name: `${social_source}-low` },
       { ...base, social_source, display_name: `${social_source}-standard`, payment_route: "standard", visibility_scope: "public", amount: 32.99 },
-      { ...base, social_source, display_name: `${social_source}-earlier-high`, amount: 33, created_at: "2026-11-04T10:00:00.000Z" },
+      { ...base, social_source, display_name: `${social_source}-earlier-high`, amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
       { ...base, social_source, display_name: `${social_source}-boundary`, amount: 33, social_source_manually_assigned: true },
       { ...base, social_source, display_name: `${social_source}-failed`, paypal_status: "FAILED" },
       { ...base, social_source, display_name: `${social_source}-old`, created_at: "2026-11-03T18:29:59.999Z" },
@@ -530,7 +534,7 @@ test("Hide button sends an explicit null assignment and keeps the payment in Adm
   const row = { id: "payment", amount: 22, createdAt: SOCIAL_PORTAL_START, socialSource: "anshu" };
   const requests = [];
   let clickAction;
-  const context = vm.createContext({ SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "admin" } }, adminCalendarDonations: [row],
     elements: { adminPanel: { getAttribute: () => "false" } },
     getDonationById: () => row, getAdminAccessToken: () => "session", renderAdminCalendar() {}, setAdminStatus() {},
@@ -546,4 +550,31 @@ test("Hide button sends an explicit null assignment and keeps the payment in Adm
   assert.equal(context.adminCalendarDonations.length, 1);
   assert.equal(context.adminCalendarDonations[0].socialSource, null);
   assert.equal(context.adminCalendarDonations[0].socialAssignmentApproved, false);
+});
+
+test("November 16 uses 55 permanently while November 17 uses 33 across visibility, hiding, and assignment", async () => {
+  const before = "2026-11-16T18:29:59.999Z";
+  const after = "2026-11-16T18:30:00.000Z";
+  const base = { payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private", social_source: "anshu" };
+  const rows = [
+    { ...base, id: "today33", display_name: "Today33", amount: 33, created_at: before },
+    { ...base, id: "today5499", display_name: "Today5499", amount: 54.99, created_at: before },
+    { ...base, id: "today55", display_name: "Today55", amount: 55, created_at: before },
+    { ...base, id: "tomorrow3299", display_name: "Tomorrow3299", amount: 32.99, created_at: after },
+    { ...base, id: "tomorrow33", display_name: "Tomorrow33", amount: 33, created_at: after },
+  ];
+  const assign = createAssignmentApi(rows);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Today33", "Today5499", "Tomorrow3299"]);
+  for (const row of [rows[0], rows[1], rows[3]]) {
+    assert.equal((await assign({ donationId: row.id, socialSource: null }, { role: "admin" })).status, 200);
+    for (const source of ["anshu", "badal", "rohit", "alok"]) {
+      assert.equal((await assign({ donationId: row.id, socialSource: source }, { role: "admin" })).status, 200);
+      assert.ok((await readPortalMonth(rows, source)).body.transactions.some((item) => item.name === row.display_name));
+    }
+  }
+  for (const row of [rows[2], rows[4]]) {
+    for (const source of [null, "anshu", "badal", "rohit", "alok"]) {
+      assert.equal((await assign({ donationId: row.id, socialSource: source }, { role: "admin" })).status, 404);
+    }
+  }
 });

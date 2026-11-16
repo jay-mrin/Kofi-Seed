@@ -1,6 +1,8 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
 
+import { SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
+
 const PAGE_SIZE = 40;
 
 Deno.serve(withCors(async (request) => {
@@ -20,7 +22,7 @@ Deno.serve(withCors(async (request) => {
       .eq("paypal_status", "COMPLETED")
       .eq("payment_route", "standard")
       .eq("visibility_scope", "public")
-      .lt("amount", 33)
+      .or(SOCIAL_ELIGIBLE_ORDER_FILTER)
       .in("payment_method", ["paypal", "dodo"])
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })

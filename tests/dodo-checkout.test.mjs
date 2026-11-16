@@ -110,7 +110,7 @@ test("portal access follows the amount split while preserving stored collecting 
   const admin = read("supabase/functions/admin-donations/index.ts");
   const paypal = read("supabase/functions/create-paypal-order/index.ts");
 
-  assert.match(admin, /role === "super_admin"[\s\S]*amount\.gte\.33/);
+  assert.match(admin, /role === "super_admin"[\s\S]*SOCIAL_EXCLUSIVE_ORDER_FILTER/);
   assert.match(admin, /payment_route\.eq\.standard[\s\S]*\.in\("payment_method", \["paypal", "dodo"\]\)/);
   assert.match(paypal, /body\.paymentRoute === "superadmin"[\s\S]*body\.paymentRoute === "standard"/);
 });

@@ -12,6 +12,7 @@ const SEED_DOLLAR_VALUE = 11;
 const MIN_DONATION_AMOUNT = 11;
 const PAYPAL_SDK_LOAD_TIMEOUT_MS = 20000;
 const SOCIAL_PORTAL_START_ISO = "2026-11-15T18:30:00.000Z";
+const SOCIAL_PARTNER_HISTORY_START_ISO = "2026-11-03T18:30:00.000Z";
 const TOP_BRAND_TITLE = "Seed Garden";
 const MINIMAL_SUPPORT_TITLE = "Buy a Seed to Sow for the Love 💗💕";
 const LEGACY_SUPPORT_TITLES = new Set([
@@ -188,6 +189,11 @@ const seedFeed = [
 ];
 
 const state = loadState();
+
+function getSocialLimitCents(createdAt = new Date().toISOString()) {
+  const timestamp = Date.parse(createdAt);
+  return Number.isFinite(timestamp) && timestamp < Date.parse("2026-11-16T18:30:00.000Z") ? 5500 : 3300;
+}
 
 function readSocialSourceTag() {
   const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
@@ -843,7 +849,7 @@ function getInitialDonationAmount() {
 }
 
 function isCustomCardCheckoutAvailable() {
-  return Math.round((Number(elements.amountInput?.value) || 0) * 100) < 3300 &&
+  return Math.round((Number(elements.amountInput?.value) || 0) * 100) < getSocialLimitCents() &&
     state.settings.alternateCardCheckoutVisible === true && visitorCountry === "US" &&
     elements.supportCard?.parentElement !== elements.superAdminCheckoutHost;
 }
@@ -1823,9 +1829,9 @@ async function setOrderSocialSource(donationId, socialSource, button) {
   }
 
   const portalName = socialSource === "anshu" ? "AnshuPortal" : socialSource === "badal" ? "Badal Portal" : socialSource === "alok" ? "Alok Portal" : "Rohit Portal";
-  if (Math.round(Number(donation.amount) * 100) >= 3300 ||
+  if (Math.round(Number(donation.amount) * 100) >= getSocialLimitCents(donation.createdAt) ||
       !(Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO))) {
-    setAdminStatus("Only orders below $33 placed from 16 November 2026 can be assigned. Orders of $33 or more stay exclusively in SuperAdmin.", "error", { persist: true });
+    setAdminStatus("Eligible orders use the $55 limit on 16 November 2026 and the $33 limit from 17 November, India time.", "error", { persist: true });
     return;
   }
   const hiding = socialSource === null;
@@ -1945,7 +1951,7 @@ async function loadAdminDonations(options = {}) {
     if (!isCurrentRequest()) return;
     if (!Array.isArray(payload.donations)) throw new Error("The server did not return an order list. Try loading orders again.");
     adminCalendarDonations = payload.donations.filter((donation) =>
-      role === "super_admin" || Math.round(Number(donation.amount) * 100) < 3300);
+      role === "super_admin" || Math.round(Number(donation.amount) * 100) < getSocialLimitCents(donation.createdAt));
     adminCalendarLoadedMonth = month;
 
     if (announce) {
@@ -2265,7 +2271,7 @@ function getCheckoutDisplaySelection() {
 
 function getCheckoutRoute(amount = elements.amountInput?.value) {
   return elements.supportCard?.parentElement === elements.superAdminCheckoutHost ||
-    Math.round((Number(amount) || 0) * 100) >= 3300
+    Math.round((Number(amount) || 0) * 100) >= getSocialLimitCents()
     ? "superadmin"
     : state.settings.homepagePayPalRoute;
 }
@@ -2436,7 +2442,7 @@ function renderCalendarDetails(context) {
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", getDonationRawValue(donation, "RedeemedBookTitle", ""));
           const isFulfilled = status === "fulfilled";
-          const isSuperAdminOnly = Math.round(amount * 100) >= 3300;
+          const isSuperAdminOnly = Math.round(amount * 100) >= getSocialLimitCents(donation.createdAt);
           const canAssignPortal = context.allowSocialTagging &&
             !isSuperAdminOnly &&
             donation.paymentMethod === "paypal" && donation.status === "COMPLETED" &&
@@ -2478,13 +2484,13 @@ function renderCalendarDetails(context) {
                   <div class="admin-social-tag-buttons">
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>Anshu</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>Badal</button>
-                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="rohit" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "rohit"}" ${!canAssignPortal || currentPortal === "rohit" || Math.round(amount * 100) >= 3300 ? "disabled" : ""}>Rohit</button>
-                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="alok" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "alok"}" ${!canAssignPortal || currentPortal === "alok" || Math.round(amount * 100) >= 3300 ? "disabled" : ""}>Alok</button>
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="rohit" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "rohit"}" ${!canAssignPortal || currentPortal === "rohit" ? "disabled" : ""}>Rohit</button>
+                    <button class="button admin-social-tag-button" type="button" data-set-order-social-source="alok" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "alok"}" ${!canAssignPortal || currentPortal === "alok" ? "disabled" : ""}>Alok</button>
                     <button class="button admin-social-tag-button" type="button" data-hide-order-from-partners="${escapeHtml(donation.id)}" aria-label="Hide payment from Anshu, Badal, Rohit, and Alok" aria-pressed="${canAssignPortal && currentPortal === null}" ${!canAssignPortal || currentPortal === null ? "disabled" : ""}>Hide from partner portals</button>
                   </div>
                   ${isSuperAdminOnly ? "<small>This order stays exclusively in SuperAdmin and cannot be assigned to a social portal.</small>" : canAssignPortal
                     ? ""
-                    : "<small>Available for completed PayPal orders below $33 from 16 Nov 2026.</small>"}
+                    : "<small>Available for completed PayPal orders from 16 Nov 2026: below $55 on 16 Nov, below $33 from 17 Nov (India time).</small>"}
                 </div>` : ""}
               </div>`}
             </article>
@@ -3962,7 +3968,7 @@ async function loadSocialTransactions() {
         const transactionSource = role === "unified_payment" ? transaction.socialSource : source;
         if (role === "unified_payment" && !["anshu", "badal", "rohit", "alok"].includes(transactionSource)) return false;
         return Number.isFinite(amountCents) && amountCents > 0 &&
-          amountCents < 3300 && Date.parse(transaction.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
+          amountCents < getSocialLimitCents(transaction.createdAt) && Date.parse(transaction.createdAt || "") >= Date.parse(SOCIAL_PARTNER_HISTORY_START_ISO);
       })
       : [];
     renderSocialCalendar();
@@ -4026,7 +4032,7 @@ function openAdminPanel() {
   if (isSuperAdmin) {
     setAdminStatus("SuperAdmin ready. Manage checkout display and private collections.", "info", { persist: true });
   } else {
-    setAdminStatus("Admin ready. Manage orders below $33 and switch their portal assignments.", "info", { persist: true });
+    setAdminStatus("Admin ready. Manage eligible orders and switch their partner assignments.", "info", { persist: true });
   }
   
   document.body.classList.add("admin-open");

@@ -1,6 +1,6 @@
 import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared/http.ts";
 import { requireUnifiedPaymentPortal } from "../_shared/supabase.ts";
-import { isSocialAssignmentApproved, SOCIAL_PORTAL_START } from "../_shared/social-source.ts";
+import { isSocialAssignmentApproved, SOCIAL_PARTNER_HISTORY_START, SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
 
 const IST_OFFSET_MS = 330 * 60_000;
 
@@ -19,19 +19,19 @@ Deno.serve(withCors(async (request) => {
     const [year, monthNumber] = month.split("-").map(Number);
     const start = new Date(Date.UTC(year, monthNumber - 1, 1) - IST_OFFSET_MS).toISOString();
     const end = new Date(Date.UTC(year, monthNumber, 1) - IST_OFFSET_MS).toISOString();
-    if (end <= SOCIAL_PORTAL_START) return jsonResponse({ transactions: [] });
+    if (end <= SOCIAL_PARTNER_HISTORY_START) return jsonResponse({ transactions: [] });
 
     const transactions: Array<{ name: string; amount: number; email: string; createdAt: string; socialSource: string }> = [];
     for (let offset = 0;; offset += 500) {
       const { data, error } = await supabase.from("donations")
         .select("display_name, amount, created_at, social_source, paypal_payer_email, digital_orders(contact_email)")
         .in("social_source", ["anshu", "badal", "rohit", "alok"])
-        .lt("amount", 33)
+        .or(SOCIAL_ELIGIBLE_ORDER_FILTER)
         .eq("payment_method", "paypal")
         .eq("paypal_status", "COMPLETED")
         .in("payment_route", ["standard", "superadmin"])
         .in("visibility_scope", ["public", "superadmin_private"])
-        .gte("created_at", SOCIAL_PORTAL_START)
+        .gte("created_at", SOCIAL_PARTNER_HISTORY_START)
         .gte("created_at", start)
         .lt("created_at", end)
         .order("created_at", { ascending: true })

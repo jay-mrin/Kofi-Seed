@@ -6,7 +6,7 @@ import {
   readJson,
 } from "../_shared/http.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
-import { isSocialAssignmentApproved, SOCIAL_PORTAL_START } from "../_shared/social-source.ts";
+import { isSocialAssignmentApproved, SOCIAL_PORTAL_START, SOCIAL_ELIGIBLE_ORDER_FILTER, SOCIAL_EXCLUSIVE_ORDER_FILTER } from "../_shared/social-source.ts";
 
 type UpdateOrderBody = {
   donationId?: string;
@@ -106,12 +106,11 @@ function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
   const routes = "payment_route.in.(standard,superadmin),visibility_scope.in.(public,superadmin_private)";
   if (role === "super_admin") {
     return query
-      .or(`and(amount.gte.33,${routes}),and(payment_route.eq.superadmin,visibility_scope.eq.superadmin_private,created_at.lt.${SOCIAL_PORTAL_START})`)
+      .or(`and(or(${SOCIAL_EXCLUSIVE_ORDER_FILTER}),${routes}),and(payment_route.eq.superadmin,visibility_scope.eq.superadmin_private,created_at.lt.${SOCIAL_PORTAL_START})`)
       .in("payment_method", ["paypal", "dodo"]);
   }
   return query
-    .lt("amount", 33)
-    .or(`and(payment_route.eq.standard,visibility_scope.eq.public),and(created_at.gte.${SOCIAL_PORTAL_START},${routes})`)
+    .or(`and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),payment_route.eq.standard,visibility_scope.eq.public),and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),created_at.gte.${SOCIAL_PORTAL_START},${routes})`)
     .in("payment_method", ["paypal", "dodo"]);
 }
 
@@ -159,7 +158,7 @@ Deno.serve(withCors(async (request) => {
     if (request.method === "PUT") {
       const body = await readJson<UpdateOrderBody>(request);
       if (Object.hasOwn(body, "socialSource")) {
-        if (adminProfile.role !== "admin" && adminProfile.role !== "super_admin") {
+        if (adminProfile.role !== "admin") {
           return errorResponse("This account cannot assign an order to a social portal.", 403);
         }
         const donationId = String(body.donationId || "").trim();
@@ -180,8 +179,9 @@ Deno.serve(withCors(async (request) => {
           .eq("paypal_status", "COMPLETED")
           .gte("created_at", SOCIAL_PORTAL_START)
           .gt("amount", 0)
-          .lt("amount", 33);
-        assignment = applyAdminDonationScope(assignment, adminProfile.role);
+          .or(SOCIAL_ELIGIBLE_ORDER_FILTER)
+          .in("payment_route", ["standard", "superadmin"])
+          .in("visibility_scope", ["public", "superadmin_private"]);
         const { data, error } = await assignment
           .select("id, amount, created_at, social_source, social_source_manually_assigned")
           .maybeSingle();

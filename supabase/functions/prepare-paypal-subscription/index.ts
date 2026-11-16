@@ -14,7 +14,7 @@ import {
   parseMoneyToCents,
 } from "../_shared/paypal.ts";
 import { getSupabaseAdmin } from "../_shared/supabase.ts";
-import { getAutomaticSocialSource, SOCIAL_AUTO_ASSIGN_LIMIT_CENTS } from "../_shared/social-source.ts";
+import { getAutomaticSocialSource, getSocialLimitCents } from "../_shared/social-source.ts";
 
 type PrepareBody = {
   amount?: number;
@@ -150,7 +150,7 @@ Deno.serve(withCors(async (request) => {
     }
     const seedCount = Math.max(1, Math.round(amountCents / seedPriceCents));
 
-    const paymentRoute = amountCents >= SOCIAL_AUTO_ASSIGN_LIMIT_CENTS || body.paymentRoute === "superadmin"
+    const paymentRoute = amountCents >= getSocialLimitCents() || body.paymentRoute === "superadmin"
       ? "superadmin"
       : body.paymentRoute === "standard"
       ? "standard"

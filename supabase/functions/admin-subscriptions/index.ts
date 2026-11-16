@@ -8,6 +8,8 @@ import {
 import { cancelPayPalSubscription } from "../_shared/paypal.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
 
+import { SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
+
 type CancelBody = {
   membershipId?: string;
   reason?: string;
@@ -72,7 +74,7 @@ Deno.serve(withCors(async (request) => {
         .order("paid_at", { foreignTable: "membership_payments", ascending: false })
         .order("opted_in_at", { ascending: false })
         .limit(500);
-      if (adminProfile.role === "admin") query = query.lt("amount", 33);
+      if (adminProfile.role === "admin") query = query.or(SOCIAL_ELIGIBLE_ORDER_FILTER.replaceAll("created_at", "opted_in_at"));
       const { data, error } = await query;
       if (error) throw error;
 
@@ -97,7 +99,7 @@ Deno.serve(withCors(async (request) => {
       .select("id, paypal_subscription_id, status, payment_route")
       .eq("id", membershipId)
       .eq("payment_route", paymentRoute);
-    if (adminProfile.role === "admin") membershipQuery = membershipQuery.lt("amount", 33);
+    if (adminProfile.role === "admin") membershipQuery = membershipQuery.or(SOCIAL_ELIGIBLE_ORDER_FILTER.replaceAll("created_at", "opted_in_at"));
     const { data: membership, error: membershipError } = await membershipQuery.maybeSingle();
     if (membershipError) throw membershipError;
     if (!membership) return errorResponse("Subscription not found.", 404);

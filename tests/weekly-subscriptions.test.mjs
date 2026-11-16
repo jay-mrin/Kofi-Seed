@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (filePath) => readFileSync(path.join(repositoryRoot, filePath), "utf8");
@@ -41,7 +42,7 @@ test("the portal visibility switch controls recurring sowing in both checkouts",
     disabled: false,
     closest: () => option,
   };
-  const context = {
+  const context = { ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: host, weeklySeedToggle: toggle },
     state: { settings: { homepagePayPalRoute: "standard" } },
     isCustomCardCheckoutAvailable: () => false,

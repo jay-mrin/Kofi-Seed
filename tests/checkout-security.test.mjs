@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 import { createQuery } from "./helpers/portal-query.mjs";
 import { fileURLToPath } from "node:url";
 
@@ -55,9 +56,9 @@ test("Admin order reads and mutations share the same role scope", () => {
   assert.ok(scopeCalls.length >= 4, "GET, PUT, DELETE, and the helper must all use the shared role scope");
   const helper = source.match(/function applyAdminDonationScope\([^]*?\n\}/)[0]
     .replace('query: any, role: "admin" | "super_admin"', 'query, role');
-  const scope = vm.runInNewContext(`${helper}; applyAdminDonationScope`, { SOCIAL_PORTAL_START: "2026-11-15T18:30:00.000Z" });
+  const scope = vm.runInNewContext(`${helper}; applyAdminDonationScope`, policy);
   const rows = [];
-  for (const amount of [11, 32.99, 33, 55]) for (const created_at of ["2026-11-14T00:00:00.000Z", "2026-11-15T18:30:00.000Z"]) {
+  for (const amount of [11, 32.99, 33, 54.99, 55]) for (const created_at of ["2026-11-14T00:00:00.000Z", "2026-11-15T18:30:00.000Z", "2026-11-16T18:30:00.000Z"]) {
     for (const payment_route of ["standard", "superadmin"]) {
       rows.push({ amount, created_at, payment_route, visibility_scope: payment_route === "standard" ? "public" : "superadmin_private", payment_method: "paypal" });
     }
@@ -65,11 +66,11 @@ test("Admin order reads and mutations share the same role scope", () => {
   const original = JSON.stringify(rows);
   const admin = scope(createQuery(rows), "admin").filtered();
   const superAdmin = scope(createQuery(rows), "super_admin").filtered();
-  assert.equal(admin.length, 6);
-  assert.ok(admin.every((row) => row.amount < 33));
+  assert.equal(admin.length, 16);
+  assert.ok(admin.every((row) => row.amount * 100 < getSocialLimitCents(row.created_at)));
   assert.ok(admin.some((row) => row.payment_route === "superadmin" && row.created_at === "2026-11-15T18:30:00.000Z"));
-  for (const row of rows.filter((row) => row.amount >= 33)) assert.ok(superAdmin.includes(row));
-  assert.ok(!superAdmin.some((row) => row.amount < 33 && row.created_at >= "2026-11-15T18:30:00.000Z"));
+  for (const row of rows.filter((row) => row.amount * 100 >= getSocialLimitCents(row.created_at))) assert.ok(superAdmin.includes(row));
+  assert.ok(!superAdmin.some((row) => row.amount * 100 < getSocialLimitCents(row.created_at) && row.created_at >= "2026-11-15T18:30:00.000Z"));
   assert.equal(JSON.stringify(rows), original);
 });
 

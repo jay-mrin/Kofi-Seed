@@ -2,6 +2,8 @@ import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared
 import { getPayPalClientId } from "../_shared/paypal.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 
+import { getSocialLimitCents, SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
+
 function getUtcHourStart(date = new Date()) {
   const hour = new Date(date);
   hour.setUTCMinutes(0, 0, 0);
@@ -89,14 +91,14 @@ async function loadPublicContent(
       )
       .eq("paypal_status", "COMPLETED")
       .eq("payment_route", "standard")
-      .lt("amount", 33)
+      .or(SOCIAL_ELIGIBLE_ORDER_FILTER)
       .gte("created_at", getIndiaDayStart())
       .order("created_at", { ascending: false })
       .limit(1000),
     supabase
       .from("seed_comments")
       .select(
-        "id, display_name, body, amount, seed_count, source, created_at, donations(amount, payment_route, visibility_scope, payment_method, raw_payment)",
+        "id, display_name, body, amount, seed_count, source, created_at, donations(amount, created_at, payment_route, visibility_scope, payment_method, raw_payment)",
       )
       .order("created_at", { ascending: false })
       .limit(1000),
@@ -121,13 +123,13 @@ async function loadPublicContent(
     .slice(0, 50);
   const seedComments = (seedCommentsResult.data || []).filter(
     (comment: Record<string, any>) => {
-      if (Number(comment.amount) >= 33) return false;
+      if (Math.round(Number(comment.amount) * 100) >= getSocialLimitCents(comment.created_at)) return false;
       const donation = Array.isArray(comment.donations)
         ? comment.donations[0]
         : comment.donations;
       if (!donation) return true;
       if (
-        Number(donation.amount) >= 33 ||
+        Math.round(Number(donation.amount) * 100) >= getSocialLimitCents(donation.created_at) ||
         donation.payment_route !== "standard" ||
         donation.visibility_scope !== "public" ||
         !["paypal", "dodo"].includes(donation.payment_method)

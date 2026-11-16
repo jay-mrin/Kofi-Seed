@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file) => readFileSync(path.join(root, file), "utf8");
@@ -22,7 +23,7 @@ test("Home and both tagged links use the selected PayPal account while the porta
 
   const host = {};
   const supportCard = { parentElement: {} };
-  const context = {
+  const context = { ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     window: { location: { pathname: "/" } },
     elements: { supportCard, superAdminCheckoutHost: host, amountInput: { value: "11" } },
     state: { settings: { homepagePayPalRoute: "standard" } },
@@ -74,7 +75,7 @@ test("saved checkout choice selects exactly one SuperAdmin control", () => {
   assert.ok(renderSource && selectionSource);
   const controls = Object.fromEntries(["homeSuperAdminPayPal", "homeAdminPayPal", "homeCustomCreditDebit"]
     .map((id) => [`#${id}`, { checked: false }]));
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     document: { querySelector: (selector) => controls[selector] },
     elements: {},
     state: { settings: { homepagePayPalRoute: "standard", alternateCardCheckoutVisible: false } },

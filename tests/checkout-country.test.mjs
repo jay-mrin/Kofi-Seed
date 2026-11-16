@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const handler = createRequire(import.meta.url)(path.join(root, "api/visitor-country.js"));
@@ -33,7 +34,7 @@ test("country endpoint uses the deployment header and prevents shared caching", 
 
 test("custom card requires both the enabled setting and a detected US country", () => {
   const portalHost = {};
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     state: { settings: { alternateCardCheckoutVisible: false } },
     elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: portalHost },
   });
@@ -57,7 +58,7 @@ test("custom card requires both the enabled setting and a detected US country", 
 test("country lookup failures and unexpected responses fall back to normal PayPal", async () => {
   for (const result of ["US", "IN", "invalid", null, new Error("Offline")]) {
     let fetchCount = 0;
-    const context = vm.createContext({
+    const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
       state: { settings: { alternateCardCheckoutVisible: true } },
       elements: { supportCard: { parentElement: {} }, superAdminCheckoutHost: {} },
       window: {

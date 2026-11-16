@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, URLSearchParams } from "node:url";
 import vm from "node:vm";
+import { policy, getSocialLimitCents } from "./helpers/social-policy.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const app = readFileSync(path.join(root, "src/app.js"), "utf8");
@@ -17,7 +18,7 @@ const source = (text, name) => {
 function createCalendar() {
   const requests = [];
   const errors = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     URLSearchParams,
     token: "admin-session",
     state: { adminProfile: { role: "admin" }, donations: [{ id: "public-order" }], settings: {} },
@@ -96,7 +97,7 @@ test("a response from a closed or replaced session cannot populate another porta
 
 test("a late SuperAdmin activity response cannot appear in the Admin portal", async () => {
   const requests = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     token: "super-session",
     state: { adminProfile: { role: "super_admin" }, analytics: { paymentRoute: "superadmin", pageViewsLast24h: 4 } },
     isBackendConfigured: () => true,
@@ -151,10 +152,10 @@ test("selected-day orders and totals collapse together, preserve expansion on re
   let previousCard = null;
   const details = { innerHTML: "", querySelector: () => previousCard };
   const donation = Object.freeze({ id: "saved-order", name: "Customer", amount: 11, createdAt: "2026-11-03T10:00:00Z", isPreview: true });
-  const context = { details, loaded: true, selectedDate: "2026-11-03", cursor: new Date(2026, 10, 1), emptyRecordLabel: "Admin orders", donations: Object.freeze([donation]) };
+  const context = { ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), details, loaded: true, selectedDate: "2026-11-03", cursor: new Date(2026, 10, 1), emptyRecordLabel: "Admin orders", donations: Object.freeze([donation]) };
   const render = vm.runInNewContext(`${source(app, "getCalendarMonthDonations")}
     ${source(app, "getCalendarSummaryMarkup")}
-    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
+    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, { ...policy,
     getDonationsByDate: (donations) => ({ "2026-11-03": donations, "2026-11-04": donations }),
     fromDateKey: (date) => date,
     readableDate: (date) => date,
@@ -205,14 +206,15 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     createdAt: "2026-11-16T12:00:00.000Z", paymentMethod: "paypal", status: "COMPLETED",
     paymentRoute: "superadmin", visibilityScope: "superadmin_private", socialSource: null,
   };
-  const context = {
+  const context = { ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"),
     details, loaded: true, selectedDate: "2026-11-16", cursor: new Date(2026, 10, 1),
     emptyRecordLabel: "SuperAdmin PayPal orders", donations: [donation],
     allowDelete: true, allowSocialTagging: true, isAdminPortal: false,
   };
   const render = vm.runInNewContext(`${source(app, "getCalendarMonthDonations")}
     ${source(app, "getCalendarSummaryMarkup")}
-    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, {
+    ${source(app, "renderCalendarDetails")}; renderCalendarDetails`, { ...policy,
+    SOCIAL_PARTNER_HISTORY_START_ISO: policy.SOCIAL_PARTNER_HISTORY_START,
     SOCIAL_PORTAL_START_ISO: "2026-11-15T18:30:00.000Z",
     SOCIAL_HIGH_VALUE_EXCLUSION_START_ISO: "2026-11-10T16:00:40.000Z",
     getDonationsByDate: (donations) => ({ "2026-11-16": donations }),
@@ -261,7 +263,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 3);
   }
 
-  donation.amount = 33;
+  donation.amount = 55;
   donation.socialSourceManuallyAssigned = false;
   render(context);
   assert.doesNotMatch(details.innerHTML, /Portal:/);
