@@ -233,22 +233,27 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     .map((match) => match[0]);
 
   render(context);
-  assert.match(details.innerHTML, /Delete order<\/button>[\s\S]*Portal: Unassigned/);
+  assert.match(details.innerHTML, /Delete order<\/button>/);
+  assert.doesNotMatch(details.innerHTML, /Portal:|AnshuPortal/);
+  const hideButton = () => details.innerHTML.match(/<button[^>]*data-hide-order-from-partners="[^"]+"[^>]*>/)[0];
+  assert.match(hideButton(), /aria-pressed="true" disabled/);
   assert.equal(tagButtons().length, 4);
   assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok"]);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
 
   donation.socialSource = "anshu";
   render(context);
-  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
   assert.match(tagButtons()[1], /aria-pressed="false"/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
-  for (const [portal, label] of [["badal", "Badal Portal"], ["rohit", "Rohit Portal"], ["alok", "Alok Portal"], ["anshu", "AnshuPortal"]]) {
+  for (const portal of ["badal", "rohit", "alok", "anshu"]) {
     donation.socialSource = portal;
     render(context);
-    assert.ok(details.innerHTML.includes(`Portal: ${label}`));
+    assert.doesNotMatch(details.innerHTML, /Portal:/);
+    assert.doesNotMatch(hideButton(), /disabled/);
+    assert.match(hideButton(), /aria-pressed="false"/);
     const selected = tagButtons().filter((button) => button.includes('aria-pressed="true"'));
     assert.equal(selected.length, 1);
     assert.ok(selected[0].includes(`data-set-order-social-source="${portal}"`));
@@ -259,19 +264,22 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   donation.amount = 33;
   donation.socialSourceManuallyAssigned = false;
   render(context);
-  assert.match(details.innerHTML, /Portal: SuperAdmin only/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
+  assert.match(hideButton(), /disabled/);
   donation.createdAt = "2026-11-10T16:00:40.000Z";
   donation.socialAssignmentApproved = true;
   render(context);
-  assert.match(details.innerHTML, /Portal: SuperAdmin only/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
+  assert.match(hideButton(), /disabled/);
   donation.amount = 11;
 
   donation.createdAt = "2026-11-03T18:29:59.999Z";
   render(context);
-  assert.match(details.innerHTML, /Portal: Not eligible/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
+  assert.match(hideButton(), /disabled/);
 
   const adminDonation = {
     ...donation,
@@ -285,25 +293,26 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   context.allowDelete = false;
   context.donations = [adminDonation];
   render(context);
-  assert.match(details.innerHTML, /Portal: Unassigned/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
 
   adminDonation.socialSource = "anshu";
   render(context);
-  assert.match(details.innerHTML, /Portal: AnshuPortal/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.match(tagButtons()[0], /aria-pressed="true" disabled/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
   adminDonation.socialSource = "alok";
   render(context);
-  assert.match(details.innerHTML, /Portal: Alok Portal/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.match(tagButtons()[3], /aria-pressed="true" disabled/);
   assert.ok(tagButtons().slice(0, 3).every((button) => !button.includes("disabled")));
 
   adminDonation.paymentMethod = "dodo";
   render(context);
-  assert.match(details.innerHTML, /Portal: Not eligible/);
+  assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
+  assert.match(hideButton(), /disabled/);
 });
 
 test("calendar month ranges include local midnight and daylight saving boundaries", () => {

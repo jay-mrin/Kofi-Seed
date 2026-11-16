@@ -10,7 +10,7 @@ import { isSocialAssignmentApproved, SOCIAL_PORTAL_START } from "../_shared/soci
 
 type UpdateOrderBody = {
   donationId?: string;
-  socialSource?: string;
+  socialSource?: string | null;
   fulfillmentStatus?: string;
   fulfillmentNote?: string;
   fulfilledAt?: string | null;
@@ -164,8 +164,8 @@ Deno.serve(withCors(async (request) => {
         }
         const donationId = String(body.donationId || "").trim();
         const socialSource = body.socialSource;
-        if (!donationId || (socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok")) {
-          return errorResponse("Choose an order and Anshu, Badal, Rohit, or Alok.", 422);
+        if (!donationId || (socialSource !== null && socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok")) {
+          return errorResponse("Choose an order and Anshu, Badal, Rohit, Alok, or hide it from partner portals.", 422);
         }
 
         // Apply the same amount/date visibility as the order calendar. This

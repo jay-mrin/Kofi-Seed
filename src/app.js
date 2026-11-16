@@ -1814,7 +1814,7 @@ async function deleteDonationRecord(donationId, button) {
 
 async function setOrderSocialSource(donationId, socialSource, button) {
   const role = state.adminProfile?.role;
-  if (!["admin", "super_admin"].includes(role) || !["anshu", "badal", "rohit", "alok"].includes(socialSource)) return;
+  if (!["admin", "super_admin"].includes(role) || (socialSource !== null && !["anshu", "badal", "rohit", "alok"].includes(socialSource))) return;
   if (elements.adminPanel?.getAttribute("aria-busy") === "true") return;
   const donation = getDonationById(donationId);
   if (!donation) {
@@ -1828,6 +1828,7 @@ async function setOrderSocialSource(donationId, socialSource, button) {
     setAdminStatus("Only orders below $33 placed from 16 November 2026 can be assigned. Orders of $33 or more stay exclusively in SuperAdmin.", "error", { persist: true });
     return;
   }
+  const hiding = socialSource === null;
   const accessToken = getAdminAccessToken();
   await runAdminAction(
     {
@@ -1835,9 +1836,9 @@ async function setOrderSocialSource(donationId, socialSource, button) {
       statusElement: elements.adminActionStatus,
       button,
       busyText: "Saving...",
-      loadingMessage: `Assigning order to ${portalName}...`,
-      successMessage: `Order assigned to ${portalName}.`,
-      errorMessage: "Could not assign this order to a portal.",
+      loadingMessage: hiding ? "Hiding payment from partner portals..." : `Assigning order to ${portalName}...`,
+      successMessage: hiding ? "Payment hidden from Anshu, Badal, Rohit, and Alok." : `Order assigned to ${portalName}.`,
+      errorMessage: "Could not update this payment's partner visibility.",
     },
     async () => {
       const payload = await callEdge("admin-donations", {
@@ -2442,12 +2443,6 @@ function renderCalendarDetails(context) {
             Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO);
           const currentPortal = canAssignPortal && ["anshu", "badal", "rohit", "alok"].includes(donation.socialSource)
             ? donation.socialSource : null;
-          const portalLabel = isSuperAdminOnly ? "SuperAdmin only"
-            : !canAssignPortal ? "Not eligible"
-            : currentPortal === "anshu" ? "AnshuPortal"
-            : currentPortal === "badal" ? "Badal Portal"
-            : currentPortal === "rohit" ? "Rohit Portal"
-            : currentPortal === "alok" ? "Alok Portal" : "Unassigned";
           const itemName = order?.itemName || DIGITAL_ORDER_ITEM_NAME;
           const itemLabel = getAdminOrderItemLabel(itemName, redeemedBookTitle, context.isAdminPortal);
           return `
@@ -2480,12 +2475,12 @@ function renderCalendarDetails(context) {
                     : ""
                 }
                 ${context.allowSocialTagging ? `<div class="admin-social-tagging" role="group" aria-label="Assign order to social portal">
-                  <span>Portal: ${portalLabel}</span>
                   <div class="admin-social-tag-buttons">
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="anshu" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "anshu"}" ${!canAssignPortal || currentPortal === "anshu" ? "disabled" : ""}>Anshu</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="badal" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "badal"}" ${!canAssignPortal || currentPortal === "badal" ? "disabled" : ""}>Badal</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="rohit" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "rohit"}" ${!canAssignPortal || currentPortal === "rohit" || Math.round(amount * 100) >= 3300 ? "disabled" : ""}>Rohit</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="alok" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "alok"}" ${!canAssignPortal || currentPortal === "alok" || Math.round(amount * 100) >= 3300 ? "disabled" : ""}>Alok</button>
+                    <button class="button admin-social-tag-button" type="button" data-hide-order-from-partners="${escapeHtml(donation.id)}" aria-label="Hide payment from Anshu, Badal, Rohit, and Alok" aria-pressed="${canAssignPortal && currentPortal === null}" ${!canAssignPortal || currentPortal === null ? "disabled" : ""}>Hide from partner portals</button>
                   </div>
                   ${isSuperAdminOnly ? "<small>This order stays exclusively in SuperAdmin and cannot be assigned to a social portal.</small>" : canAssignPortal
                     ? ""
@@ -4255,6 +4250,11 @@ elements.adminCalendarGrid.addEventListener("click", (event) => {
 });
 
 function handleAdminCalendarDetailClick(event) {
+  const hideButton = event.target.closest("[data-hide-order-from-partners]");
+  if (hideButton) {
+    void setOrderSocialSource(hideButton.dataset.hideOrderFromPartners, null, hideButton);
+    return;
+  }
   const socialTagButton = event.target.closest("[data-set-order-social-source]");
   if (socialTagButton) {
     void setOrderSocialSource(socialTagButton.dataset.donationId, socialTagButton.dataset.setOrderSocialSource, socialTagButton);

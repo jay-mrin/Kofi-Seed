@@ -228,11 +228,18 @@ test("client blocks $33 and earlier orders before calling the assignment API", a
   assert.equal(calls, 1);
 });
 
-test("Admin switches all eligible orders among four partners without changing their payment data", async () => {
+function createAssignmentApi(rows) {
   const endpoint = read("supabase/functions/admin-donations/index.ts");
   const scope = endpoint.match(/function applyAdminDonationScope\([^]*?\n\}/)[0]
     .replace('query: any, role: "admin" | "super_admin"', 'query, role');
   const update = endpoint.match(/if \(Object\.hasOwn\(body, "socialSource"\)\) \{[\s\S]*?return jsonResponse\(\{ donationId: data\.id, socialSource: data\.social_source, socialAssignmentApproved: isSocialAssignmentApproved\(data\) \}\);\s*\}/)[0];
+  const supabase = { from: () => createQuery(rows) };
+  const context = { supabase, SOCIAL_PORTAL_START, isSocialAssignmentApproved,
+    errorResponse: (error, status) => ({ error, status }), jsonResponse: (body) => ({ ...body, status: 200 }) };
+  return vm.runInNewContext(`${scope}; (async (body, adminProfile) => { ${update} })`, context);
+}
+
+test("Admin switches all eligible orders among four partners without changing their payment data", async () => {
   const base = { amount: 11, created_at: SOCIAL_PORTAL_START, payment_method: "paypal", paypal_status: "COMPLETED", social_source: "anshu" };
   const rows = [
     { ...base, id: "admin", payment_route: "standard", visibility_scope: "public" },
@@ -242,10 +249,7 @@ test("Admin switches all eligible orders among four partners without changing th
     { ...base, id: "early", created_at: "2026-11-15T18:29:59.999Z", payment_route: "standard", visibility_scope: "public" },
     { ...base, id: "failed", paypal_status: "FAILED", payment_route: "standard", visibility_scope: "public" },
   ];
-  const supabase = { from: () => createQuery(rows) };
-  const context = { supabase, SOCIAL_PORTAL_START, isSocialAssignmentApproved,
-    errorResponse: (error, status) => ({ error, status }), jsonResponse: (body) => ({ ...body, status: 200 }) };
-  const assign = vm.runInNewContext(`${scope}; (async (body, adminProfile) => { ${update} })`, context);
+  const assign = createAssignmentApi(rows);
   for (const row of rows.slice(0, 2)) {
     const immutable = { ...row }; delete immutable.social_source;
     for (const socialSource of ["alok", "badal", "rohit", "anshu"]) {
@@ -259,7 +263,7 @@ test("Admin switches all eligible orders among four partners without changing th
   }
   for (const row of rows.slice(2)) {
     const original = JSON.stringify(row);
-    for (const socialSource of ["anshu", "badal", "rohit", "alok"]) {
+    for (const socialSource of [null, "anshu", "badal", "rohit", "alok"]) {
       assert.equal((await assign({ donationId: row.id, socialSource }, { role: "admin" })).status, 404);
     }
     assert.equal(JSON.stringify(row), original);
@@ -486,4 +490,60 @@ test("Unified portal migration adds a protected read-only identity without chang
   assert.match(sql, /revoke all on public\.unified_payment_portal_profiles from anon, authenticated/);
   assert.doesNotMatch(sql, /(?:update|delete from|truncate|alter table) public\.(?:donations|digital_orders|payment_attempts|memberships|admin_profiles|social_portal_profiles)/i);
   assert.doesNotMatch(sql, /password/i);
+});
+
+test("Hide removes only the selected payment from every partner and can be reversed by assignment", async () => {
+  const target = { id: "hide-me", display_name: "Hidden payment", amount: 22, created_at: SOCIAL_PORTAL_START,
+    payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
+    social_source: "anshu", social_source_manually_assigned: true,
+    paypal_order_id: "ORIGINAL-ORDER", paypal_capture_id: "ORIGINAL-CAPTURE", membership_id: "original-membership" };
+  const other = { ...target, id: "keep-me", display_name: "Other payment", social_source: "badal" };
+  const rows = [target, other];
+  const originalOther = JSON.stringify(other);
+  const originalPayment = { ...target }; delete originalPayment.social_source;
+  const assign = createAssignmentApi(rows);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Hidden payment"]);
+  const hidden = await assign({ donationId: target.id, socialSource: null }, { role: "admin" });
+  assert.equal(hidden.status, 200);
+  assert.equal(hidden.socialSource, null);
+  assert.equal(hidden.socialAssignmentApproved, false);
+  for (const source of ["anshu", "badal", "rohit", "alok", "unified"]) {
+    assert.ok((await readPortalMonth(rows, source)).body.transactions.every((row) => row.name !== "Hidden payment"));
+  }
+  const remaining = { ...target }; delete remaining.social_source;
+  assert.deepEqual(remaining, originalPayment);
+  assert.equal(JSON.stringify(other), originalOther);
+  assert.equal(rows.length, 2);
+  assert.equal((await assign({ donationId: target.id, socialSource: null }, { role: "social_partner" })).status, 403);
+  assert.equal((await assign({ donationId: target.id, socialSource: "unknown" }, { role: "admin" })).status, 422);
+  const restored = await assign({ donationId: target.id, socialSource: "alok" }, { role: "admin" });
+  assert.equal(restored.status, 200);
+  assert.equal(restored.socialAssignmentApproved, true);
+  assert.deepEqual((await readPortalMonth(rows, "alok")).body.transactions.map((row) => row.name), ["Hidden payment"]);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
+});
+
+test("Hide button sends an explicit null assignment and keeps the payment in Admin's calendar", async () => {
+  const app = read("src/app.js");
+  const setSource = app.match(/async function setOrderSocialSource\([^]*?\n\}/)[0];
+  const click = app.match(/function handleAdminCalendarDetailClick\([^]*?\n\}/)[0];
+  const row = { id: "payment", amount: 22, createdAt: SOCIAL_PORTAL_START, socialSource: "anshu" };
+  const requests = [];
+  let clickAction;
+  const context = vm.createContext({ SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
+    state: { adminProfile: { role: "admin" } }, adminCalendarDonations: [row],
+    elements: { adminPanel: { getAttribute: () => "false" } },
+    getDonationById: () => row, getAdminAccessToken: () => "session", renderAdminCalendar() {}, setAdminStatus() {},
+    runAdminAction: (_options, action) => (clickAction = action()),
+    callEdge: async (_endpoint, options) => { requests.push(options.body); return { donationId: row.id, socialSource: null, socialAssignmentApproved: false }; },
+  });
+  vm.runInContext(`${setSource}\n${click}`, context);
+  const button = { dataset: { hideOrderFromPartners: row.id } };
+  context.handleAdminCalendarDetailClick({ target: { closest: (selector) => selector === "[data-hide-order-from-partners]" ? button : null } });
+  await clickAction;
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].socialSource, null);
+  assert.equal(context.adminCalendarDonations.length, 1);
+  assert.equal(context.adminCalendarDonations[0].socialSource, null);
+  assert.equal(context.adminCalendarDonations[0].socialAssignmentApproved, false);
 });
