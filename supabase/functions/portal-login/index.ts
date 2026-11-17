@@ -21,10 +21,20 @@ Deno.serve(withCors(async (request) => {
       .eq("login_username", username)
       .maybeSingle();
     if (profileError) throw profileError;
-    if (!profile) return errorResponse("Invalid username or password.", 401);
+    let loginProfile = profile;
+    if (!loginProfile) {
+      const { data: partner, error: partnerError } = await supabase
+        .from("social_portal_profiles")
+        .select("user_id, email")
+        .eq("login_username", username)
+        .maybeSingle();
+      if (partnerError) throw partnerError;
+      loginProfile = partner;
+    }
+    if (!loginProfile) return errorResponse("Invalid username or password.", 401);
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email: profile.email, password });
-    if (error || !data.session || data.user?.id !== profile.user_id) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email: loginProfile.email, password });
+    if (error || !data.session || data.user?.id !== loginProfile.user_id) {
       return errorResponse("Invalid username or password.", 401);
     }
     const response = jsonResponse({

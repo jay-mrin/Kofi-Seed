@@ -1,4 +1,4 @@
-export type SocialSource = "anshu" | "badal" | "rohit" | "alok";
+export type SocialSource = "anshu" | "badal" | "rohit" | "alok" | "ayush";
 
 // 16 November 2026, 00:00 Asia/Kolkata, inclusive.
 export const SOCIAL_PORTAL_START = "2026-11-15T18:30:00.000Z";
@@ -16,7 +16,7 @@ export function getSocialLimitCents(createdAt = new Date().toISOString()) {
 }
 
 export function parseSocialSource(value: unknown): SocialSource | null {
-  return value === "anshu" || value === "badal" || value === "rohit" || value === "alok" ? value : null;
+  return value === "anshu" || value === "badal" || value === "rohit" || value === "alok" || value === "ayush" ? value : null;
 }
 
 export function getAutomaticSocialSource(value: unknown, amountCents: number): SocialSource | null {

@@ -16,11 +16,13 @@ export function matchesFilter(row, value) {
     return value.startsWith("and(") ? children.every((child) => matchesFilter(row, child)) : children.some((child) => matchesFilter(row, child));
   }
   const [, key, operator, operand] = value.match(/^([^.]+)\.([^.]+)\.(.*)$/) || [];
-  if (operator === "in") return operand.slice(1, -1).split(",").includes(row[key]);
-  const expected = typeof row[key] === "number" ? Number(operand) : operand;
-  if (operator === "eq") return row[key] === expected;
-  if (operator === "lt") return row[key] < expected;
-  if (operator === "gte") return row[key] >= expected;
+  let actual = key?.split(/->>?/).reduce((value, part) => value?.[part], row);
+  if (key?.includes("->>") && actual !== undefined && actual !== null) actual = String(actual);
+  if (operator === "in") return operand.slice(1, -1).split(",").includes(actual);
+  const expected = typeof actual === "number" ? Number(operand) : operand;
+  if (operator === "eq") return actual === expected;
+  if (operator === "lt") return actual < expected;
+  if (operator === "gte") return actual >= expected;
   throw new Error(`Unsupported filter: ${value}`);
 }
 export function createQuery(rows) {

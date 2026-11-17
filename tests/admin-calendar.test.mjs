@@ -231,16 +231,17 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     getFulfillmentStatusLabel: () => "Unfulfilled",
     DIGITAL_ORDER_ITEM_NAME: "Seed",
   });
-  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal|rohit|alok)"[^>]*>/g)]
+  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal|rohit|alok|ayush)"[^>]*>/g)]
     .map((match) => match[0]);
 
   render(context);
   assert.match(details.innerHTML, /Delete order<\/button>/);
   assert.doesNotMatch(details.innerHTML, /Portal:|AnshuPortal/);
-  const hideButton = () => details.innerHTML.match(/<button[^>]*data-hide-order-from-partners="[^"]+"[^>]*>/)[0];
-  assert.match(hideButton(), /aria-pressed="true" disabled/);
-  assert.equal(tagButtons().length, 4);
-  assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok"]);
+  const ayushButton = () => tagButtons()[4];
+  assert.match(ayushButton(), /aria-pressed="false"/);
+  assert.doesNotMatch(details.innerHTML, /Hide from partner portals|data-hide-order-from-partners/);
+  assert.equal(tagButtons().length, 5);
+  assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok", "ayush"]);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
 
   donation.socialSource = "anshu";
@@ -254,13 +255,13 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     donation.socialSource = portal;
     render(context);
     assert.doesNotMatch(details.innerHTML, /Portal:/);
-    assert.doesNotMatch(hideButton(), /disabled/);
-    assert.match(hideButton(), /aria-pressed="false"/);
+    assert.doesNotMatch(ayushButton(), /disabled/);
+    assert.match(ayushButton(), /aria-pressed="false"/);
     const selected = tagButtons().filter((button) => button.includes('aria-pressed="true"'));
     assert.equal(selected.length, 1);
     assert.ok(selected[0].includes(`data-set-order-social-source="${portal}"`));
     assert.ok(selected[0].includes("disabled"));
-    assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 3);
+    assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 4);
   }
 
   donation.amount = 55;
@@ -268,20 +269,20 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   render(context);
   assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
-  assert.match(hideButton(), /disabled/);
+  assert.match(ayushButton(), /disabled/);
   donation.createdAt = "2026-11-10T16:00:40.000Z";
   donation.socialAssignmentApproved = true;
   render(context);
   assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
-  assert.match(hideButton(), /disabled/);
+  assert.match(ayushButton(), /disabled/);
   donation.amount = 11;
 
   donation.createdAt = "2026-11-03T18:29:59.999Z";
   render(context);
   assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
-  assert.match(hideButton(), /disabled/);
+  assert.match(ayushButton(), /disabled/);
 
   const adminDonation = {
     ...donation,
@@ -314,7 +315,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   render(context);
   assert.doesNotMatch(details.innerHTML, /Portal:/);
   assert.ok(tagButtons().every((button) => button.includes("disabled")));
-  assert.match(hideButton(), /disabled/);
+  assert.match(ayushButton(), /disabled/);
 });
 
 test("calendar month ranges include local midnight and daylight saving boundaries", () => {

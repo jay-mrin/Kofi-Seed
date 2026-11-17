@@ -181,3 +181,8 @@ These are differences or gaps visible in the repository, not claims about produc
 ## 10. Maintenance rule
 
 When changing the site, update this document alongside the relevant UI, backend, and policy copy. Verify the current behavior from source and tests before treating older README instructions or historical migrations as the latest product definition.
+
+
+**17 November 2026 — Ayush Portal:** `/seeds` uses source `ayush`; the scoped partner profile signs in with username `ayush`, with its password stored only in Supabase Auth. It shows only successful own-source PayPal payments and the four approved contact/payment fields. Ayush follows the original India-time order date boundary: below $55 before November 17, below $33 from November 17. Admin’s former Hide button becomes Ayush, including compatibility for cached clients. The additive migration extends source/profile constraints and converts only explicitly hidden eligible payments from November 16 onward; it does not rewrite payment data or ordinary untagged orders. The six owner-supplied fulfilled receipts are separately checked against original order and provider identifiers, existing matches reused, and missing records restored from receipt plus retained checkout metadata. No new payment is collected. Other portals and protected pending migrations remain unchanged.
+
+The owner additionally authorized Admin history access for the two privately supplied older restored receipts. Only restored Ayush records carrying a server-written `raw_payment.recovery.adminHistoryVisible` marker gain this narrow older-history exception. Existing collecting routes and all unrelated private history remain unchanged.

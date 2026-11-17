@@ -37,6 +37,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.equal(context.readSocialSourceTag(), "alok");
   window.location.pathname = "/sownow/";
   assert.equal(context.readSocialSourceTag(), "alok");
+  window.location.pathname = "/seeds";
+  assert.equal(context.readSocialSourceTag(), "ayush");
+  window.location.pathname = "/seeds/";
+  assert.equal(context.readSocialSourceTag(), "ayush");
   window.location.pathname = "/";
   assert.equal(context.readSocialSourceTag(), null);
   window.location.search = "?campaign=unknown";
@@ -46,10 +50,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.doesNotMatch(source, /sessionStorage|localStorage/);
   const routing = JSON.parse(read("vercel.json"));
   assert.deepEqual(routing.rewrites.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed", "/index.html"], ["/seed", "/index.html"], ["/garden", "/index.html"], ["/sownow", "/index.html"],
+    ["/sowseed", "/index.html"], ["/seed", "/index.html"], ["/garden", "/index.html"], ["/sownow", "/index.html"], ["/seeds", "/index.html"],
   ]);
   assert.deepEqual(routing.redirects.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"], ["/garden/", "/garden"], ["/sownow/", "/sownow"],
+    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"], ["/garden/", "/garden"], ["/sownow/", "/sownow"], ["/seeds/", "/seeds"],
   ]);
   assert.equal(new URL("src/app.js", "https://example.invalid/sowseed").pathname, "/src/app.js");
 });
@@ -75,7 +79,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
     handleOptions: () => null,
     requireSocialPortal: async (request) => {
       const bearer = request.headers.get("Authorization");
-      if (!["Bearer anshu", "Bearer badal", "Bearer rohit", "Bearer alok"].includes(bearer)) {
+      if (!["Bearer anshu", "Bearer badal", "Bearer rohit", "Bearer alok", "Bearer ayush"].includes(bearer)) {
         throw new globalThis.Response("Forbidden", { status: 403 });
       }
       return { supabase, socialSource: bearer.slice(7) };
@@ -100,7 +104,7 @@ test("each partner retains only its own eligible history and rejects new $33 ord
   const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z",
     paypal_payer_email: "payer@example.invalid", digital_orders: { contact_email: "order@example.invalid" },
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private" };
-  const rows = ["anshu", "badal", "rohit", "alok"].flatMap((social_source) => [
+  const rows = ["anshu", "badal", "rohit", "alok", "ayush"].flatMap((social_source) => [
     { ...base, social_source, display_name: `${social_source}-first` },
     { ...base, social_source, display_name: `${social_source}-last-cent`, amount: 32.99 },
     { ...base, social_source, display_name: `${social_source}-existing`, amount: 44, created_at: "2026-11-12T00:00:00.000Z" },
@@ -111,7 +115,7 @@ test("each partner retains only its own eligible history and rejects new $33 ord
     { ...base, social_source, display_name: "Dodo", payment_method: "dodo" },
   ]);
   const original = JSON.stringify(rows);
-  for (const source of ["anshu", "badal", "rohit", "alok"]) {
+  for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
     const result = await readPortalMonth(rows, source);
     assert.equal(result.status, 200);
     assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-last-cent`, `${source}-existing`, `${source}-nov16`]);
@@ -161,7 +165,7 @@ test("social order cards show paid amount without credited details", () => {
 });
 
 test("old high-value exceptions no longer grant any partner visibility", () => {
-  for (const social_source of ["anshu", "badal", "rohit", "alok"]) {
+  for (const social_source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
     for (const amount of [55, 121]) {
       assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-04T00:00:00Z", social_source_manually_assigned: true }), false);
       assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-16T18:30:00.000Z", social_source_manually_assigned: true }), false);
@@ -185,7 +189,7 @@ test("frontend rejects stale high values and earlier rows from any backend polic
     getMonthKey: () => "2026-11", getAdminAccessToken: () => "session", callEdge: async () => payload, renderSocialCalendar() {},
   });
   vm.runInContext(source, context);
-  for (const source of ["anshu", "badal", "rohit", "alok"]) {
+  for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
     context.state.adminProfile.socialSource = source;
     await context.loadSocialTransactions();
     assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low"]);
@@ -243,7 +247,7 @@ function createAssignmentApi(rows) {
   return vm.runInNewContext(`${scope}; (async (body, adminProfile) => { ${update} })`, context);
 }
 
-test("Admin switches all eligible orders among four partners without changing their payment data", async () => {
+test("Admin switches all eligible orders among five partners without changing their payment data", async () => {
   const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z", payment_method: "paypal", paypal_status: "COMPLETED", social_source: "anshu" };
   const rows = [
     { ...base, id: "admin", payment_route: "standard", visibility_scope: "public" },
@@ -256,7 +260,7 @@ test("Admin switches all eligible orders among four partners without changing th
   const assign = createAssignmentApi(rows);
   for (const row of rows.slice(0, 2)) {
     const immutable = { ...row }; delete immutable.social_source;
-    for (const socialSource of ["alok", "badal", "rohit", "anshu"]) {
+    for (const socialSource of ["alok", "badal", "rohit", "anshu", "ayush"]) {
       const response = await assign({ donationId: row.id, socialSource }, { role: "admin" });
       assert.equal(response.status, 200);
       assert.equal(response.socialAssignmentApproved, true);
@@ -358,6 +362,7 @@ test("portal authentication binds each account to its database source and reject
     badal: { id: "user-b", email: "badal@example.invalid" },
     rohit: { id: "user-r", email: "rohit@example.invalid" },
     alok: { id: "user-al", email: "alok@example.invalid" },
+    ayush: { id: "user-ay", email: "ayush@example.invalid" },
     unified: { id: "user-u", email: "unified@example.invalid" },
     admin: { id: "user-admin", email: "admin@example.invalid" },
     standard: { id: "user-standard", email: "standard@example.invalid" },
@@ -376,6 +381,7 @@ test("portal authentication binds each account to its database source and reject
       { user_id: "user-b", email: users.badal.email, display_name: "Badal Portal", social_source: "badal" },
       { user_id: "user-r", email: users.rohit.email, display_name: "Rohit Portal", social_source: "rohit" },
       { user_id: "user-al", email: users.alok.email, display_name: "Alok Portal", social_source: "alok" },
+      { user_id: "user-ay", email: users.ayush.email, display_name: "Ayush Portal", social_source: "ayush" },
     ],
   };
   const supabase = {
@@ -398,10 +404,11 @@ test("portal authentication binds each account to its database source and reject
   assert.equal((await context.requireSocialPortal(request("badal"))).socialSource, "badal");
   assert.equal((await context.requireSocialPortal(request("rohit"))).socialSource, "rohit");
   assert.equal((await context.requireSocialPortal(request("alok"))).socialSource, "alok");
+  assert.equal((await context.requireSocialPortal(request("ayush"))).socialSource, "ayush");
   assert.equal((await context.requireUnifiedPaymentPortal(request("unified"))).profile.role, "unified_payment");
   assert.equal((await context.getPortalProfile(request("unified"))).profile.displayName, "Unified Payment Portal");
   await assert.rejects(context.requireSocialPortal(request("unified")), (error) => error.status === 403);
-  for (const token of ["anshu", "badal", "rohit", "alok", "admin", "standard", "unknown"]) {
+  for (const token of ["anshu", "badal", "rohit", "alok", "ayush", "admin", "standard", "unknown"]) {
     await assert.rejects(context.requireUnifiedPaymentPortal(request(token)), (error) => error.status === 403);
   }
   await assert.rejects(context.requireSocialPortal(request("admin")), (error) => error.status === 403);
@@ -496,7 +503,7 @@ test("Unified portal migration adds a protected read-only identity without chang
   assert.doesNotMatch(sql, /password/i);
 });
 
-test("Hide removes only the selected payment from every partner and can be reversed by assignment", async () => {
+test("cached Hide requests assign only the selected payment to Ayush and can be reassigned", async () => {
   const target = { id: "hide-me", display_name: "Hidden payment", amount: 22, created_at: SOCIAL_PORTAL_START,
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
     social_source: "anshu", social_source_manually_assigned: true,
@@ -509,8 +516,9 @@ test("Hide removes only the selected payment from every partner and can be rever
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Hidden payment"]);
   const hidden = await assign({ donationId: target.id, socialSource: null }, { role: "admin" });
   assert.equal(hidden.status, 200);
-  assert.equal(hidden.socialSource, null);
-  assert.equal(hidden.socialAssignmentApproved, false);
+  assert.equal(hidden.socialSource, "ayush");
+  assert.equal(hidden.socialAssignmentApproved, true);
+  assert.deepEqual((await readPortalMonth(rows, "ayush")).body.transactions.map((row) => row.name), ["Hidden payment"]);
   for (const source of ["anshu", "badal", "rohit", "alok", "unified"]) {
     assert.ok((await readPortalMonth(rows, source)).body.transactions.every((row) => row.name !== "Hidden payment"));
   }
@@ -527,7 +535,7 @@ test("Hide removes only the selected payment from every partner and can be rever
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions, []);
 });
 
-test("Hide button sends an explicit null assignment and keeps the payment in Admin's calendar", async () => {
+test("Ayush button sends an explicit assignment and keeps the payment in Admin's calendar", async () => {
   const app = read("src/app.js");
   const setSource = app.match(/async function setOrderSocialSource\([^]*?\n\}/)[0];
   const click = app.match(/function handleAdminCalendarDetailClick\([^]*?\n\}/)[0];
@@ -539,20 +547,20 @@ test("Hide button sends an explicit null assignment and keeps the payment in Adm
     elements: { adminPanel: { getAttribute: () => "false" } },
     getDonationById: () => row, getAdminAccessToken: () => "session", renderAdminCalendar() {}, setAdminStatus() {},
     runAdminAction: (_options, action) => (clickAction = action()),
-    callEdge: async (_endpoint, options) => { requests.push(options.body); return { donationId: row.id, socialSource: null, socialAssignmentApproved: false }; },
+    callEdge: async (_endpoint, options) => { requests.push(options.body); return { donationId: row.id, socialSource: "ayush", socialAssignmentApproved: true }; },
   });
   vm.runInContext(`${setSource}\n${click}`, context);
-  const button = { dataset: { hideOrderFromPartners: row.id } };
-  context.handleAdminCalendarDetailClick({ target: { closest: (selector) => selector === "[data-hide-order-from-partners]" ? button : null } });
+  const button = { dataset: { donationId: row.id, setOrderSocialSource: "ayush" } };
+  context.handleAdminCalendarDetailClick({ target: { closest: (selector) => selector === "[data-set-order-social-source]" ? button : null } });
   await clickAction;
   assert.equal(requests.length, 1);
-  assert.equal(requests[0].socialSource, null);
+  assert.equal(requests[0].socialSource, "ayush");
   assert.equal(context.adminCalendarDonations.length, 1);
-  assert.equal(context.adminCalendarDonations[0].socialSource, null);
-  assert.equal(context.adminCalendarDonations[0].socialAssignmentApproved, false);
+  assert.equal(context.adminCalendarDonations[0].socialSource, "ayush");
+  assert.equal(context.adminCalendarDonations[0].socialAssignmentApproved, true);
 });
 
-test("November 16 uses 55 permanently while November 17 uses 33 across visibility, hiding, and assignment", async () => {
+test("November 16 uses 55 permanently while November 17 uses 33 across visibility and existing partner assignment", async () => {
   const before = "2026-11-16T18:29:59.999Z";
   const after = "2026-11-16T18:30:00.000Z";
   const base = { payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private", social_source: "anshu" };
@@ -567,7 +575,7 @@ test("November 16 uses 55 permanently while November 17 uses 33 across visibilit
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Today33", "Today5499", "Tomorrow3299"]);
   for (const row of [rows[0], rows[1], rows[3]]) {
     assert.equal((await assign({ donationId: row.id, socialSource: null }, { role: "admin" })).status, 200);
-    for (const source of ["anshu", "badal", "rohit", "alok"]) {
+    for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
       assert.equal((await assign({ donationId: row.id, socialSource: source }, { role: "admin" })).status, 200);
       assert.ok((await readPortalMonth(rows, source)).body.transactions.some((item) => item.name === row.display_name));
     }
@@ -577,4 +585,67 @@ test("November 16 uses 55 permanently while November 17 uses 33 across visibilit
       assert.equal((await assign({ donationId: row.id, socialSource: source }, { role: "admin" })).status, 404);
     }
   }
+});
+
+
+test("Ayush uses original India dates at both amount boundaries and never sees other partners", async () => {
+  const base = { social_source: "ayush", amount: 32.99, created_at: "2026-11-16T18:30:00.000Z",
+    payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
+    paypal_payer_email: "payer@example.invalid" };
+  const rows = [
+    { ...base, display_name: "Last eligible cent" },
+    { ...base, display_name: "Old eligible", amount: 54.99, created_at: "2026-11-16T18:29:59.999Z" },
+    { ...base, display_name: "Old boundary", amount: 55, created_at: "2026-11-16T18:29:59.999Z" },
+    { ...base, display_name: "New boundary", amount: 33 },
+    { ...base, display_name: "Not paid", paypal_status: "FAILED" },
+    { ...base, display_name: "Ordinary untagged", social_source: null },
+    { ...base, display_name: "Another partner", social_source: "alok" },
+  ];
+  const original = JSON.stringify(rows);
+  const result = await readPortalMonth(rows, "ayush");
+  assert.deepEqual(result.body.transactions.map((row) => row.name), ["Last eligible cent", "Old eligible"]);
+  for (const row of result.body.transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
+  assert.equal(JSON.stringify(rows), original);
+  for (const source of ["anshu", "badal", "rohit", "alok"]) {
+    assert.ok((await readPortalMonth(rows, source)).body.transactions.every((row) => !["Last eligible cent", "Old eligible"].includes(row.name)));
+  }
+});
+
+test("Ayush backfill is limited to explicitly hidden eligible completed payments", () => {
+  const sql = read("supabase/migrations/202611170001_ayush_social_portal.sql");
+  const updates = sql.match(/update public\.[^;]+;/gi);
+  assert.equal(updates.length, 1);
+  assert.match(updates[0], /set social_source = 'ayush'/);
+  assert.match(updates[0], /social_source is null/);
+  assert.match(updates[0], /social_source_manually_assigned = true/);
+  assert.match(updates[0], /paypal_status = 'COMPLETED'/);
+  assert.match(updates[0], /created_at >= timestamptz '2026-11-15 18:30:00\+00'/);
+  assert.match(updates[0], /case when created_at < timestamptz '2026-11-16 18:30:00\+00' then 55 else 33 end/);
+  assert.doesNotMatch(updates[0], /set[\s\S]*\b(?:amount|created_at|payment_route|visibility_scope|paypal_order_id|paypal_capture_id|membership_id)\s*=/);
+  assert.doesNotMatch(sql, /delete from|truncate|drop table/i);
+  assert.match(sql, /donations_ayush_amount_check/);
+  assert.match(sql, /add column login_username text unique/);
+});
+
+
+test("Admin sees only specifically authorized restored Ayush history without exposing other private history", async () => {
+  const endpoint = read("supabase/functions/admin-donations/index.ts");
+  const scope = endpoint.match(/function applyAdminDonationScope\([^]*?\n\}/)[0]
+    .replace('query: any, role: "admin" | "super_admin"', 'query, role');
+  const apply = vm.runInNewContext(`${scope}; applyAdminDonationScope`, policy);
+  const base = { payment_method: "paypal", amount: 33, created_at: "2026-11-15T04:17:00.000Z",
+    payment_route: "superadmin", visibility_scope: "superadmin_private", social_source: "ayush",
+    raw_payment: { recovery: { adminHistoryVisible: true } } };
+  const rows = [
+    { ...base, id: "authorized-restored" },
+    { ...base, id: "ordinary-private", raw_payment: {} },
+    { ...base, id: "other-partner", social_source: "rohit" },
+    { ...base, id: "unassigned", social_source: null },
+    { ...base, id: "old-limit", amount: 55 },
+    { ...base, id: "new-limit", created_at: "2026-11-16T18:30:00.000Z" },
+  ];
+  const original = JSON.stringify(rows);
+  const { data } = await apply(createQuery(rows), "admin").range(0, 499);
+  assert.deepEqual(data.map((row) => row.id), ["authorized-restored"]);
+  assert.equal(JSON.stringify(rows), original);
 });

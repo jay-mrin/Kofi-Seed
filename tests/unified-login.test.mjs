@@ -21,13 +21,13 @@ async function usernameLogin(body, { method = "POST", wrongIdentity = false, fai
     jsonResponse: (value) => ({ status: 200, body: value, headers: new globalThis.Headers() }),
     getSupabaseAdmin: () => ({
       from(table) {
-        assert.equal(table, "unified_payment_portal_profiles");
+        assert.ok(["unified_payment_portal_profiles", "social_portal_profiles"].includes(table));
         const query = {
           select(fields) { assert.equal(fields, "user_id, email"); return query; },
           eq(field, value) { assert.equal(field, "login_username"); lookedUp = value; return query; },
           async maybeSingle() {
             if (failLookup) return { error: new Error("Private database details") };
-            return { data: lookedUp === "client@3" ? { user_id: "unified-user", email: "private-alias@example.invalid" } : null };
+            return { data: table === "unified_payment_portal_profiles" && lookedUp === "client@3" ? { user_id: "unified-user", email: "private-alias@example.invalid" } : table === "social_portal_profiles" && lookedUp === "ayush" ? { user_id: "ayush-user", email: "partner-alias@example.invalid" } : null };
           },
         };
         return query;
@@ -35,9 +35,9 @@ async function usernameLogin(body, { method = "POST", wrongIdentity = false, fai
       auth: {
         async signInWithPassword(credentials) {
           authCalls.push(credentials);
-          assert.equal(credentials.email, "private-alias@example.invalid");
+          assert.ok(["private-alias@example.invalid", "partner-alias@example.invalid"].includes(credentials.email));
           if (credentials.password !== "test-password") return { error: new Error("Invalid login") };
-          return { data: { user: { id: wrongIdentity ? "other-user" : "unified-user" }, session: {
+          return { data: { user: { id: wrongIdentity ? "other-user" : credentials.email === "partner-alias@example.invalid" ? "ayush-user" : "unified-user" }, session: {
             access_token: "session-access", refresh_token: "session-refresh", token_type: "bearer", expires_in: 3600, expires_at: 1234,
             private_metadata: "must not leave server",
           } } };
@@ -157,4 +157,13 @@ test("unified calendar replaces dots with daily payment totals using India dates
   context.renderSocialCalendar();
   assert.equal(day("2026-11-14").children[1].textContent, "●");
   assert.doesNotMatch(day("2026-11-14").attributes["aria-label"], /total/);
+});
+
+test("partner username login verifies the matching Auth identity without exposing its alias", async () => {
+  const { response, authCalls } = await usernameLogin({ username: " AYUSH ", password: "test-password" });
+  assert.equal(response.status, 200);
+  assert.equal(authCalls[0].email, "partner-alias@example.invalid");
+  assert.doesNotMatch(JSON.stringify(response.body), /partner-alias|ayush-user/);
+  assert.equal((await usernameLogin({ username: "ayush", password: "wrong-password" })).response.status, 401);
+  assert.equal((await usernameLogin({ username: "ayush", password: "test-password" }, { wrongIdentity: true })).response.status, 401);
 });

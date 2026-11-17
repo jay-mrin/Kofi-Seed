@@ -102,7 +102,8 @@ function applyDateRange(query: any, fromDate: string, toDate: string) {
 
 function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
   // Preserve original collecting routes. Amount determines portal access;
-  // pre-16-Nov low-value private history remains in its original portal.
+  // pre-16-Nov private history remains scoped, except owner-authorized
+  // restored Ayush receipts carrying a server-written Admin-history marker.
   const routes = "payment_route.in.(standard,superadmin),visibility_scope.in.(public,superadmin_private)";
   if (role === "super_admin") {
     return query
@@ -110,7 +111,7 @@ function applyAdminDonationScope(query: any, role: "admin" | "super_admin") {
       .in("payment_method", ["paypal", "dodo"]);
   }
   return query
-    .or(`and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),payment_route.eq.standard,visibility_scope.eq.public),and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),created_at.gte.${SOCIAL_PORTAL_START},${routes})`)
+    .or(`and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),payment_route.eq.standard,visibility_scope.eq.public),and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),created_at.gte.${SOCIAL_PORTAL_START},${routes}),and(or(${SOCIAL_ELIGIBLE_ORDER_FILTER}),social_source.eq.ayush,payment_method.eq.paypal,raw_payment->recovery->>adminHistoryVisible.eq.true,${routes})`)
     .in("payment_method", ["paypal", "dodo"]);
 }
 
@@ -162,9 +163,10 @@ Deno.serve(withCors(async (request) => {
           return errorResponse("This account cannot assign an order to a social portal.", 403);
         }
         const donationId = String(body.donationId || "").trim();
-        const socialSource = body.socialSource;
-        if (!donationId || (socialSource !== null && socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok")) {
-          return errorResponse("Choose an order and Anshu, Badal, Rohit, Alok, or hide it from partner portals.", 422);
+        // Older cached Hide buttons now assign Ayush as well.
+        const socialSource = body.socialSource === null ? "ayush" : body.socialSource;
+        if (!donationId || (socialSource !== null && socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok" && socialSource !== "ayush")) {
+          return errorResponse("Choose an order and Anshu, Badal, Rohit, Alok, or Ayush.", 422);
         }
 
         // Apply the same amount/date visibility as the order calendar. This

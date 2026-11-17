@@ -220,3 +220,12 @@ Apply only `202611160001_thirty_three_portal_boundary.sql`, then deploy the upda
 ## Scheduled cutoff correction
 
 Existing orders before November 17, 2026 in Asia/Kolkata permanently use $55 as the SuperAdmin-only boundary. Partner portals retain assigned history from November 4; Admin assignment and hiding remain limited to November 16 onward. Orders from November 17 at 00:00 India time use $33. Historical display, assignment, and hiding use the order's own creation timestamp. New checkouts switch automatically at the fixed boundary. Deploy `202611160002_dated_portal_limits.sql` and the updated Edge Functions/frontend; no order data is rewritten, and protected pending migrations stay pending.
+
+
+### Ayush Portal (17 November 2026)
+
+`/seeds` attributes eligible PayPal checkouts and weekly signups to `ayush`. Ayush signs in with username `ayush` and a privately provisioned Supabase Auth password. Its separate social profile grants no Admin privileges and returns only its own successful payments’ name, amount, email, and original order date. Orders before 17 November in India time are eligible below $55; orders from that date are eligible below $33. The original creation time controls both visibility and assignment.
+
+The Admin Ayush button replaces “Hide from partner portals”; cached hide requests also assign Ayush. Migration `202611170001_ayush_social_portal.sql` extends source constraints, adds server-only partner username lookup, and changes only the source of explicitly hidden eligible completed PayPal payments from 16 November onward. Ordinary untagged payments and other partners’ assignments stay unchanged. Payment routes, provider identifiers, amounts, dates, memberships and linked orders are preserved. Apply this migration individually, deploy the updated profile, login, assignment, checkout-source and social-query functions, and provision the dedicated Auth/social profile privately. Never commit a password or customer restoration data. Leave migrations `202611100001`–`202611100003` unapplied.
+
+For the two owner-authorized older receipt restorations only, a server-written `raw_payment.recovery.adminHistoryVisible` marker permits Admin to read eligible restored Ayush records before November 16 while retaining their original collecting routes. Other older private records remain excluded. Restoration itself is performed privately, deduplicating provider/order IDs; customer data is not stored in migrations.
