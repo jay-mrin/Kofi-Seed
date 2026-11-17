@@ -3,10 +3,12 @@ import { createDodoCheckoutSession, getDodoCurrency, getDodoProductId } from "..
 import { getRandomOrderRequest } from "../_shared/order-requests.ts";
 import { getRitual } from "../_shared/rituals.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
+import { parseMoneyToCents } from "../_shared/paypal.ts";
 import { getSocialLimitCents } from "../_shared/social-source.ts";
 
 type CreateDodoBody = {
   seedCount?: number;
+  amount?: number;
   ritualTier?: string;
   name?: string;
   message?: string;
@@ -27,7 +29,8 @@ Deno.serve(withCors(async (request) => {
   let attemptId = "";
   try {
     const body = await readJson<CreateDodoBody>(request);
-    const seedCount = Number(body.seedCount);
+    let seedCount = Number(body.seedCount);
+    const hasCustomAmount = Object.hasOwn(body, "amount");
     const ritualTier = String(body.ritualTier || "").trim();
     const ritual = ritualTier ? getRitual(ritualTier) : null;
     const email = String(body.email || "").trim().slice(0, 160);
@@ -37,7 +40,7 @@ Deno.serve(withCors(async (request) => {
     if (ritualTier && !ritual) return errorResponse("Choose a valid ritual.", 422);
     if (!name) return errorResponse("Enter your name.", 422);
     if (ritual && !message) return errorResponse("Enter who this ritual is for.", 422);
-    if (!ritual && (!Number.isSafeInteger(seedCount) || seedCount < 1 || seedCount > 999)) {
+    if (!ritual && !hasCustomAmount && (!Number.isSafeInteger(seedCount) || seedCount < 1 || seedCount > 999)) {
       return errorResponse("Choose between 1 and 999 seeds.", 422);
     }
     if (!isValidEmail(email)) return errorResponse("A valid email is required for the order detail.", 422);
@@ -51,7 +54,12 @@ Deno.serve(withCors(async (request) => {
         .from("site_settings").select("settings").eq("id", true).maybeSingle();
       if (settingsError) throw settingsError;
       const unitPrice = Math.max(Number(settingsRow?.settings?.seedPrice) || 11, 11);
-      amountCents = Math.round(unitPrice * seedCount * 100);
+      amountCents = hasCustomAmount ? parseMoneyToCents(body.amount) : Math.round(unitPrice * seedCount * 100);
+      if (!Number.isSafeInteger(amountCents) || amountCents < Math.round(unitPrice * 100)) {
+        return errorResponse(`Enter at least $${unitPrice}, with no more than two decimal places.`, 422);
+      }
+      seedCount = Math.max(1, Math.round(amountCents / (unitPrice * 100)));
+      if (seedCount > 999) return errorResponse("Choose between 1 and 999 seeds.", 422);
     }
     if (amountCents < 1100) return errorResponse("Amount must be at least $11.", 422);
     if (amountCents >= getSocialLimitCents()) {

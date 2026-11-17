@@ -4,6 +4,7 @@
 
   const countOutput = document.querySelector("#dodoSeedCount");
   const totalOutput = document.querySelector("#dodoTotalAmount");
+  const amountInput = document.querySelector("#dodoAmountInput");
   const totalSeedsOutput = document.querySelector("#dodoTotalSeeds");
   const checkoutButton = document.querySelector("#dodoCheckoutButton");
   const dodoPayButton = document.querySelector("#dodoPayButton");
@@ -19,20 +20,25 @@
   const messageInput = document.querySelector("#dodoCustomerMessage");
   const quickSeedButtons = [...form.querySelectorAll(".seed-quick-pick")];
   let seedCount = 1;
+  let customAmount = null;
   let submitting = false;
   const donorTokenKey = "sow-your-seed-dodo-donor-token";
   const pendingProductKey = "sow-your-seed-dodo-product";
 
-  const getUnitPrice = () => Number(totalOutput.dataset.unitPrice) || 7;
-  const updateTotal = () => {
+  const getUnitPrice = () => Math.max(Number(totalOutput.dataset.unitPrice) || 11, 11);
+  const getTotalAmount = () => customAmount ?? getUnitPrice() * seedCount;
+  const updateTotal = (preserveInput = false) => {
+    if (customAmount !== null) seedCount = Math.max(1, Math.round(customAmount / getUnitPrice()));
     countOutput.value = String(seedCount);
+    amountInput.min = String(getUnitPrice());
+    amountInput.max = String(getUnitPrice() * 999);
     const formattedTotal = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(getUnitPrice() * seedCount);
-    totalOutput.textContent = formattedTotal;
+    }).format(getTotalAmount());
+    if (preserveInput !== true) amountInput.value = getTotalAmount().toFixed(2);
     totalSeedsOutput.textContent = `(${seedCount} ${seedCount === 1 ? "Seed" : "Seeds"})`;
     quickSeedButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(Number(button.dataset.seedCount) === seedCount));
@@ -49,6 +55,7 @@
 
   const setLoading = (isLoading, message = "Processing Your Seed.....") => {
     submitting = isLoading;
+    amountInput.disabled = isLoading;
     checkoutButton.disabled = isLoading;
     dodoPayButton.disabled = isLoading;
     directButton.disabled = isLoading;
@@ -139,6 +146,7 @@
       window.sessionStorage.removeItem(pendingProductKey);
       form.reset();
       seedCount = 1;
+      customAmount = null;
       updateTotal();
       closePaymentDialog();
     } catch (error) {
@@ -150,19 +158,30 @@
     }
   };
 
+  amountInput.addEventListener("input", () => {
+    customAmount = Number(amountInput.value) || 0;
+    updateTotal(true);
+  });
+  amountInput.addEventListener("blur", () => {
+    if (amountInput.checkValidity()) amountInput.value = getTotalAmount().toFixed(2);
+  });
+
   document.querySelector("#dodoDecreaseSeeds").addEventListener("click", () => {
     if (submitting) return;
+    customAmount = null;
     seedCount = Math.max(1, seedCount - 1);
     updateTotal();
   });
   document.querySelector("#dodoIncreaseSeeds").addEventListener("click", () => {
     if (submitting) return;
+    customAmount = null;
     seedCount = Math.min(999, seedCount + 1);
     updateTotal();
   });
   quickSeedButtons.forEach((button) => {
     button.addEventListener("click", () => {
       if (submitting) return;
+      customAmount = null;
       seedCount = Number(button.dataset.seedCount);
       updateTotal();
     });
@@ -170,7 +189,7 @@
 
   const startDodoCheckout = async () => {
     nameInput.value = nameInput.value.trim();
-    if (submitting || !nameInput.reportValidity() || !emailInput.reportValidity()) return;
+    if (submitting || !amountInput.reportValidity() || !nameInput.reportValidity() || !emailInput.reportValidity()) return;
 
     setStatus("");
     setLoading(true);
@@ -182,6 +201,7 @@
       const payload = await checkout.callEdge("create-dodo-checkout", {
         body: {
           seedCount,
+          amount: getTotalAmount(),
           email: emailInput.value.trim(),
           name: nameInput.value.trim(),
           message: messageInput.value.trim(),
@@ -201,7 +221,7 @@
     event.preventDefault();
     if (submitting || paymentDialog.open) return;
     nameInput.value = nameInput.value.trim();
-    if (!nameInput.reportValidity()) return;
+    if (!amountInput.reportValidity() || !nameInput.reportValidity()) return;
 
     setStatus("");
     if (typeof paymentDialog.showModal === "function") {

@@ -22,6 +22,7 @@ const moneyParser = read("supabase/functions/_shared/paypal.ts")
 async function checkout(functionName, body, now = "2026-11-17T00:00:00Z") {
   const writes = [];
   const paypalOrders = [];
+  const dodoSessions = [];
   const deletions = [];
   let handler;
   const supabase = {
@@ -34,6 +35,7 @@ async function checkout(functionName, body, now = "2026-11-17T00:00:00Z") {
         lt() { return query; },
         limit() { return query; },
         delete() { deletions.push(table); return query; },
+        update() { return query; },
         insert(value) { inserted = value; writes.push({ table, value }); return query; },
         async maybeSingle() {
           return { data: table === "site_settings"
@@ -70,13 +72,18 @@ async function checkout(functionName, body, now = "2026-11-17T00:00:00Z") {
     getRandomOrderRequest: () => "Writing request",
     getRitual: (tier) => tier === "199" ? { priceCents: 19900, itemName: "Ritual" } : null,
     getPayPalCurrency: () => "USD",
+    crypto: { randomUUID: () => "01234567-89ab-cdef-0123-456789abcdef" },
+    hashText: async () => "hashed-token",
+    getDodoCurrency: () => "USD",
+    getDodoProductId: () => "dodo-seed-product",
+    createDodoCheckoutSession: async (value) => { dodoSessions.push(value); return { session_id: "SESSION", checkout_url: "https://checkout.example.invalid/checkout" }; },
     centsToMoney: (cents) => cents / 100,
     createPayPalOrder: async (value) => { paypalOrders.push(value); return { id: "ORDER", status: "CREATED" }; },
     createPayPalSubscriptionProduct: async () => { throw new Error("Unexpected plan creation"); },
     createPayPalWeeklyPlan: async () => { throw new Error("Unexpected plan creation"); },
   });
   vm.runInContext(`${socialRules}\n${moneyParser}\n${source}`, context);
-  return { response: await handler({ method: "POST" }), writes, paypalOrders, deletions };
+  return { response: await handler({ method: "POST" }), writes, paypalOrders, dodoSessions, deletions };
 }
 
 test("starting checkout preserves expired attempt history for delayed payment recovery", async () => {
@@ -206,5 +213,30 @@ test("browser and server agree on the permanent limit for each order's date", ()
   for (const [date, cents] of [["2026-11-15T18:29:59.999Z", 5500], ["2026-11-15T18:30:00.000Z", 5500], ["2026-11-16T18:29:59.999Z", 5500], ["2026-11-16T18:30:00.000Z", 3300], ["2026-12-16T00:00:00Z", 3300], ["invalid", 3300]]) {
     assert.equal(browserLimit(date), cents);
     assert.equal(getSocialLimitCents(date), cents);
+  }
+});
+
+test("Dodo custom amounts preserve exact cents and compute seed count on the server", async () => {
+  for (const amount of [11, 15.25, 22.75, 32.99]) {
+    const result = await checkout("create-dodo-checkout", { amount, seedCount: 999, name: "Customer", email: "customer@example.invalid", donorAccessToken: "a".repeat(64) });
+    assert.equal(result.response.status, 200, JSON.stringify(result.response.body));
+    assert.equal(result.writes[0].value.amount, amount);
+    assert.equal(result.writes[0].value.payment_route, "standard");
+    assert.equal(result.dodoSessions[0].amountCents, Math.round(amount * 100));
+    assert.equal(result.dodoSessions[0].seedCount, Math.max(1, Math.round(amount / 11)));
+  }
+});
+
+test("custom amounts cannot bypass the minimum, precision, or high-value Dodo boundary", async () => {
+  for (const [amount, status] of [["", 422], [10.99, 422], [11.001, 422], [-22, 422], [Infinity, 422], [33, 409], [55, 409]]) {
+    const result = await checkout("create-dodo-checkout", { amount, seedCount: 1, name: "Customer", email: "customer@example.invalid", donorAccessToken: "a".repeat(64) });
+    assert.equal(result.response.status, status, JSON.stringify(result.response.body));
+    assert.equal(result.writes.length, 0);
+    assert.equal(result.dodoSessions.length, 0);
+  }
+  for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
+    const result = await checkout(functionName, { amount: 15.25, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag: "anshu" });
+    assert.equal(result.response.status, 200);
+    assert.ok(result.writes.every(({ value }) => value.amount === 15.25));
   }
 });

@@ -67,6 +67,8 @@ The About section describes personalised writing prepared from a customer's pray
 
 ## 4. Customer journeys
 
+**17 November 2026 — custom amounts:** The displayed Total Amount is editable in both seed checkout forms, including cents. Quantity controls and seed labels stay synchronized; checkout validates the existing $11 minimum and two-decimal precision. Dodo creation accepts an optional exact amount, computes seed count server-side, and preserves its existing amount and route guards. Ritual pricing stays server-controlled. This changes new checkout input only, without altering existing payments.
+
 ### Seed order
 
 1. The visitor chooses a seed count. The displayed total uses the saved seed price.

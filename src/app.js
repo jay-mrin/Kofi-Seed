@@ -2642,7 +2642,6 @@ function updateCheckoutLabel() {
   elements.checkoutButton.setAttribute("aria-label", `Support this ministry with ${money(amount)}`);
   elements.seedPriceLabel.textContent = String(Math.max(Math.round(seedUnits), 0));
   elements.seedQuantityNoun.textContent = Math.round(seedUnits) === 1 ? "Seed" : "Seeds";
-  elements.paypalTotalAmount.textContent = `$${formatFixedAmount(amount)}`;
   elements.paypalTotalSeeds.textContent = `(${formatSeedUnits(seedUnits)})`;
   if (elements.decreaseSeedButton) elements.decreaseSeedButton.disabled = seedUnits <= 1;
   elements.supportForm.querySelectorAll(".seed-quick-pick").forEach((button) => {
@@ -2765,8 +2764,8 @@ function validateForm() {
     elements.nameInput.focus();
     isValid = false;
   }
-  if (amount < MIN_DONATION_AMOUNT) {
-    elements.amountError.textContent = `Enter at least $${MIN_DONATION_AMOUNT}.`;
+  if (!Number.isFinite(amount) || amount < MIN_DONATION_AMOUNT || elements.amountInput.checkValidity?.() === false) {
+    elements.amountError.textContent = `Enter at least $${MIN_DONATION_AMOUNT}, with no more than two decimal places.`;
     isValid = false;
   }
 
@@ -3635,7 +3634,7 @@ function openAlternateCheckout(link) {
     const url = new URL(rawCheckoutUrl);
     alternateCheckoutSource = isDodoCheckout ? "dodo" : "paypal";
     url.searchParams.set("amount", String(isDodoCheckout
-      ? (Number(document.querySelector("#dodoSeedCount")?.value) || 1) * (Number(state.settings.seedPrice) || SEED_DOLLAR_VALUE)
+      ? Number(document.querySelector("#dodoAmountInput")?.value) || 0
       : pendingDonation?.amount || getActiveCheckoutAmount()));
     url.searchParams.set("email", isDodoCheckout
       ? document.querySelector("#dodoCustomerEmail")?.value.trim() || ""
@@ -4221,6 +4220,15 @@ function renderApp() {
   updateCheckoutLabel();
 }
 
+elements.amountInput.addEventListener("input", () => {
+  elements.amountError.textContent = "";
+  updateCheckoutLabel();
+});
+elements.amountInput.addEventListener("blur", () => {
+  if (elements.amountInput.checkValidity()) {
+    elements.amountInput.value = getAmount().toFixed(2);
+  }
+});
 elements.decreaseSeedButton?.addEventListener("click", () => {
   stepSeedAmount(-1);
 });

@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,600&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles.css?v=239" />
+    <link rel="stylesheet" href="src/styles.css?v=240" />
   </head>
   <body class="app-loading seed-garden-design">
     <svg class="seed-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" focusable="false">
@@ -443,7 +443,7 @@
                 <strong><output id="dodoSeedCount">1</output> <span>🌱 Seeds</span></strong>
                 <button type="button" id="dodoIncreaseSeeds" aria-label="Add one seed">+</button>
               </div>
-              <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount">$11.00</strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
+              <div class="dodo-total"><span>Total Amount</span><strong id="dodoTotalAmount"><label class="custom-amount-control" for="dodoAmountInput" title="Enter a custom amount"><span aria-hidden="true">$</span><input id="dodoAmountInput" type="number" inputmode="decimal" min="11" step="0.01" value="11.00" aria-label="Custom amount in US dollars" aria-describedby="dodoTotalSeeds" required /></label></strong><small id="dodoTotalSeeds">(1 Seed)</small></div>
               <div class="seed-quick-picks" role="group" aria-label="Quick seed quantity choices">
                 <button class="seed-quick-pick" type="button" data-seed-count="3" aria-label="Select 3 seeds" aria-pressed="false"><strong>3 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
                 <button class="seed-quick-pick" type="button" data-seed-count="5" aria-label="Select 5 seeds" aria-pressed="false"><strong>5 <span aria-hidden="true">🌱</span></strong><span>Seeds</span></button>
@@ -625,8 +625,9 @@
                 </div>
                 <div class="compact-amount-field" role="group" aria-labelledby="paypalTotalAmountLabel">
                   <span id="paypalTotalAmountLabel">Total Amount</span>
-                  <output class="paypal-total-value" id="paypalTotalAmount" for="amountInput" aria-live="polite" aria-atomic="true">$11.00</output>
-                  <input id="amountInput" type="hidden" value="11.00" />
+                  <label class="paypal-total-value custom-amount-control" id="paypalTotalAmount" for="amountInput" title="Enter a custom amount">
+                    <span aria-hidden="true">$</span><input id="amountInput" type="number" inputmode="decimal" min="11" step="0.01" value="11.00" aria-label="Custom amount in US dollars" aria-describedby="amountError paypalTotalSeeds" required />
+                  </label>
                   <small id="paypalTotalSeeds">(1 Seed)</small>
                 </div>
                 <label class="field minimal-text-field paypal-name-field">
@@ -1130,9 +1131,9 @@
 
     <script src="src/config.js?v=3"></script>
     <script src="src/paypal-recovery.js?v=2" defer></script>
-    <script src="src/app.js?v=190" defer></script>
+    <script src="src/app.js?v=191" defer></script>
     <script src="src/seed-testimonies.js?v=4" defer></script>
-    <script src="src/home-dodo-checkout.js?v=16" defer></script>
+    <script src="src/home-dodo-checkout.js?v=17" defer></script>
     <script src="src/home-books-carousel.js?v=1" defer></script>
     <script src="src/shop-gallery.js?v=4" defer></script>
     <script src="src/book-preview.js?v=5" defer></script>
