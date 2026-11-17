@@ -2487,9 +2487,7 @@ function renderCalendarDetails(context) {
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="alok" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "alok"}" ${!canAssignPortal || currentPortal === "alok" ? "disabled" : ""}>Alok</button>
                     <button class="button admin-social-tag-button" type="button" data-set-order-social-source="ayush" data-donation-id="${escapeHtml(donation.id)}" aria-pressed="${currentPortal === "ayush"}" ${!canAssignPortal || currentPortal === "ayush" ? "disabled" : ""}>Ayush</button>
                   </div>
-                  ${isSuperAdminOnly ? "<small>This order stays exclusively in SuperAdmin and cannot be assigned to a social portal.</small>" : canAssignPortal
-                    ? ""
-                    : "<small>Available for completed PayPal orders from 16 Nov 2026: below $55 on 16 Nov, below $33 from 17 Nov (India time).</small>"}
+                  ${isSuperAdminOnly ? "<small>This order stays exclusively in SuperAdmin and cannot be assigned to a social portal.</small>" : ""}
                 </div>` : ""}
               </div>`}
             </article>
