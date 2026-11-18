@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { jsonResponse } from "./http.ts";
 
 export type AdminRole = "admin" | "super_admin";
-export type SocialPortalSource = "anshu" | "badal" | "rohit" | "alok" | "ayush";
+export type SocialPortalSource = "anshu" | "badal" | "rohit" | "alok" | "ayush" | "himanshu";
 
 export function getSupabaseAdmin() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -78,7 +78,7 @@ export async function getPortalProfile(request: Request) {
       },
     };
   }
-  if (!["anshu", "badal", "rohit", "alok", "ayush"].includes(socialProfile.social_source)) {
+  if (!["anshu", "badal", "rohit", "alok", "ayush", "himanshu"].includes(socialProfile.social_source)) {
     throw jsonResponse({ error: "This social portal is unavailable." }, 403);
   }
 

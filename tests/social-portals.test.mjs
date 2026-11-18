@@ -30,9 +30,9 @@ test("only the current tagged path attributes PayPal checkout", () => {
   window.location.pathname = "/seed";
   assert.equal(context.readSocialSourceTag(), "badal");
   window.location.pathname = "/garden";
-  assert.equal(context.readSocialSourceTag(), "rohit");
+  assert.equal(context.readSocialSourceTag(), "himanshu");
   window.location.pathname = "/garden/";
-  assert.equal(context.readSocialSourceTag(), "rohit");
+  assert.equal(context.readSocialSourceTag(), "himanshu");
   window.location.pathname = "/sownow";
   assert.equal(context.readSocialSourceTag(), "alok");
   window.location.pathname = "/sownow/";
@@ -79,7 +79,7 @@ async function readPortalMonth(rows, token, month = "2026-11") {
     handleOptions: () => null,
     requireSocialPortal: async (request) => {
       const bearer = request.headers.get("Authorization");
-      if (!["Bearer anshu", "Bearer badal", "Bearer rohit", "Bearer alok", "Bearer ayush"].includes(bearer)) {
+      if (!["Bearer anshu", "Bearer badal", "Bearer rohit", "Bearer alok", "Bearer ayush", "Bearer himanshu"].includes(bearer)) {
         throw new globalThis.Response("Forbidden", { status: 403 });
       }
       return { supabase, socialSource: bearer.slice(7) };
@@ -104,7 +104,7 @@ test("each partner retains only its own eligible history and rejects new $33 ord
   const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z",
     paypal_payer_email: "payer@example.invalid", digital_orders: { contact_email: "order@example.invalid" },
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private" };
-  const rows = ["anshu", "badal", "rohit", "alok", "ayush"].flatMap((social_source) => [
+  const rows = ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"].flatMap((social_source) => [
     { ...base, social_source, display_name: `${social_source}-first` },
     { ...base, social_source, display_name: `${social_source}-last-cent`, amount: 32.99 },
     { ...base, social_source, display_name: `${social_source}-existing`, amount: 44, created_at: "2026-11-12T00:00:00.000Z" },
@@ -115,7 +115,7 @@ test("each partner retains only its own eligible history and rejects new $33 ord
     { ...base, social_source, display_name: "Dodo", payment_method: "dodo" },
   ]);
   const original = JSON.stringify(rows);
-  for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
+  for (const source of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]) {
     const result = await readPortalMonth(rows, source);
     assert.equal(result.status, 200);
     assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-existing`]);
@@ -165,7 +165,7 @@ test("social order cards show paid amount without credited details", () => {
 });
 
 test("old high-value exceptions no longer grant any partner visibility", () => {
-  for (const social_source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
+  for (const social_source of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]) {
     for (const amount of [55, 121]) {
       assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-04T00:00:00Z", social_source_manually_assigned: true }), false);
       assert.equal(isSocialAssignmentApproved({ social_source, amount, created_at: "2026-11-16T18:30:00.000Z", social_source_manually_assigned: true }), false);
@@ -189,7 +189,7 @@ test("frontend rejects stale high values and earlier rows from any backend polic
     getMonthKey: () => "2026-11", getAdminSessionKey: () => "session", callEdge: async () => payload, renderSocialCalendar() {},
   });
   vm.runInContext(source, context);
-  for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
+  for (const source of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]) {
     context.state.adminProfile.socialSource = source;
     await context.loadSocialTransactions();
     assert.deepEqual(Array.from(context.socialTransactions, (row) => row.name), ["Low"]);
@@ -247,7 +247,7 @@ function createAssignmentApi(rows) {
   return vm.runInNewContext(`${scope}; (async (body, adminProfile) => { ${update} })`, context);
 }
 
-test("Admin switches all eligible orders among five partners without changing their payment data", async () => {
+test("Admin switches all eligible orders among six partners without changing their payment data", async () => {
   const base = { amount: 11, created_at: "2026-11-16T18:30:00.000Z", payment_method: "paypal", paypal_status: "COMPLETED", social_source: "anshu" };
   const rows = [
     { ...base, id: "admin", payment_route: "standard", visibility_scope: "public" },
@@ -260,7 +260,7 @@ test("Admin switches all eligible orders among five partners without changing th
   const assign = createAssignmentApi(rows);
   for (const row of rows.slice(0, 2)) {
     const immutable = { ...row }; delete immutable.social_source;
-    for (const socialSource of ["alok", "badal", "rohit", "anshu", "ayush"]) {
+    for (const socialSource of ["alok", "badal", "rohit", "anshu", "ayush", "himanshu"]) {
       const response = await assign({ donationId: row.id, socialSource }, { role: "admin" });
       assert.equal(response.status, 200);
       assert.equal(response.socialAssignmentApproved, true);
@@ -363,6 +363,7 @@ test("portal authentication binds each account to its database source and reject
     rohit: { id: "user-r", email: "rohit@example.invalid" },
     alok: { id: "user-al", email: "alok@example.invalid" },
     ayush: { id: "user-ay", email: "ayush@example.invalid" },
+    himanshu: { id: "user-h", email: "himanshu@example.invalid" },
     unified: { id: "user-u", email: "unified@example.invalid" },
     admin: { id: "user-admin", email: "admin@example.invalid" },
     standard: { id: "user-standard", email: "standard@example.invalid" },
@@ -382,6 +383,7 @@ test("portal authentication binds each account to its database source and reject
       { user_id: "user-r", email: users.rohit.email, display_name: "Rohit Portal", social_source: "rohit" },
       { user_id: "user-al", email: users.alok.email, display_name: "Alok Portal", social_source: "alok" },
       { user_id: "user-ay", email: users.ayush.email, display_name: "Ayush Portal", social_source: "ayush" },
+      { user_id: "user-h", email: users.himanshu.email, display_name: "Himanshu Portal", social_source: "himanshu" },
     ],
   };
   const supabase = {
@@ -405,10 +407,11 @@ test("portal authentication binds each account to its database source and reject
   assert.equal((await context.requireSocialPortal(request("rohit"))).socialSource, "rohit");
   assert.equal((await context.requireSocialPortal(request("alok"))).socialSource, "alok");
   assert.equal((await context.requireSocialPortal(request("ayush"))).socialSource, "ayush");
+  assert.equal((await context.requireSocialPortal(request("himanshu"))).socialSource, "himanshu");
   assert.equal((await context.requireUnifiedPaymentPortal(request("unified"))).profile.role, "unified_payment");
   assert.equal((await context.getPortalProfile(request("unified"))).profile.displayName, "Unified Payment Portal");
   await assert.rejects(context.requireSocialPortal(request("unified")), (error) => error.status === 403);
-  for (const token of ["anshu", "badal", "rohit", "alok", "ayush", "admin", "standard", "unknown"]) {
+  for (const token of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu", "admin", "standard", "unknown"]) {
     await assert.rejects(context.requireUnifiedPaymentPortal(request(token)), (error) => error.status === 403);
   }
   await assert.rejects(context.requireSocialPortal(request("admin")), (error) => error.status === 403);
@@ -575,7 +578,7 @@ test("November 16 uses 55 permanently while November 17 uses 33 across visibilit
   assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Today33", "Today44", "Tomorrow22"]);
   for (const row of [rows[0], rows[1], rows[3]]) {
     assert.equal((await assign({ donationId: row.id, socialSource: null }, { role: "admin" })).status, 200);
-    for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
+    for (const source of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]) {
       assert.equal((await assign({ donationId: row.id, socialSource: source }, { role: "admin" })).status, 200);
       assert.ok((await readPortalMonth(rows, source)).body.transactions.some((item) => item.name === row.display_name));
     }
@@ -654,8 +657,35 @@ test("non-multiple payments cannot be assigned to any partner and keep their ori
   const rows = [7, 12, 14.99, 19.99, 32.99].map((amount) => ({ id: `order-${amount}`, amount, created_at: "2026-11-18T00:00:00Z", payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "standard", visibility_scope: "public", social_source: null, paypal_order_id: `provider-${amount}` }));
   const snapshot = JSON.stringify(rows);
   const assign = createAssignmentApi(rows);
-  for (const row of rows) for (const socialSource of ["anshu", "badal", "rohit", "alok", "ayush", null]) {
+  for (const row of rows) for (const socialSource of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu", null]) {
     assert.equal((await assign({ donationId: row.id, socialSource }, { role: "admin" })).status, 404);
   }
   assert.equal(JSON.stringify(rows), snapshot);
+});
+
+test("Himanshu sees only eligible own-source orders while Rohit's history stays intact", async () => {
+  const base = { amount: 11, created_at: "2026-11-19T00:00:00.000Z", payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private", paypal_payer_email: "payer@example.invalid" };
+  const rows = [
+    { ...base, social_source: "rohit", display_name: "Retained Rohit order", created_at: "2026-11-12T00:00:00.000Z" },
+    { ...base, social_source: "himanshu", display_name: "Himanshu own order", amount: 22 },
+    { ...base, social_source: "himanshu", display_name: "Non-multiple", amount: 14.99 },
+    { ...base, social_source: "himanshu", display_name: "Exclusive boundary", amount: 33 },
+    { ...base, social_source: "himanshu", display_name: "Not completed", paypal_status: "FAILED" },
+    { ...base, social_source: "alok", display_name: "Alok own order" },
+  ];
+  const original = JSON.stringify(rows);
+  assert.deepEqual((await readPortalMonth(rows, "himanshu")).body.transactions.map((row) => row.name), ["Himanshu own order"]);
+  assert.deepEqual((await readPortalMonth(rows, "rohit")).body.transactions.map((row) => row.name), ["Retained Rohit order"]);
+  assert.deepEqual((await readPortalMonth(rows, "alok")).body.transactions.map((row) => row.name), ["Alok own order"]);
+  assert.equal(JSON.stringify(rows), original);
+});
+
+test("Himanshu's schema extension leaves orders, checkout attempts, memberships and other accounts untouched", () => {
+  const sql = read("supabase/migrations/202611190001_himanshu_social_portal.sql");
+  for (const table of ["payment_attempts", "memberships", "donations", "social_portal_profiles"]) assert.ok(sql.includes(`alter table public.${table}`));
+  assert.equal((sql.match(/'anshu', 'badal', 'rohit', 'alok', 'ayush', 'himanshu'/g) || []).length, 4);
+  assert.match(sql, /mod\(amount, 11\) = 0/);
+  assert.match(sql, /2026-11-16 18:30:00\+00/);
+  assert.match(sql, /then 55 else 33 end/);
+  assert.doesNotMatch(sql, /\bupdate\s+public\.|\binsert\s+into|\bdelete\s+from|\btruncate|drop table/i);
 });

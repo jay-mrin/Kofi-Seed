@@ -165,8 +165,8 @@ Deno.serve(withCors(async (request) => {
         const donationId = String(body.donationId || "").trim();
         // Older cached Hide buttons now assign Ayush as well.
         const socialSource = body.socialSource === null ? "ayush" : body.socialSource;
-        if (!donationId || (socialSource !== null && socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok" && socialSource !== "ayush")) {
-          return errorResponse("Choose an order and Anshu, Badal, Rohit, Alok, or Ayush.", 422);
+        if (!donationId || (socialSource !== null && socialSource !== "anshu" && socialSource !== "badal" && socialSource !== "rohit" && socialSource !== "alok" && socialSource !== "ayush" && socialSource !== "himanshu")) {
+          return errorResponse("Choose an order and Anshu, Badal, Rohit, Alok, Ayush, or Himanshu.", 422);
         }
 
         // Apply the same amount/date visibility as the order calendar. This

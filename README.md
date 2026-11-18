@@ -239,3 +239,10 @@ See [the payment instructions and flow](doc.work/Paymentinstruction.md) for the 
 ### Portal sign-in and session recovery
 
 Email and username logins both use `portal-login` so browser sign-in does not depend on the public Auth gateway that returned a timeout during diagnosis. The function authenticates with Supabase and revalidates the user's existing scoped portal profile for login and renewal; it returns only user-session fields. Expiring portal sessions share one server renewal, and protected requests may retry once after an authentication rejection. A stable logical login key prevents stale responses or refreshes from replacing another account. Temporary outages preserve renewal credentials. Payment requests are never automatically replayed by portal session recovery. No order rows, passwords, payment routes or portal permissions are changed by this fix.
+
+
+### Himanshu Portal (19 November 2026)
+
+New `/garden` checkouts now carry source `himanshu`. Himanshu uses a separate email/password Auth account and social profile, with only his own eligible completed PayPal order contacts/amounts/dates visible. Exact $11 multiples and the original dated limit remain enforced. Admin's assignment controls include Himanshu; Unified's retained scope remains unchanged. The `/garden` Vercel rewrite already points to the shared page.
+
+Rohit retains his login, existing eligible history, stored tags, pending checkouts and membership attribution; those records are never bulk-retagged. Apply only `202611190001_himanshu_social_portal.sql`, deploy the updated profile/login/source/assignment functions and frontend, and provision the new account privately. Alok's requested password change is an Auth-only operation that preserves his user ID, profile and history. No password belongs in source. See [Paymentinstruction.md](doc.work/Paymentinstruction.md) for current link ownership and access rules.

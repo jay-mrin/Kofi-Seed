@@ -1,6 +1,6 @@
 # Payment instructions, rules and flow
 
-Last updated: 18 November 2026. Currency: USD. Policy dates use Asia/Kolkata (India time).
+Last updated: 19 November 2026. Currency: USD. Policy dates use Asia/Kolkata (India time).
 
 This is the current payment guide. Read it with [Strictinstructions.md](Strictinstructions.md), which contains the owner's authorizations and data-preservation requirements. New owner instructions override older descriptions; update both documents when the policy changes. Historical notes in other documents do not override the current rules below.
 
@@ -51,10 +51,12 @@ Amount eligibility is necessary but does not replace the history and access rest
 | --- | --- | --- |
 | Anshu | `/sowseed` | `anshu` |
 | Badal | `/seed` | `badal` |
-| Rohit | `/garden` | `rohit` |
+| Rohit | Historical attribution retained; no new checkout path assigned | `rohit` |
 | Alok | `/sownow` | `alok` |
 | Ayush | `/seeds` | `ayush` |
+| Himanshu | `/garden` | `himanshu` |
 
+- From the 19 November Himanshu rollout, newly started `/garden` checkouts use `himanshu`. Existing Rohit orders, in-progress attempts, memberships and their renewal attribution are not reassigned. Rohit keeps his login, eligible history and Admin assignment option.
 - Attribute checkout using the current path. Do not keep a sticky partner attribution when a customer visits another path.
 - Only authenticated partner accounts can read their own source's eligible, successfully completed PayPal orders.
 - Partner history starts on 4 November 2026 at 00:00 India time (`2026-11-03T18:30:00.000Z`). Earlier records remain stored but are excluded from partner views.
@@ -66,7 +68,7 @@ Amount eligibility is necessary but does not replace the history and access rest
 
 ### Admin assignment controls
 
-- The controls are Anshu, Badal, Rohit, Alok and Ayush.
+- The controls are Anshu, Badal, Rohit, Alok, Ayush and Himanshu.
 - The former **Hide from partner portals** control is now **Ayush**. Older cached hide requests also assign Ayush.
 - Only Admin may use the assignment API, for eligible completed PayPal orders from 16 November onward.
 - Assignment changes only the selected order's attribution. It does not change the subscription, other payments, collecting account, amount, original timestamp or provider relationships.
@@ -77,7 +79,7 @@ Amount eligibility is necessary but does not replace the history and access rest
 
 - The current frontend displays only its isolated, generated payment-record view and does not fetch actual payments.
 - Generated entries must never be inserted as real payments or mixed into real orders, totals, payment processing or other portals.
-- The retained read-only backend is restricted to the previously authorized eligible union of Anshu, Badal, Rohit and Alok. It does not automatically gain Ayush access.
+- The retained read-only backend is restricted to the previously authorized eligible union of Anshu, Badal, Rohit and Alok. It does not automatically gain Ayush or Himanshu access.
 - Non-multiple and otherwise SuperAdmin-exclusive records remain excluded. Unified has no assignment, fulfillment, settings or Admin privileges.
 
 ## 5. Normal payment flow

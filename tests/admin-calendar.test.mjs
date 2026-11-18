@@ -231,7 +231,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     getFulfillmentStatusLabel: () => "Unfulfilled",
     DIGITAL_ORDER_ITEM_NAME: "Seed",
   });
-  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal|rohit|alok|ayush)"[^>]*>/g)]
+  const tagButtons = () => [...details.innerHTML.matchAll(/<button[^>]*data-set-order-social-source="(anshu|badal|rohit|alok|ayush|himanshu)"[^>]*>/g)]
     .map((match) => match[0]);
 
   render(context);
@@ -240,8 +240,8 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   const ayushButton = () => tagButtons()[4];
   assert.match(ayushButton(), /aria-pressed="false"/);
   assert.doesNotMatch(details.innerHTML, /Hide from partner portals|data-hide-order-from-partners/);
-  assert.equal(tagButtons().length, 5);
-  assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok", "ayush"]);
+  assert.equal(tagButtons().length, 6);
+  assert.deepEqual(tagButtons().map((button) => button.match(/data-set-order-social-source="([^"]+)"/)[1]), ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]);
   assert.ok(tagButtons().every((button) => !button.includes("disabled")));
 
   donation.socialSource = "anshu";
@@ -251,7 +251,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
   assert.match(tagButtons()[1], /aria-pressed="false"/);
   assert.doesNotMatch(tagButtons()[1], /disabled/);
 
-  for (const portal of ["badal", "rohit", "alok", "anshu"]) {
+  for (const portal of ["badal", "rohit", "alok", "anshu", "himanshu"]) {
     donation.socialSource = portal;
     render(context);
     assert.doesNotMatch(details.innerHTML, /Portal:/);
@@ -261,7 +261,7 @@ test("Admin and SuperAdmin order cards show only eligible portal assignments and
     assert.equal(selected.length, 1);
     assert.ok(selected[0].includes(`data-set-order-social-source="${portal}"`));
     assert.ok(selected[0].includes("disabled"));
-    assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 4);
+    assert.equal(tagButtons().filter((button) => !button.includes("disabled")).length, 5);
   }
 
   donation.amount = 55;

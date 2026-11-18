@@ -96,7 +96,7 @@ test("starting checkout preserves expired attempt history for delayed payment re
 
 for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"]) {
   test(`${functionName} enforces the $33 account and assignment boundary on the server`, async () => {
-    for (const sourceTag of ["anshu", "badal", "rohit", "alok"]) {
+    for (const sourceTag of ["anshu", "badal", "rohit", "alok", "ayush", "himanshu"]) {
       for (const amount of [11, 22, 32.99, 33, 33.01, 55, 110, 121]) {
         const { response, writes, paypalOrders } = await checkout(functionName, {
           amount, name: "Customer", email: "customer@example.invalid", paymentRoute: "standard", sourceTag,
