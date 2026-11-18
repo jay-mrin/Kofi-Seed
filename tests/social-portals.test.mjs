@@ -186,7 +186,7 @@ test("frontend rejects stale high values and earlier rows from any backend polic
     SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "social_partner", socialSource: "anshu" } },
     elements: { socialCalendarPrev: {}, socialCalendarNext: {}, socialCalendarDetails: {} },
-    getMonthKey: () => "2026-11", getAdminAccessToken: () => "session", callEdge: async () => payload, renderSocialCalendar() {},
+    getMonthKey: () => "2026-11", getAdminSessionKey: () => "session", callEdge: async () => payload, renderSocialCalendar() {},
   });
   vm.runInContext(source, context);
   for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
@@ -221,7 +221,7 @@ test("client blocks $33 and earlier orders before calling the assignment API", a
   const row = { id: "order", amount: 33, createdAt: "2026-11-16T18:30:00.000Z", socialSource: null };
   const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "admin" } }, adminCalendarDonations: [row],
-    elements: { adminPanel: { getAttribute: () => "false" } }, getDonationById: () => row, getAdminAccessToken: () => "session",
+    elements: { adminPanel: { getAttribute: () => "false" } }, getDonationById: () => row, getAdminSessionKey: () => "session",
     runAdminAction: async (_options, action) => action(), renderAdminCalendar() {}, setAdminStatus() {},
     callEdge: async () => { calls++; return { donationId: row.id, socialSource: "anshu", socialAssignmentApproved: true }; },
   });
@@ -545,7 +545,7 @@ test("Ayush button sends an explicit assignment and keeps the payment in Admin's
   const context = vm.createContext({ ...policy, getSocialLimitCents: (date) => getSocialLimitCents(date || "2026-11-17T00:00:00Z"), SOCIAL_PORTAL_START_ISO: SOCIAL_PORTAL_START,
     state: { adminProfile: { role: "admin" } }, adminCalendarDonations: [row],
     elements: { adminPanel: { getAttribute: () => "false" } },
-    getDonationById: () => row, getAdminAccessToken: () => "session", renderAdminCalendar() {}, setAdminStatus() {},
+    getDonationById: () => row, getAdminSessionKey: () => "session", renderAdminCalendar() {}, setAdminStatus() {},
     runAdminAction: (_options, action) => (clickAction = action()),
     callEdge: async (_endpoint, options) => { requests.push(options.body); return { donationId: row.id, socialSource: "ayush", socialAssignmentApproved: true }; },
   });

@@ -113,6 +113,10 @@ Weekly PayPal signup creates a subscription after customer approval. Recurring p
 - Authenticate and authorize on the server. A role, source tag or UI button supplied by the browser does not grant access.
 - Financial tables use row-level security; public/partner/Admin output is served through scoped functions. Service-role credentials remain private.
 - Passwords belong in Supabase Auth, not source, migrations, screenshots or this guide. Partner usernames resolve on the server and must match the authenticated user's own profile.
+- Email and username sign-in both go through `portal-login`, which authenticates with Supabase on the server and rechecks the account's current portal profile. The browser does not sign in directly through the public Auth gateway.
+- Expiring sessions renew through that same server path using their refresh token. Concurrent portal requests share one renewal; an unauthorized protected request retries at most once after renewal. Failed/removed portal access still requires signing in again.
+- Token renewal preserves a logical login identifier so a valid renewed response can load, while logout/account changes reject stale responses. A slow refresh must never overwrite a newer account's session. Temporary connectivity problems retain the existing refresh credentials for a later retry.
+- Session recovery must not automatically replay PayPal/Dodo payment requests or uncertain captures.
 
 ## 8. Order preservation and restoration
 

@@ -5,6 +5,7 @@ const CONFIG = {
 const PUBLIC_CONFIG = window.SOW_YOUR_SEED_CONFIG || {};
 const STORAGE_KEY = "sow-your-seed:v1";
 const ADMIN_SESSION_KEY = "sow-your-seed:admin-session";
+let adminSessionRefreshPromise = null;
 const DONOR_TOKEN_KEY = "sow-your-seed:donor-token";
 const VISITOR_KEY_KEY = "sow-your-seed:visitor-key";
 const DEMO_ADMIN_PASSWORD = "sowseed";
@@ -622,8 +623,9 @@ function getAdminSession() {
   }
 }
 
-function setAdminSession(session) {
-  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+function setAdminSession(session, sessionKey = "") {
+  const portalSessionId = sessionKey || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ ...session, portal_session_id: portalSessionId }));
 }
 
 function clearAdminSession() {
@@ -657,6 +659,56 @@ function getAdminAccessToken() {
   return session?.access_token || "";
 }
 
+function getAdminSessionKey(session = getAdminSession()) {
+  if (!session?.access_token) return "";
+  return session.portal_session_id || `legacy-${session.access_token.slice(-32)}`;
+}
+
+function portalSessionError() {
+  const error = new Error("Your session expired. Please sign in again.");
+  error.code = "SESSION_EXPIRED";
+  error.status = 401;
+  return error;
+}
+
+async function refreshAdminSession() {
+  if (adminSessionRefreshPromise) return adminSessionRefreshPromise;
+  const session = getAdminSession();
+  const sessionKey = getAdminSessionKey(session);
+  if (!sessionKey || !session?.refresh_token) throw portalSessionError();
+  const pending = (async () => {
+    try {
+      const payload = await callEdge("portal-login", { body: { refreshToken: session.refresh_token } });
+      const current = getAdminSession();
+      if (sessionKey !== getAdminSessionKey(current)) throw new Error("The portal session changed. Please reload the current portal.");
+      if (current.access_token !== session.access_token || current.refresh_token !== session.refresh_token) return current;
+      if (!payload.access_token || !payload.refresh_token) throw new Error("The service did not return a renewed portal session. Please try again.");
+      setAdminSession(payload, sessionKey);
+      return payload;
+    } catch (error) {
+      const current = getAdminSession();
+      if (error.status === 401 && sessionKey === getAdminSessionKey(current)) {
+        if (current.access_token !== session.access_token || current.refresh_token !== session.refresh_token) return current;
+        clearAdminSession();
+        throw portalSessionError();
+      }
+      throw error;
+    }
+  })();
+  adminSessionRefreshPromise = pending;
+  try { return await pending; } finally {
+    if (adminSessionRefreshPromise === pending) adminSessionRefreshPromise = null;
+  }
+}
+
+async function getValidAdminAccessToken() {
+  const session = getAdminSession();
+  if (!session?.access_token) throw portalSessionError();
+  const expiresAt = Number(session.expires_at);
+  if (adminSessionRefreshPromise || (expiresAt > 0 && expiresAt * 1000 <= Date.now() + 60000)) await refreshAdminSession();
+  return getAdminAccessToken();
+}
+
 function edgeUrl(functionName) {
   return `${PUBLIC_CONFIG.supabaseUrl.replace(/\/$/, "")}/functions/v1/${functionName}`;
 }
@@ -666,9 +718,17 @@ async function callEdge(functionName, options = {}) {
     throw new Error("Backend is not configured. Fill src/config.js first.");
   }
 
+  if (options.admin) await getValidAdminAccessToken();
+  const requestSession = options.admin ? getAdminSession() : null;
+  const accessToken = options.admin ? requestSession?.access_token : PUBLIC_CONFIG.supabaseAnonKey;
+  const sessionKey = options.admin ? getAdminSessionKey(requestSession) : "";
+  if (options.admin && !accessToken) throw portalSessionError();
+  if (options.admin && options.portalSessionKey && options.portalSessionKey !== sessionKey) {
+    throw new Error("The portal session changed. Please reload the current portal.");
+  }
   const headers = {
     apikey: PUBLIC_CONFIG.supabaseAnonKey,
-    Authorization: options.admin ? `Bearer ${getAdminAccessToken()}` : `Bearer ${PUBLIC_CONFIG.supabaseAnonKey}`,
+    Authorization: `Bearer ${accessToken}`,
     ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {}),
   };
@@ -681,13 +741,27 @@ async function callEdge(functionName, options = {}) {
       body: options.body instanceof FormData ? options.body : options.body ? JSON.stringify(options.body) : undefined,
     });
   } catch (cause) {
-    const error = new Error("The payment service could not be reached. Check your connection and try again.");
+    const isPortalRequest = options.admin || functionName.split("?")[0] === "portal-login";
+    const error = new Error(isPortalRequest
+      ? "The portal service could not be reached. Please try again."
+      : "The payment service could not be reached. Check your connection and try again.");
     error.code = "NETWORK_ERROR";
     error.cause = cause;
     throw error;
   }
   const payload = await response.json().catch(() => ({}));
+  if (options.admin && sessionKey !== getAdminSessionKey()) {
+    throw new Error("The portal session changed. Please reload the current portal.");
+  }
 
+  if (response.status === 401 && options.admin) {
+    if (options.sessionRetried) {
+      if (accessToken === getAdminAccessToken()) clearAdminSession();
+      throw portalSessionError();
+    }
+    if (accessToken === getAdminAccessToken()) await refreshAdminSession();
+    return callEdge(functionName, { ...options, sessionRetried: true, portalSessionKey: sessionKey });
+  }
   if (!response.ok) {
     const error = new Error(payload.error || `Request failed: ${response.status}`);
     error.code = payload.code || "";
@@ -719,25 +793,8 @@ async function trackCheckoutEvent(eventName, donation = pendingDonation) {
 }
 
 async function signInAdmin(email, password) {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    const payload = await callEdge("portal-login", { body: { username: email, password } });
-    setAdminSession(payload);
-    return payload;
-  }
-  const response = await fetch(`${PUBLIC_CONFIG.supabaseUrl.replace(/\/$/, "")}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: {
-      apikey: PUBLIC_CONFIG.supabaseAnonKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(payload.error_description || payload.msg || "Could not sign in.");
-  }
-
+  const payload = await callEdge("portal-login", { body: { username: email, password } });
+  if (!payload.access_token || !payload.refresh_token) throw new Error("The sign-in service did not return a session. Please try again.");
   setAdminSession(payload);
   return payload;
 }
@@ -1839,7 +1896,7 @@ async function setOrderSocialSource(donationId, socialSource, button) {
     setAdminStatus("Only eligible PayPal orders in exact multiples of $11 can be assigned.", "error", { persist: true });
     return;
   }
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
   await runAdminAction(
     {
       panel: elements.adminPanel,
@@ -1859,7 +1916,7 @@ async function setOrderSocialSource(donationId, socialSource, button) {
       if (String(payload.donationId) !== String(donationId) || payload.socialSource !== socialSource) {
         throw new Error("The server did not confirm the portal assignment.");
       }
-      if (state.adminProfile?.role === role && getAdminAccessToken() === accessToken) {
+      if (state.adminProfile?.role === role && getAdminSessionKey() === sessionKey) {
         adminCalendarDonations = adminCalendarDonations.map((item) =>
           String(item.id) === String(donationId) ? { ...item, socialSource, socialSourceManuallyAssigned: true, socialAssignmentApproved: payload.socialAssignmentApproved === true } : item);
         renderAdminCalendar();
@@ -1924,9 +1981,9 @@ async function loadAdminDonations(options = {}) {
     renderAdminCalendar();
     return;
   }
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
   const role = state.adminProfile?.role;
-  if (!accessToken || !["admin", "super_admin"].includes(role)) return;
+  if (!sessionKey || !["admin", "super_admin"].includes(role)) return;
   const requestId = ++adminCalendarRequestId;
   const month = getMonthKey(adminCalendarCursor);
   const cursor = new Date(adminCalendarCursor.getFullYear(), adminCalendarCursor.getMonth(), 1);
@@ -1937,7 +1994,7 @@ async function loadAdminDonations(options = {}) {
     endOffset: String(end.getTimezoneOffset()),
   });
   const isCurrentRequest = () => requestId === adminCalendarRequestId &&
-    accessToken === getAdminAccessToken() && role === state.adminProfile?.role &&
+    sessionKey === getAdminSessionKey() && role === state.adminProfile?.role &&
     month === getMonthKey(adminCalendarCursor);
   const announce = Boolean(options.announce);
   adminCalendarLoading = true;
@@ -1978,10 +2035,10 @@ async function loadAdminDonations(options = {}) {
 }
 
 async function loadAdminAnalytics(options = {}) {
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
   const role = state.adminProfile?.role;
-  if (!isBackendConfigured() || !accessToken || role !== "super_admin") return;
-  const isCurrentSession = () => accessToken === getAdminAccessToken() && role === state.adminProfile?.role;
+  if (!isBackendConfigured() || !sessionKey || role !== "super_admin") return;
+  const isCurrentSession = () => sessionKey === getAdminSessionKey() && role === state.adminProfile?.role;
 
   const announce = Boolean(options.announce);
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
@@ -2022,7 +2079,7 @@ async function loadAdminAnalytics(options = {}) {
 async function resetAdminAnalytics() {
   if (state.adminProfile?.role !== "super_admin") return;
   const routeLabel = state.adminProfile?.role === "super_admin" ? "SuperAdmin" : "Admin";
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
   const role = state.adminProfile?.role;
   if (!isBackendConfigured() || !getAdminAccessToken()) {
     state.analytics = createEmptyAnalytics();
@@ -2045,7 +2102,7 @@ async function resetAdminAnalytics() {
         method: "DELETE",
       });
 
-      if (accessToken !== getAdminAccessToken() || role !== state.adminProfile?.role) return payload;
+      if (sessionKey !== getAdminSessionKey() || role !== state.adminProfile?.role) return payload;
       state.analytics = normalizeAnalytics(payload);
       renderAdminAnalytics();
       return payload;
@@ -2055,7 +2112,7 @@ async function resetAdminAnalytics() {
 
 async function decrementPageView() {
   if (state.adminProfile?.role !== "super_admin") return;
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
 
   const currentViews = normalizeAnalytics(state.analytics).pageViewsLast24h;
   if (currentViews <= 0) {
@@ -2089,7 +2146,7 @@ async function decrementPageView() {
         method: "POST",
       });
 
-      if (accessToken !== getAdminAccessToken() || state.adminProfile?.role !== "super_admin") return payload;
+      if (sessionKey !== getAdminSessionKey() || state.adminProfile?.role !== "super_admin") return payload;
       state.analytics = normalizeAnalytics(payload);
       renderAdminAnalytics();
       return payload;
@@ -3953,7 +4010,7 @@ async function loadSocialTransactions() {
   const month = getMonthKey(socialCalendarCursor);
   const source = state.adminProfile?.socialSource;
   const role = state.adminProfile?.role;
-  const accessToken = getAdminAccessToken();
+  const sessionKey = getAdminSessionKey();
   if (!["social_partner", "unified_payment"].includes(role)) return;
   elements.socialCalendarPrev.disabled = true;
   elements.socialCalendarNext.disabled = true;
@@ -3962,7 +4019,7 @@ async function loadSocialTransactions() {
     const endpoint = role === "unified_payment" ? "unified-portal-transactions" : "social-portal-transactions";
     const payload = await callEdge(`${endpoint}?month=${month}`, { admin: true, method: "GET" });
     if (month !== getMonthKey(socialCalendarCursor) || role !== state.adminProfile?.role ||
-        source !== state.adminProfile?.socialSource || accessToken !== getAdminAccessToken()) return;
+        source !== state.adminProfile?.socialSource || sessionKey !== getAdminSessionKey()) return;
     socialTransactions = Array.isArray(payload.transactions)
       ? payload.transactions.filter((transaction) => {
         const amountCents = Math.round(Number(transaction.amount) * 100);

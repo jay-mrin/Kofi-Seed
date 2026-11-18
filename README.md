@@ -234,3 +234,8 @@ For the two owner-authorized older receipt restorations only, a server-written `
 ### Current payment visibility (18 November 2026)
 
 See [the payment instructions and flow](doc.work/Paymentinstruction.md) for the current policy. Admin accepts only exact positive $11 multiples below the original dated limit: $11/$22/$33/$44 before November 17 India time, $11/$22 from that date onward. All other amounts are SuperAdmin-only across collecting accounts and history. Existing payment rows and routes remain untouched; the shared API filters, frontend defenses and future-write guards enforce visibility and attribution. Apply only migration `202611180001_eleven_dollar_payment_visibility.sql` and deploy functions using the updated shared rules. Earlier policy notes are historical and remain subject to this additional restriction.
+
+
+### Portal sign-in and session recovery
+
+Email and username logins both use `portal-login` so browser sign-in does not depend on the public Auth gateway that returned a timeout during diagnosis. The function authenticates with Supabase and revalidates the user's existing scoped portal profile for login and renewal; it returns only user-session fields. Expiring portal sessions share one server renewal, and protected requests may retry once after an authentication rejection. A stable logical login key prevents stale responses or refreshes from replacing another account. Temporary outages preserve renewal credentials. Payment requests are never automatically replayed by portal session recovery. No order rows, passwords, payment routes or portal permissions are changed by this fix.

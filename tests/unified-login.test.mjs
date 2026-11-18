@@ -9,16 +9,23 @@ const loginSource = read("supabase/functions/portal-login/index.ts")
   .replace(/^import .*;\n/gm, "")
   .replace(/readJson<.*>\(request\)/g, "readJson(request)");
 
-async function usernameLogin(body, { method = "POST", wrongIdentity = false, failLookup = false } = {}) {
+async function usernameLogin(body, { method = "POST", wrongIdentity = false, failLookup = false, profileDenied = false, refreshInvalid = false, serviceUnavailable = false } = {}) {
   let handler;
   let lookedUp;
   const authCalls = [];
+  let authenticatedId = "";
   const context = vm.createContext({
     Deno: { serve: (callback) => { handler = callback; } },
     withCors: (callback) => callback, handleOptions: () => null,
     readJson: async () => body,
     errorResponse: (error, status) => ({ status, body: { error } }),
     jsonResponse: (value) => ({ status: 200, body: value, headers: new globalThis.Headers() }),
+    Request: globalThis.Request, Response: globalThis.Response,
+    getPortalProfile: async (request) => {
+      assert.match(request.headers.get("Authorization"), /^Bearer (session-access|refreshed-access)$/);
+      if (profileDenied) throw new globalThis.Response("Not a portal account", { status: 403 });
+      return { profile: { userId: authenticatedId } };
+    },
     getSupabaseAdmin: () => ({
       from(table) {
         assert.ok(["unified_payment_portal_profiles", "social_portal_profiles"].includes(table));
@@ -33,11 +40,21 @@ async function usernameLogin(body, { method = "POST", wrongIdentity = false, fai
         return query;
       },
       auth: {
+        async refreshSession(credentials) {
+          authCalls.push(credentials);
+          if (refreshInvalid) return { error: { status: 400 }, data: {} };
+          if (serviceUnavailable) return { error: { status: 503 }, data: {} };
+          assert.equal(credentials.refresh_token, "refresh-current");
+          authenticatedId = "ayush-user";
+          return { data: { user: { id: authenticatedId }, session: { access_token: "refreshed-access", refresh_token: "refreshed-token", token_type: "bearer", expires_in: 3600, expires_at: 1234 } } };
+        },
         async signInWithPassword(credentials) {
           authCalls.push(credentials);
-          assert.ok(["private-alias@example.invalid", "partner-alias@example.invalid"].includes(credentials.email));
-          if (credentials.password !== "test-password") return { error: new Error("Invalid login") };
-          return { data: { user: { id: wrongIdentity ? "other-user" : credentials.email === "partner-alias@example.invalid" ? "ayush-user" : "unified-user" }, session: {
+          assert.ok(["private-alias@example.invalid", "partner-alias@example.invalid", "admin@example.invalid"].includes(credentials.email));
+          if (serviceUnavailable) return { error: { status: 503 }, data: {} };
+          if (credentials.password !== "test-password") return { error: { status: 400 } };
+          authenticatedId = wrongIdentity ? "other-user" : credentials.email === "partner-alias@example.invalid" ? "ayush-user" : credentials.email === "admin@example.invalid" ? "admin-user" : "unified-user";
+          return { data: { user: { id: authenticatedId }, session: {
             access_token: "session-access", refresh_token: "session-refresh", token_type: "bearer", expires_in: 3600, expires_at: 1234,
             private_metadata: "must not leave server",
           } } };
@@ -46,7 +63,7 @@ async function usernameLogin(body, { method = "POST", wrongIdentity = false, fai
     }),
   });
   vm.runInContext(loginSource, context);
-  return { response: await handler({ method }), authCalls };
+  return { response: await handler({ method, url: "https://local.invalid/portal-login" }), authCalls };
 }
 
 test("username login resolves a normalized alias on the server and returns only session fields", async () => {
@@ -75,11 +92,11 @@ test("username login rejects invalid credentials, identity mismatches, and metho
   assert.equal(get.response.status, 405);
   assert.equal(get.authCalls.length, 0);
   const failed = await usernameLogin({ username: "client@3", password: "test-password" }, { failLookup: true });
-  assert.equal(failed.response.status, 500);
+  assert.equal(failed.response.status, 503);
   assert.doesNotMatch(JSON.stringify(failed.response.body), /Private database/);
 });
 
-test("frontend accepts username login while preserving existing email sign-in and session handling", async () => {
+test("frontend routes both usernames and emails through the working server sign-in path", async () => {
   const app = read("src/app.js");
   const signIn = app.match(/async function signInAdmin\([^]*?\n\}/)[0];
   const sessions = [];
@@ -87,19 +104,16 @@ test("frontend accepts username login while preserving existing email sign-in an
   const context = vm.createContext({
     PUBLIC_CONFIG: { supabaseUrl: "https://local.invalid", supabaseAnonKey: "public-key" },
     setAdminSession: (session) => sessions.push(session),
-    callEdge: async (name, options) => { calls.push({ name, body: options.body }); return { access_token: "username-session" }; },
-    fetch: async (url, options) => {
-      calls.push({ url, body: JSON.parse(options.body) });
-      return { ok: true, json: async () => ({ access_token: "email-session" }) };
-    },
+    callEdge: async (name, options) => { calls.push({ name, body: options.body }); return { access_token: options.body.username.includes("example.invalid") ? "email-session" : "username-session", refresh_token: "session-refresh" }; },
+    fetch: () => { throw new Error("Browser must not use the failing public Auth gateway"); },
   });
   vm.runInContext(signIn, context);
   await context.signInAdmin("client@3", "test-password");
   assert.equal(calls[0].name, "portal-login");
   assert.equal(calls[0].body.username, "client@3");
   await context.signInAdmin("anshu@example.invalid", "test-password");
-  assert.match(calls[1].url, /auth\/v1\/token\?grant_type=password$/);
-  assert.equal(calls[1].body.email, "anshu@example.invalid");
+  assert.equal(calls[1].name, "portal-login");
+  assert.equal(calls[1].body.username, "anshu@example.invalid");
   assert.deepEqual(sessions.map((session) => session.access_token), ["username-session", "email-session"]);
   assert.match(read("index.html"), /id="adminEmailInput" type="text" autocomplete="username"/);
   assert.doesNotMatch(app, /client3@2026|client@3/i);
@@ -166,4 +180,28 @@ test("partner username login verifies the matching Auth identity without exposin
   assert.doesNotMatch(JSON.stringify(response.body), /partner-alias|ayush-user/);
   assert.equal((await usernameLogin({ username: "ayush", password: "wrong-password" })).response.status, 401);
   assert.equal((await usernameLogin({ username: "ayush", password: "test-password" }, { wrongIdentity: true })).response.status, 401);
+});
+
+
+test("email sign-in is normalized and still requires an authorized portal profile", async () => {
+  const result = await usernameLogin({ username: " ADMIN@EXAMPLE.INVALID ", password: "test-password" });
+  assert.equal(result.response.status, 200);
+  assert.equal(result.authCalls[0].email, "admin@example.invalid");
+  assert.equal((await usernameLogin({ username: "admin@example.invalid", password: "wrong" })).response.status, 401);
+  assert.equal((await usernameLogin({ username: "admin@example.invalid", password: "test-password" }, { profileDenied: true })).response.status, 401);
+  assert.equal((await usernameLogin({ username: "admin@example.invalid", password: "test-password" }, { serviceUnavailable: true })).response.status, 503);
+});
+
+test("session renewal returns only user tokens and rechecks current portal access", async () => {
+  const result = await usernameLogin({ refreshToken: "refresh-current" });
+  assert.equal(result.response.status, 200);
+  assert.equal(result.authCalls[0].refresh_token, "refresh-current");
+  assert.equal(result.response.body.access_token, "refreshed-access");
+  assert.deepEqual(Object.keys(result.response.body).sort(), ["access_token", "expires_at", "expires_in", "refresh_token", "token_type"]);
+  assert.equal(result.response.headers.get("Cache-Control"), "no-store");
+  assert.equal((await usernameLogin({ refreshToken: "refresh-current" }, { refreshInvalid: true })).response.status, 401);
+  assert.equal((await usernameLogin({ refreshToken: "refresh-current" }, { profileDenied: true })).response.status, 401);
+  assert.equal((await usernameLogin({ refreshToken: "refresh-current" }, { serviceUnavailable: true })).response.status, 503);
+  for (const refreshToken of ["", 42, "x".repeat(4097)]) assert.equal((await usernameLogin({ refreshToken })).response.status, 401);
+  assert.equal((await usernameLogin({ refreshToken: "refresh-current", username: "ayush", password: "test-password" })).response.status, 401);
 });
