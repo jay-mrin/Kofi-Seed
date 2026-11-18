@@ -30,8 +30,12 @@ test("only the current tagged path attributes PayPal checkout", () => {
   window.location.pathname = "/seed";
   assert.equal(context.readSocialSourceTag(), "badal");
   window.location.pathname = "/garden";
-  assert.equal(context.readSocialSourceTag(), "himanshu");
+  assert.equal(context.readSocialSourceTag(), "rohit");
   window.location.pathname = "/garden/";
+  assert.equal(context.readSocialSourceTag(), "rohit");
+  window.location.pathname = "/seedhere";
+  assert.equal(context.readSocialSourceTag(), "himanshu");
+  window.location.pathname = "/seedhere/";
   assert.equal(context.readSocialSourceTag(), "himanshu");
   window.location.pathname = "/sownow";
   assert.equal(context.readSocialSourceTag(), "alok");
@@ -50,10 +54,10 @@ test("only the current tagged path attributes PayPal checkout", () => {
   assert.doesNotMatch(source, /sessionStorage|localStorage/);
   const routing = JSON.parse(read("vercel.json"));
   assert.deepEqual(routing.rewrites.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed", "/index.html"], ["/seed", "/index.html"], ["/garden", "/index.html"], ["/sownow", "/index.html"], ["/seeds", "/index.html"],
+    ["/sowseed", "/index.html"], ["/seed", "/index.html"], ["/garden", "/index.html"], ["/sownow", "/index.html"], ["/seeds", "/index.html"], ["/seedhere", "/index.html"],
   ]);
   assert.deepEqual(routing.redirects.map(({ source, destination }) => [source, destination]), [
-    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"], ["/garden/", "/garden"], ["/sownow/", "/sownow"], ["/seeds/", "/seeds"],
+    ["/sowseed/", "/sowseed"], ["/seed/", "/seed"], ["/garden/", "/garden"], ["/sownow/", "/sownow"], ["/seeds/", "/seeds"], ["/seedhere/", "/seedhere"],
   ]);
   assert.equal(new URL("src/app.js", "https://example.invalid/sowseed").pathname, "/src/app.js");
 });

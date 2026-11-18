@@ -51,12 +51,12 @@ Amount eligibility is necessary but does not replace the history and access rest
 | --- | --- | --- |
 | Anshu | `/sowseed` | `anshu` |
 | Badal | `/seed` | `badal` |
-| Rohit | Historical attribution retained; no new checkout path assigned | `rohit` |
+| Rohit | `/garden` | `rohit` |
 | Alok | `/sownow` | `alok` |
 | Ayush | `/seeds` | `ayush` |
-| Himanshu | `/garden` | `himanshu` |
+| Himanshu | `/seedhere` | `himanshu` |
 
-- From the 19 November Himanshu rollout, newly started `/garden` checkouts use `himanshu`. Existing Rohit orders, in-progress attempts, memberships and their renewal attribution are not reassigned. Rohit keeps his login, eligible history and Admin assignment option.
+- Following the 19 November link correction, newly started `/seedhere` checkouts use `himanshu`, and `/garden` again uses `rohit`. Existing orders, in-progress attempts, memberships and their renewal attribution are not reassigned. Both portals retain their logins, eligible history and Admin assignment options.
 - Attribute checkout using the current path. Do not keep a sticky partner attribution when a customer visits another path.
 - Only authenticated partner accounts can read their own source's eligible, successfully completed PayPal orders.
 - Partner history starts on 4 November 2026 at 00:00 India time (`2026-11-03T18:30:00.000Z`). Earlier records remain stored but are excluded from partner views.

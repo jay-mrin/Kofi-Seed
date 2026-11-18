@@ -4,13 +4,15 @@
     { "source": "/seed/", "destination": "/seed", "permanent": true },
     { "source": "/garden/", "destination": "/garden", "permanent": true },
     { "source": "/sownow/", "destination": "/sownow", "permanent": true },
-    { "source": "/seeds/", "destination": "/seeds", "permanent": true }
+    { "source": "/seeds/", "destination": "/seeds", "permanent": true },
+    { "source": "/seedhere/", "destination": "/seedhere", "permanent": true }
   ],
   "rewrites": [
     { "source": "/sowseed", "destination": "/index.html" },
     { "source": "/seed", "destination": "/index.html" },
     { "source": "/garden", "destination": "/index.html" },
     { "source": "/sownow", "destination": "/index.html" },
-    { "source": "/seeds", "destination": "/index.html" }
+    { "source": "/seeds", "destination": "/index.html" },
+    { "source": "/seedhere", "destination": "/index.html" }
   ]
 }

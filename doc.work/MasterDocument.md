@@ -195,3 +195,6 @@ The owner additionally authorized Admin history access for the two privately sup
 
 
 **19 November 2026 — Himanshu Portal and Alok credentials:** Newly started `/garden` checkouts attribute eligible payments to `himanshu`. A separate restricted social profile and privately provisioned email/password login grant only own-source completed PayPal records under the exact-$11 and dated-limit policy. Admin assignment includes Himanshu, while Unified's retained source scope stays unchanged. Rohit's login, order history, stored tags, pending checkout and membership sources remain intact. Additive migration `202611190001_himanshu_social_portal.sql` extends source constraints without updating rows. The separately authorized Alok password update changes only Auth credentials, preserving identity, role and payments. No passwords are recorded here.
+
+
+**19 November 2026 — Himanshu link correction:** The owner changed Himanshu's checkout path to `/seedhere`. Newly started `/garden` checkouts again use Rohit's original `rohit` source. The frontend and Vercel route configuration reflect the separate paths. Existing orders, attempts, memberships, attribution, accounts and eligibility rules are preserved; this change requires no database or Auth updates.

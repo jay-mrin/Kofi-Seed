@@ -202,7 +202,7 @@ function isElevenDollarMultiple(amountCents) {
 
 function readSocialSourceTag() {
   const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
-  return path === "/sowseed" ? "anshu" : path === "/seed" ? "badal" : path === "/garden" ? "himanshu" : path === "/sownow" ? "alok" : path === "/seeds" ? "ayush" : null;
+  return path === "/sowseed" ? "anshu" : path === "/seed" ? "badal" : path === "/garden" ? "rohit" : path === "/seedhere" ? "himanshu" : path === "/sownow" ? "alok" : path === "/seeds" ? "ayush" : null;
 }
 
 const elements = {
