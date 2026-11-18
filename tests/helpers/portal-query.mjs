@@ -18,7 +18,8 @@ export function matchesFilter(row, value) {
   const [, key, operator, operand] = value.match(/^([^.]+)\.([^.]+)\.(.*)$/) || [];
   let actual = key?.split(/->>?/).reduce((value, part) => value?.[part], row);
   if (key?.includes("->>") && actual !== undefined && actual !== null) actual = String(actual);
-  if (operator === "in") return operand.slice(1, -1).split(",").includes(actual);
+  if (operator === "in") return operand.slice(1, -1).split(",").includes(String(actual));
+  if (operator === "not" && operand.startsWith("in.(")) return !operand.slice(4, -1).split(",").includes(String(actual));
   const expected = typeof actual === "number" ? Number(operand) : operand;
   if (operator === "eq") return actual === expected;
   if (operator === "lt") return actual < expected;

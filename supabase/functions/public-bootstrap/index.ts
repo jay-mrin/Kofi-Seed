@@ -2,7 +2,7 @@ import { withCors, errorResponse, handleOptions, jsonResponse } from "../_shared
 import { getPayPalClientId } from "../_shared/paypal.ts";
 import { getSupabaseAdmin, hashText } from "../_shared/supabase.ts";
 
-import { getSocialLimitCents, SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
+import { getSocialLimitCents, isElevenDollarMultiple, SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
 
 function getUtcHourStart(date = new Date()) {
   const hour = new Date(date);
@@ -109,7 +109,7 @@ async function loadPublicContent(
 
   const confirmedSeedDonations = (donationsResult.data || [])
     .filter((donation) => {
-      if (!["paypal", "dodo"].includes(donation.payment_method)) return false;
+      if (!isElevenDollarMultiple(Math.round(Number(donation.amount) * 100)) || !["paypal", "dodo"].includes(donation.payment_method)) return false;
       const rawPayment =
         donation.raw_payment && typeof donation.raw_payment === "object"
           ? donation.raw_payment
@@ -123,12 +123,14 @@ async function loadPublicContent(
     .slice(0, 50);
   const seedComments = (seedCommentsResult.data || []).filter(
     (comment: Record<string, any>) => {
+      if (comment.amount != null && !isElevenDollarMultiple(Math.round(Number(comment.amount) * 100))) return false;
       if (Math.round(Number(comment.amount) * 100) >= getSocialLimitCents(comment.created_at)) return false;
       const donation = Array.isArray(comment.donations)
         ? comment.donations[0]
         : comment.donations;
-      if (!donation) return true;
+      if (!donation) return comment.amount != null || comment.source === "legacy";
       if (
+        !isElevenDollarMultiple(Math.round(Number(donation.amount) * 100)) ||
         Math.round(Number(donation.amount) * 100) >= getSocialLimitCents(donation.created_at) ||
         donation.payment_route !== "standard" ||
         donation.visibility_scope !== "public" ||

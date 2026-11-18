@@ -349,3 +349,21 @@ test("months with more than 500 orders are fully read and failed pages are not s
     ? { data: records.slice(start, end + 1) }
     : { error: new Error("Page unavailable") } }), /Page unavailable/);
 });
+
+test("Admin drops non-multiple amounts from stale responses while SuperAdmin retains them", async () => {
+  const rows = [
+    ...[7, 12, 14.99, 19.99, 11, 22, 33, 44].map((amount) => ({ id: `new-${amount}`, amount, createdAt: "2026-11-18T00:00:00Z" })),
+    { id: "old-33", amount: 33, createdAt: "2026-11-16T18:29:59.999Z" },
+    { id: "old-44", amount: 44, createdAt: "2026-11-16T18:29:59.999Z" },
+  ];
+  const calendar = createCalendar();
+  const pending = calendar.context.loadAdminDonations();
+  calendar.requests[0].resolve({ donations: rows });
+  await pending;
+  assert.deepEqual(calendar.snapshot().records.map((row) => row.id), ["new-11", "new-22", "old-33", "old-44"]);
+  calendar.context.state.adminProfile.role = "super_admin";
+  const next = calendar.context.loadAdminDonations();
+  calendar.requests[1].resolve({ donations: rows });
+  await next;
+  assert.equal(calendar.snapshot().records.length, rows.length);
+});

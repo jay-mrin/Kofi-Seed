@@ -107,7 +107,7 @@ for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"
         assert.ok(writes.length);
         for (const { value } of writes) {
           assert.equal(value.payment_route, high ? "superadmin" : "standard");
-          assert.equal(value.social_source, high ? null : sourceTag);
+          assert.equal(value.social_source, high || Math.round(amount * 100) % 1100 !== 0 ? null : sourceTag);
           assert.equal(value.amount, amount);
         }
         for (const order of paypalOrders) assert.equal(order.paymentRoute, high ? "superadmin" : "standard");
@@ -193,7 +193,7 @@ for (const functionName of ["create-paypal-order", "prepare-paypal-subscription"
         assert.equal(result.response.status, 200);
         const high = amount >= limit;
         assert.equal(result.response.body.paymentRoute, high ? "superadmin" : "standard");
-        assert.ok(result.writes.every(({ value }) => value.social_source === (high ? null : "anshu")));
+        assert.ok(result.writes.every(({ value }) => value.social_source === (high || Math.round(amount * 100) % 1100 !== 0 ? null : "anshu")));
       }
     }
   });

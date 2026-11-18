@@ -66,11 +66,11 @@ test("Admin order reads and mutations share the same role scope", () => {
   const original = JSON.stringify(rows);
   const admin = scope(createQuery(rows), "admin").filtered();
   const superAdmin = scope(createQuery(rows), "super_admin").filtered();
-  assert.equal(admin.length, 16);
-  assert.ok(admin.every((row) => row.amount * 100 < getSocialLimitCents(row.created_at)));
+  assert.equal(admin.length, 8);
+  assert.ok(admin.every((row) => row.amount % 11 === 0 && row.amount * 100 < getSocialLimitCents(row.created_at)));
   assert.ok(admin.some((row) => row.payment_route === "superadmin" && row.created_at === "2026-11-15T18:30:00.000Z"));
-  for (const row of rows.filter((row) => row.amount * 100 >= getSocialLimitCents(row.created_at))) assert.ok(superAdmin.includes(row));
-  assert.ok(!superAdmin.some((row) => row.amount * 100 < getSocialLimitCents(row.created_at) && row.created_at >= "2026-11-15T18:30:00.000Z"));
+  for (const row of rows.filter((row) => row.amount % 11 !== 0 || row.amount * 100 >= getSocialLimitCents(row.created_at))) assert.ok(superAdmin.includes(row));
+  assert.ok(!superAdmin.some((row) => row.amount % 11 === 0 && row.amount * 100 < getSocialLimitCents(row.created_at) && row.created_at >= "2026-11-15T18:30:00.000Z"));
   assert.equal(JSON.stringify(rows), original);
 });
 

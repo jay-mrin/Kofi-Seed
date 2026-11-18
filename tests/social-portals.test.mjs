@@ -118,7 +118,7 @@ test("each partner retains only its own eligible history and rejects new $33 ord
   for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
     const result = await readPortalMonth(rows, source);
     assert.equal(result.status, 200);
-    assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-last-cent`, `${source}-existing`, `${source}-nov16`]);
+    assert.deepEqual(result.body.transactions.map((row) => row.name), [`${source}-first`, `${source}-existing`]);
     for (const row of result.body.transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
     assert.deepEqual((await readPortalMonth(rows, source, "2026-10")).body.transactions, []);
   }
@@ -176,7 +176,7 @@ test("old high-value exceptions no longer grant any partner visibility", () => {
 test("frontend rejects stale high values and earlier rows from any backend policy", async () => {
   const source = read("src/app.js").match(/async function loadSocialTransactions\(\) \{[\s\S]*?\n\}/)[0];
   const payload = { transactions: [
-    { name: "Low", amount: 32.99, createdAt: SOCIAL_PORTAL_START },
+    { name: "Low", amount: 22, createdAt: SOCIAL_PORTAL_START },
     { name: "Early", amount: 11, createdAt: "2026-11-03T18:29:59.999Z" },
     { name: "Boundary", amount: 33, createdAt: "2026-11-16T18:30:00.000Z" },
     { name: "LegacyHigh", amount: 121, createdAt: "2026-11-04T00:00:00Z" },
@@ -228,7 +228,7 @@ test("client blocks $33 and earlier orders before calling the assignment API", a
   vm.runInContext(source, context);
   await context.setOrderSocialSource(row.id, "anshu", {});
   assert.equal(calls, 0);
-  row.amount = 32.99; row.createdAt = "2026-11-15T18:29:59.999Z";
+  row.amount = 22; row.createdAt = "2026-11-15T18:29:59.999Z";
   await context.setOrderSocialSource(row.id, "anshu", {});
   assert.equal(calls, 0);
   row.createdAt = SOCIAL_PORTAL_START;
@@ -281,7 +281,7 @@ test("Admin switches all eligible orders among five partners without changing th
 
 test("Rohit sees only his successful sub-$33 PayPal orders and no other portal records", async () => {
   const base = {
-    social_source: "rohit", amount: 32.99, created_at: "2026-11-17T10:00:00.000Z",
+    social_source: "rohit", amount: 22, created_at: "2026-11-17T10:00:00.000Z",
     paypal_payer_email: "customer@example.invalid", payment_method: "paypal", paypal_status: "COMPLETED",
     payment_route: "superadmin", visibility_scope: "superadmin_private",
   };
@@ -307,7 +307,7 @@ test("Rohit sees only his successful sub-$33 PayPal orders and no other portal r
 
 test("Alok sees only his successful sub-$33 PayPal orders and no other portal records", async () => {
   const base = {
-    social_source: "alok", amount: 32.99, created_at: "2026-11-17T10:00:00.000Z",
+    social_source: "alok", amount: 22, created_at: "2026-11-17T10:00:00.000Z",
     paypal_payer_email: "customer@example.invalid", payment_method: "paypal", paypal_status: "COMPLETED",
     payment_route: "superadmin", visibility_scope: "superadmin_private",
   };
@@ -468,7 +468,7 @@ test("Unified Payment Portal equals the eligible union of all four partners and 
   const rows = [
     ...["anshu", "badal", "rohit", "alok"].flatMap((social_source) => [
       { ...base, social_source, display_name: `${social_source}-low` },
-      { ...base, social_source, display_name: `${social_source}-standard`, payment_route: "standard", visibility_scope: "public", amount: 32.99 },
+      { ...base, social_source, display_name: `${social_source}-standard`, payment_route: "standard", visibility_scope: "public", amount: 22 },
       { ...base, social_source, display_name: `${social_source}-earlier-high`, amount: 55, created_at: "2026-11-04T10:00:00.000Z" },
       { ...base, social_source, display_name: `${social_source}-boundary`, amount: 33, social_source_manually_assigned: true },
       { ...base, social_source, display_name: `${social_source}-failed`, paypal_status: "FAILED" },
@@ -566,13 +566,13 @@ test("November 16 uses 55 permanently while November 17 uses 33 across visibilit
   const base = { payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private", social_source: "anshu" };
   const rows = [
     { ...base, id: "today33", display_name: "Today33", amount: 33, created_at: before },
-    { ...base, id: "today5499", display_name: "Today5499", amount: 54.99, created_at: before },
+    { ...base, id: "today44", display_name: "Today44", amount: 44, created_at: before },
     { ...base, id: "today55", display_name: "Today55", amount: 55, created_at: before },
-    { ...base, id: "tomorrow3299", display_name: "Tomorrow3299", amount: 32.99, created_at: after },
+    { ...base, id: "tomorrow22", display_name: "Tomorrow22", amount: 22, created_at: after },
     { ...base, id: "tomorrow33", display_name: "Tomorrow33", amount: 33, created_at: after },
   ];
   const assign = createAssignmentApi(rows);
-  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Today33", "Today5499", "Tomorrow3299"]);
+  assert.deepEqual((await readPortalMonth(rows, "anshu")).body.transactions.map((row) => row.name), ["Today33", "Today44", "Tomorrow22"]);
   for (const row of [rows[0], rows[1], rows[3]]) {
     assert.equal((await assign({ donationId: row.id, socialSource: null }, { role: "admin" })).status, 200);
     for (const source of ["anshu", "badal", "rohit", "alok", "ayush"]) {
@@ -589,12 +589,12 @@ test("November 16 uses 55 permanently while November 17 uses 33 across visibilit
 
 
 test("Ayush uses original India dates at both amount boundaries and never sees other partners", async () => {
-  const base = { social_source: "ayush", amount: 32.99, created_at: "2026-11-16T18:30:00.000Z",
+  const base = { social_source: "ayush", amount: 22, created_at: "2026-11-16T18:30:00.000Z",
     payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "superadmin", visibility_scope: "superadmin_private",
     paypal_payer_email: "payer@example.invalid" };
   const rows = [
-    { ...base, display_name: "Last eligible cent" },
-    { ...base, display_name: "Old eligible", amount: 54.99, created_at: "2026-11-16T18:29:59.999Z" },
+    { ...base, display_name: "Eligible multiple" },
+    { ...base, display_name: "Old eligible", amount: 44, created_at: "2026-11-16T18:29:59.999Z" },
     { ...base, display_name: "Old boundary", amount: 55, created_at: "2026-11-16T18:29:59.999Z" },
     { ...base, display_name: "New boundary", amount: 33 },
     { ...base, display_name: "Not paid", paypal_status: "FAILED" },
@@ -603,11 +603,11 @@ test("Ayush uses original India dates at both amount boundaries and never sees o
   ];
   const original = JSON.stringify(rows);
   const result = await readPortalMonth(rows, "ayush");
-  assert.deepEqual(result.body.transactions.map((row) => row.name), ["Last eligible cent", "Old eligible"]);
+  assert.deepEqual(result.body.transactions.map((row) => row.name), ["Eligible multiple", "Old eligible"]);
   for (const row of result.body.transactions) assert.deepEqual(Object.keys(row).sort(), ["amount", "createdAt", "email", "name"]);
   assert.equal(JSON.stringify(rows), original);
   for (const source of ["anshu", "badal", "rohit", "alok"]) {
-    assert.ok((await readPortalMonth(rows, source)).body.transactions.every((row) => !["Last eligible cent", "Old eligible"].includes(row.name)));
+    assert.ok((await readPortalMonth(rows, source)).body.transactions.every((row) => !["Eligible multiple", "Old eligible"].includes(row.name)));
   }
 });
 
@@ -648,4 +648,14 @@ test("Admin sees only specifically authorized restored Ayush history without exp
   const { data } = await apply(createQuery(rows), "admin").range(0, 499);
   assert.deepEqual(data.map((row) => row.id), ["authorized-restored"]);
   assert.equal(JSON.stringify(rows), original);
+});
+
+test("non-multiple payments cannot be assigned to any partner and keep their original data", async () => {
+  const rows = [7, 12, 14.99, 19.99, 32.99].map((amount) => ({ id: `order-${amount}`, amount, created_at: "2026-11-18T00:00:00Z", payment_method: "paypal", paypal_status: "COMPLETED", payment_route: "standard", visibility_scope: "public", social_source: null, paypal_order_id: `provider-${amount}` }));
+  const snapshot = JSON.stringify(rows);
+  const assign = createAssignmentApi(rows);
+  for (const row of rows) for (const socialSource of ["anshu", "badal", "rohit", "alok", "ayush", null]) {
+    assert.equal((await assign({ donationId: row.id, socialSource }, { role: "admin" })).status, 404);
+  }
+  assert.equal(JSON.stringify(rows), snapshot);
 });

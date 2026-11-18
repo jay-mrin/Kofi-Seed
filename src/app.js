@@ -195,6 +195,10 @@ function getSocialLimitCents(createdAt = new Date().toISOString()) {
   return Number.isFinite(timestamp) && timestamp < Date.parse("2026-11-16T18:30:00.000Z") ? 5500 : 3300;
 }
 
+function isElevenDollarMultiple(amountCents) {
+  return Number.isSafeInteger(amountCents) && amountCents > 0 && amountCents % 1100 === 0;
+}
+
 function readSocialSourceTag() {
   const path = window.location.pathname.replace(/\/+$/, "").toLowerCase();
   return path === "/sowseed" ? "anshu" : path === "/seed" ? "badal" : path === "/garden" ? "rohit" : path === "/sownow" ? "alok" : path === "/seeds" ? "ayush" : null;
@@ -1829,9 +1833,10 @@ async function setOrderSocialSource(donationId, socialSource, button) {
   }
 
   const portalName = socialSource === "anshu" ? "AnshuPortal" : socialSource === "badal" ? "Badal Portal" : socialSource === "alok" ? "Alok Portal" : socialSource === "ayush" ? "Ayush Portal" : "Rohit Portal";
-  if (Math.round(Number(donation.amount) * 100) >= getSocialLimitCents(donation.createdAt) ||
+  if (!isElevenDollarMultiple(Math.round(Number(donation.amount) * 100)) ||
+      Math.round(Number(donation.amount) * 100) >= getSocialLimitCents(donation.createdAt) ||
       !(Date.parse(donation.createdAt || "") >= Date.parse(SOCIAL_PORTAL_START_ISO))) {
-    setAdminStatus("Eligible orders use the $55 limit on 16 November 2026 and the $33 limit from 17 November, India time.", "error", { persist: true });
+    setAdminStatus("Only eligible PayPal orders in exact multiples of $11 can be assigned.", "error", { persist: true });
     return;
   }
   const accessToken = getAdminAccessToken();
@@ -1950,7 +1955,7 @@ async function loadAdminDonations(options = {}) {
     if (!isCurrentRequest()) return;
     if (!Array.isArray(payload.donations)) throw new Error("The server did not return an order list. Try loading orders again.");
     adminCalendarDonations = payload.donations.filter((donation) =>
-      role === "super_admin" || Math.round(Number(donation.amount) * 100) < getSocialLimitCents(donation.createdAt));
+      role === "super_admin" || (isElevenDollarMultiple(Math.round(Number(donation.amount) * 100)) && Math.round(Number(donation.amount) * 100) < getSocialLimitCents(donation.createdAt)));
     adminCalendarLoadedMonth = month;
 
     if (announce) {
@@ -2441,7 +2446,7 @@ function renderCalendarDetails(context) {
           const status = getDigitalOrderValue(donation, "fulfillmentStatus", "paid_awaiting_personalized_writing");
           const redeemedBookTitle = getDigitalOrderValue(donation, "redeemedBookTitle", getDonationRawValue(donation, "RedeemedBookTitle", ""));
           const isFulfilled = status === "fulfilled";
-          const isSuperAdminOnly = Math.round(amount * 100) >= getSocialLimitCents(donation.createdAt);
+          const isSuperAdminOnly = !isElevenDollarMultiple(Math.round(amount * 100)) || Math.round(amount * 100) >= getSocialLimitCents(donation.createdAt);
           const canAssignPortal = context.allowSocialTagging &&
             !isSuperAdminOnly &&
             donation.paymentMethod === "paypal" && donation.status === "COMPLETED" &&
@@ -3361,7 +3366,7 @@ async function finishVerifiedDonation(payload) {
     setDonorToken(payload.donorAccessToken);
   }
 
-  if (donation && paymentRoute !== "superadmin" && !state.donations.some((entry) => entry.id === donation.id)) {
+  if (donation && paymentRoute !== "superadmin" && isElevenDollarMultiple(Math.round(Number(donation.amount) * 100)) && !state.donations.some((entry) => entry.id === donation.id)) {
     state.donations.unshift({
       id: donation.id,
       name: donation.display_name || donation.name || pendingDonation?.name || "Customer",
@@ -3378,7 +3383,7 @@ async function finishVerifiedDonation(payload) {
     adminCalendarCursor = fromDateKey(selectedAdminCalendarDate);
   }
 
-  if (payload.seedComment) {
+  if (payload.seedComment && isElevenDollarMultiple(Math.round(Number(donation?.amount) * 100))) {
     state.seedComments = normalizeSeedComments([payload.seedComment, ...(state.seedComments || [])]);
   } else if (!isBackendConfigured() && pendingDonation?.message) {
     state.seedComments = normalizeSeedComments([
@@ -3963,7 +3968,7 @@ async function loadSocialTransactions() {
         const amountCents = Math.round(Number(transaction.amount) * 100);
         const transactionSource = role === "unified_payment" ? transaction.socialSource : source;
         if (role === "unified_payment" && !["anshu", "badal", "rohit", "alok"].includes(transactionSource)) return false;
-        return Number.isFinite(amountCents) && amountCents > 0 &&
+        return isElevenDollarMultiple(amountCents) &&
           amountCents < getSocialLimitCents(transaction.createdAt) && Date.parse(transaction.createdAt || "") >= Date.parse(SOCIAL_PARTNER_HISTORY_START_ISO);
       })
       : [];

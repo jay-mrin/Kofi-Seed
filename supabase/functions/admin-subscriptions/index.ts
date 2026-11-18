@@ -8,7 +8,7 @@ import {
 import { cancelPayPalSubscription } from "../_shared/paypal.ts";
 import { requireAdmin } from "../_shared/supabase.ts";
 
-import { SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
+import { getSocialLimitCents, isElevenDollarMultiple, SOCIAL_ELIGIBLE_ORDER_FILTER } from "../_shared/social-source.ts";
 
 type CancelBody = {
   membershipId?: string;
@@ -29,7 +29,14 @@ function mapPayment(value: Record<string, any>) {
   };
 }
 
-function mapMembership(value: Record<string, any>) {
+function mapMembership(value: Record<string, any>, isSuperAdmin = false) {
+  const payments = (value.membership_payments || []).filter((payment: Record<string, any>) => {
+    const cents = Math.round(Number(payment.amount) * 100);
+    return isSuperAdmin || (isElevenDollarMultiple(cents) && cents < getSocialLimitCents(payment.paid_at));
+  });
+  const successfulPayments = payments.filter((payment: Record<string, any>) => ["COMPLETED", "completed", "succeeded"].includes(payment.status));
+  const lastVisiblePayment = successfulPayments.reduce((last: string | null, payment: Record<string, any>) =>
+    !last || payment.paid_at > last ? payment.paid_at : last, null);
   return {
     id: value.id,
     name: value.customer_name,
@@ -45,10 +52,10 @@ function mapMembership(value: Record<string, any>) {
     nextBillingAt: value.next_billing_at,
     nextRetryAt: value.next_retry_at,
     lastFailedAt: value.last_failed_at,
-    lastSuccessfulPaymentAt: value.last_successful_payment_at,
-    successfulPaymentCount: value.successful_payment_count,
+    lastSuccessfulPaymentAt: isSuperAdmin ? value.last_successful_payment_at : lastVisiblePayment,
+    successfulPaymentCount: isSuperAdmin ? value.successful_payment_count : successfulPayments.length,
     cancelledAt: value.cancelled_at,
-    payments: (value.membership_payments || []).map(mapPayment),
+    payments: payments.map(mapPayment),
   };
 }
 
@@ -80,7 +87,7 @@ Deno.serve(withCors(async (request) => {
 
       return jsonResponse({
         paymentRoute,
-        subscriptions: (data || []).map(mapMembership),
+        subscriptions: (data || []).map((membership) => mapMembership(membership, adminProfile.role === "super_admin")),
       });
     }
 
